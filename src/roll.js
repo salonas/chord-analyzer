@@ -9,7 +9,7 @@ import { bendAt, glidePlan } from './glide.js';
 import { tr } from './i18n.js';
 import { audio, ensureSounds, master, mixOf, patVoice, preview, releasePreview, soundsReady } from './audio.js';
 // main.js imports this module too: these four are only called from inside functions, never at load
-import { drawMini, lastCur, render, renderActive } from './main.js';
+import { drawMini, lastCur, paintKeys, render, renderActive } from './main.js';
 
 // ---------- history (active chord + roll) ----------
 function snapshot(){return {notes:[...st.notes],lockedRoot:st.lockedRoot,pat:st.prog.id,roll:JSON.stringify({n:st.prog.notes,m:st.prog.names,x:st.prog.expr||null})}}
@@ -57,6 +57,15 @@ function stopProg(){
   if(P.bus){ const c=audio(); P.bus.gain.setTargetAtTime(0,c.currentTime,.03); P.bus=null; }
   P.playing=false; R.pos=null; setPlayBtn(false);
   showPos(R.start); drawRoll();
+  if(R.live){ R.live=null; paintKeys(); drawMini(); }
+}
+// "Real time: All": the keyboard shows every note sounding at the playhead, not just the active chord
+function followLive(pos){
+  if(!st.liveAll) return;
+  const now=new Set(); st.prog.notes.forEach(n=>{ if(pos>=n.s&&pos<n.s+n.l) now.add(n.m); });
+  const old=R.live;
+  if(old&&old.size===now.size&&[...now].every(m=>old.has(m))) return;
+  R.live=now; paintKeys(); drawMini();
 }
 // scheduling runs on a timer, not in tick(): requestAnimationFrame stops in a hidden tab, and the loop would go silent after the first pass
 // a timer still fires there (throttled to about 1 s), so the next pass is queued 2 s ahead
@@ -73,7 +82,7 @@ function tick(){
   pump();
   if(!P.playing) return;
   const pos=P.from+(audio().currentTime-P.t0)/P.spt;
-  R.pos=pos; showPos(pos); followChord(pos);
+  R.pos=pos; showPos(pos); followChord(pos); followLive(pos);
   const x=pos/T*st.beatW, vw=R.el.clientWidth-R.K;
   if(x<R.el.scrollLeft||x>R.el.scrollLeft+vw*.9) R.el.scrollLeft=Math.max(0,x-vw*.1);
   drawRoll();
@@ -82,7 +91,7 @@ function tick(){
 function showPos(t){ const bar=Math.floor(t/(4*T))+1, beat=Math.floor(t/T)%4+1, tk=Math.floor(t%T); $('pos').textContent=`${bar}.${beat}.${String(tk).padStart(2,'0')}`; }
 
 // ---------- piano roll ----------
-const R={el:$('roll'),inner:$('rollInner'),cv:$('rollCv'),K:64,TOP:84,RUL:18,LN:42,rh:14,VEL:68,lastVel:100,glide:'',sel:new Set(),lastLen:T,drag:null,start:0,pos:null,C:{},segs:[],lane:[],queued:false};
+const R={el:$('roll'),inner:$('rollInner'),cv:$('rollCv'),K:64,TOP:84,RUL:18,LN:42,rh:14,VEL:68,lastVel:100,glide:'',sel:new Set(),lastLen:T,drag:null,start:0,pos:null,live:null,C:{},segs:[],lane:[],queued:false};
 function readColors(){
   const cs=getComputedStyle(document.documentElement), v=n=>cs.getPropertyValue(n).trim();
   R.C={w:v('--roll-w'),b:v('--roll-b'),line:v('--roll-line'),beat:v('--roll-beat'),bar:v('--roll-bar'),note:v('--note'),edge:v('--note-edge'),ink:v('--note-ink'),
