@@ -67,6 +67,11 @@ describe('harmony and melody in the text', () => {
     const t = progText(pattern('48 0 4|52 0 4|55 0 4|50 4 4|53 4 4|57 4 4|72 .5 .5|77 2.5 .5'), PREFS);
     expect(t).toContain('F5 (77) | 2.5 | 0.5 | C | 4 | alta (0,85) | anticipación → Dm');
   });
+  it('a note of the next chord that is not the last before the change is a tension, not an anticipation', () => {
+    expect(L).toContain('D3 (50) | 7.5 | 0.5 | Am7 | 4 | media (0,5) | anticipación → Dm7');
+    expect(L).toContain('F3 (53) | 6.5 | 1 | Am7 | ♭6 | alta (0,85) | tensión');
+    expect(L).toContain('G3 (55) | 8.5 | 0.5 | Dm7 | 4 | media (0,5) | tensión');
+  });
   it('reads back the exact notes and the chord names', () => {
     const back = parseText(t, PREFS).projects[0].patterns[0];
     expect(back.notes.length).toBe(37);
