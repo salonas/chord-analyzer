@@ -67,7 +67,7 @@ function tick(){
     if(P.next){ P.from=0; P.t0=P.next.t0; P.next=null; pos=P.from+(c.currentTime-P.t0)/P.spt; R.el.scrollLeft=0; }
     else { stopProg(); return; }
   }
-  R.pos=pos; showPos(pos);
+  R.pos=pos; showPos(pos); followChord(pos);
   const x=pos/T*st.beatW, vw=R.el.clientWidth-R.K;
   if(x<R.el.scrollLeft||x>R.el.scrollLeft+vw*.9) R.el.scrollLeft=Math.max(0,x-vw*.1);
   drawRoll();
@@ -463,11 +463,17 @@ $('bSlide').onclick=()=>toggleGlide('s'); $('bPorta').onclick=()=>toggleGlide('p
 
 // ---------- chord (segment) operations ----------
 function curSeg(){ return st.segA==null?null:R.segs.find(s=>s.a===st.segA)||null; }
-function selectSeg(i,selectNotes){
+// during playback the active chord is the one under the playhead; in a gap, or when stopped, the last one stays
+function followChord(pos){
+  if(R.drag) return;
+  const i=R.segs.findIndex(s=>pos>=s.a&&pos<s.b);
+  if(i>=0&&R.segs[i].a!==st.segA) selectSeg(i,false,true);
+}
+function selectSeg(i,selectNotes,keepSel){
   const S=R.segs[i]; if(!S) return;
   st.segA=S.a; st.notes=new Set(S.notes); st.src='seg'; st.srcSig=S.sig; st.lockedRoot=null;
   const nm=st.prog.names[S.sig]; st.prefer=nm?{...nm}:null; st.pick=0;
-  R.sel=selectNotes?new Set(S.ids):new Set();
+  if(!keepSel) R.sel=selectNotes?new Set(S.ids):new Set();
   if(selectNotes){ st.src='seg'; }
   render();
 }
