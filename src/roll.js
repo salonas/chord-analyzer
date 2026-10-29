@@ -213,7 +213,9 @@ function drawRoll(){
   // keys column
   for(let m=mTop;m>=mBot;m--){
     const y=rowY(m), black=BLACK.has(m%12), on=st.notes.has(m);
-    if(!black){ g.fillStyle=on?C.selW:C.ivory; g.fillRect(0,y,K,rh); g.fillStyle=C.ivoryEdge; g.fillRect(0,y+rh-1,K,1); }
+    // black rows get ivory too: the black key covers only part of the column, and notes scrolled under it would show through the rest
+    g.fillStyle=!black&&on?C.selW:C.ivory; g.fillRect(0,y,K,rh);
+    if(!black){ g.fillStyle=C.ivoryEdge; g.fillRect(0,y+rh-1,K,1); }
   }
   for(let m=mTop;m>=mBot;m--){
     if(!BLACK.has(m%12)) continue;
