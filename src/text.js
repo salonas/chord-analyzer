@@ -9,8 +9,9 @@ import { tr } from './i18n.js';
 import { hasGlide, rangeOf } from './glide.js';
 
 // ---------- text export / import ----------
-function projHeader(pr,prefs){
-  const np=`${pr.patterns.length} pattern${pr.patterns.length===1?'':'s'}`;
+function projHeader(pr,prefs,only){
+  // exporting one pattern of several says which one, so the count does not promise patterns the text lacks
+  const np=`${pr.patterns.length} pattern${pr.patterns.length===1?'':'s'}`+(only&&pr.patterns.length>1?tr(` · exportado: ${only.name||'Sin nombre'}`,` · exported: ${only.name||'Untitled'}`):'');
   return tr([`# Proyecto: ${pr.name||'Sin nombre'}`,`# ${pr.bpm} BPM · compás 4/4 · semilla de humanizar ${pr.seed} · ${np}`,`# Octavas: ${OCT_CONV[prefs.octConv].name}`],
     [`# Project: ${pr.name||'Untitled'}`,`# ${pr.bpm} BPM · 4/4 time · humanize seed ${pr.seed} · ${np}`,`# Octaves: ${OCT_CONV[prefs.octConv].name}`]).join('\n');
 }
@@ -47,19 +48,21 @@ const TEN_WORD={get low(){return tr('baja','low');},get mid(){return tr('media',
 // the melody tension in the same 0–1 scale as the chords, with its word: "alta (0,85)"
 const TEN_VAL={low:.15,mid:.5,high:.85};
 const melTen=f=>f?`${TEN_WORD[f.ten]} (${numText(TEN_VAL[f.ten])})`:'—';
-// a note that is not in its chord but is in the next one, within two beats of the change, announces it
+// a note that is not in its chord but is in the next one, within two beats of the change, and is the last
+// melody note before the change, announces it; an earlier one in that window is just a tension
 const ANTICIPATION=2*T;
 function melodyRole(mel,i,info,toneAt,prefs,next){
   const k=info[i]; if(!k) return '—';
   if(k.tone) return tr('nota del acorde','chord tone');
   const m=mel[i].notes[0], pv=mel[i-1], nx=mel[i+1], d1=pv?m-pv.notes[0]:null, d2=nx?nx.notes[0]-m:null;
-  const ahead=next&&next.r&&next.r.c&&mel[i].s<next.a&&mel[i].s>=next.a-ANTICIPATION&&against(m,next.r).tone;
+  const toward=next&&next.r&&next.r.c&&mel[i].s<next.a&&mel[i].s>=next.a-ANTICIPATION&&against(m,next.r).tone;
+  const ahead=toward&&(!nx||nx.s>=next.a);
   const step=x=>x!==null&&x!==0&&Math.abs(x)<=2;
   if(step(d1)&&step(d2)) return Math.sign(d1)===Math.sign(d2)?tr('paso','passing'):tr('bordadura','neighbor');
   if(step(d2)&&toneAt(i+1)) return `${tr('apoyatura','appoggiatura')} → ${noteText(plainSpell(nx.notes[0],prefs),prefs)}`;
   if(step(d1)) return tr('escapada','escape tone');
   if(ahead) return `${tr('anticipación','anticipation')} → ${next.label}`;
-  return k.ten==='mid'?tr('tensión','tension'):tr('libre','free');
+  return k.ten==='mid'||toward?tr('tensión','tension'):tr('libre','free');
 }
 function harmonyLines(p,prefs,L){
   const Hm=splitHarmony(p);
@@ -114,7 +117,7 @@ function libText(lib,prefs){
   lib.chords.forEach(s=>{const r=resolveStep(s,prefs); L.push(`${r.label} | ${r.spelled.map(n=>noteText(n,prefs)).join(' ')} | ${r.notes.join(' ')}`);});
   return [L.join('\n'),...lib.projects.map(pr=>projectText(pr,prefs))].join('\n\n');
 }
-const projectText=(pr,prefs,only)=>[projHeader(pr,prefs),...(only?[only]:pr.patterns).map(p=>progText(p,prefs))].join('\n\n');
+const projectText=(pr,prefs,only)=>[projHeader(pr,prefs,only),...(only?[only]:pr.patterns).map(p=>progText(p,prefs))].join('\n\n');
 const NOTE_RE=/(Sol|Do|Re|Mi|Fa|La|Si|[A-G])(♯♯|♭♭|##|bb|x|♯|♭|#|b)?(-?\d{1,2})(?!\d)/g;
 function parseNotes(s,off){
   const out=[];
