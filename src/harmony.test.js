@@ -27,6 +27,11 @@ describe('splitHarmony', () => {
     const d = splitHarmony(pattern('48 0 1|60 0 1|64 .5 .5'));
     expect([d.chords.length, d.mel.map(m => m.notes)]).toEqual([0, [[48, 60], [64]]]);
   });
+  it('a note in octaves plus its fifth is a power chord, even when the fifth moves on first', () => {
+    const d = splitHarmony(pattern('38 0 4|50 0 4|62 0 4|69 0 3|72 1.5 1.5|70 3 1'));
+    expect(d.chords.map(c => [beats(c.a), beats(c.b), c.notes])).toEqual([[0, 4, [38, 50, 62, 69]]]);
+    expect(d.mel.map(m => m.notes[0])).toEqual([72, 70]);
+  });
   it('plain blocks stay one chord per block, a lone note too', () => {
     expect(splitHarmony(pattern('48 0 2|52 0 2|55 0 2|67 2 2')).chords.map(c => c.notes)).toEqual([[48, 52, 55], [67]]);
   });

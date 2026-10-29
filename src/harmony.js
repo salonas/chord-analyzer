@@ -16,10 +16,12 @@ function noteRoles(ns){
     const k=g.notes.length, pcs=new Set(g.notes.map(n=>n.m%12));
     // a chord starts with two more notes; two notes count when one holds a beat or they are the same note in octaves
     g.notes.forEach(n=>{ if(k>=3||(k===2&&(n.l>=T||pcs.size===1))) role.set(n.id,'harm'); });
-    // the top of a chord that moves on while the rest holds is the tune
+    // the top of a chord that moves on while the rest holds is the tune,
+    // unless the rest is one note in octaves and the top its fifth: that is a power chord
     if(k>=3){
       const top=g.notes[k-1], rest=g.notes.slice(0,-1), restEnd=Math.min(...rest.map(n=>n.s+n.l)), end=top.s+top.l;
-      if(end<restEnd-TOL&&ns.some(n=>n.s>=end-TOL&&n.s<restEnd&&n.m>rest[rest.length-1].m)) role.set(top.id,'mel');
+      const power=new Set(rest.map(n=>n.m%12)).size===1&&(top.m-rest[0].m)%12===7;
+      if(!power&&end<restEnd-TOL&&ns.some(n=>n.s>=end-TOL&&n.s<restEnd&&n.m>rest[rest.length-1].m)) role.set(top.id,'mel');
     }
   }
   for(const n of ns){
