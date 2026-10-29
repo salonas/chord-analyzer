@@ -23,11 +23,11 @@ const TURNAROUND_EN = `# Project: Ejemplo: turnaround en Do
 # Octaves: scientific (C4 = MIDI 60)
 
 # Pattern: Turnaround
-# Estimated key: C major · total 12 beats
+# Estimated key: C major · total 12 beats (3 bars)
 # Patterns: Turnaround I–vi–ii–V; ii–V–I; Circle of fifths (3 chords in a row)
 # Ending: Half cadence (ends on V)
-# Instrument: Generic (no adjustment) · velocity 1–127 · sensitivity 100 % · accents 100 % · humanize 100 % · low trim 0/octave below C2 · high trim 0/octave above C7
-# Format: n. chord | degree (function · tension 0–1) | notes | MIDI | length
+# Instrument: Generic (no adjustment) · velocity limits 1–127 · used 100 · sensitivity 100 % · accents 100 % · humanize velocity 100 % · low trim 0/octave below C2 · high trim 0/octave above C7
+# Format: n. chord | degree (function · tension 0–1) | notes | MIDI | length — octaves: scientific (C4 = MIDI 60)
 1. Cmaj7 | Imaj7 (tonic · 0.1) | C3 B3 E4 G4 | 48 59 64 67 | 4 beats
 2. Am7 | vi7 (tonic · 0.13) | A2 G3 C4 E4 | 45 55 60 64 | 4 beats
 3. Dm7 | ii7 (subdominant · 0.28) | D3 C4 F4 A4 | 50 60 65 69 | 2 beats
@@ -58,8 +58,9 @@ describe('English text export', () => {
   });
   it('writes the exact-notes block as «# Notes» and decimals with a point', () => {
     const t = inEnglish(() => projectText(clone(fx.loose.project), PREFS));
-    expect(t).toContain('\n# Notes (exact): note | MIDI | start | length | velocity');
-    expect(t).toContain('| 0.75 beats');
+    expect(t).toContain('\n# Notes (exact): note | MIDI | start | length | velocity | channel');
+    expect(t).toContain('\n# Harmony: n. chord | degree (function · tension 0–1) | start–end (beats) | voices | bass');
+    expect(t).toContain('\nC5 (72) | 2 | 0.75 | C(no5) | 1 | low | chord tone');
     expect(t).not.toMatch(/\d,\d/);
   });
   it('writes the applied expression as «# Expression» with the scope in English', () => {
@@ -67,7 +68,7 @@ describe('English text export', () => {
     expressPattern(p, p.notes.slice(0, 3), exDefaults('triste'), 7, false, PREFS);
     expect(p.expr.scope).toBe('3 seleccionadas');
     const line = inEnglish(() => progText(p, PREFS)).split('\n').find(l => l.startsWith('# Expression: '));
-    expect(line).toBe('# Expression: Sad / melancholic on Generic (no adjustment) · base 56 · contrast 60 % · voices 12 · accent 3 · diminuendo 14 over 4 bars · contour 5 · harmonic tension 6 · appoggiaturas 12 · cadence -12 · humanize ±3 (seed 7) · notes: 3 selected');
+    expect(line).toBe('# Expression: Sad / melancholic on Generic (no adjustment) · base 56 · contrast 60 % · voices 12 · accent 3 · diminuendo 14 over 4 bars · contour 5 · harmonic tension 6 · appoggiaturas 12 · cadence -12 · humanize velocity ±3 · timing 0 (seed 7) · notes: 3 selected');
   });
   it('writes a drum pattern with its pieces and expression in English', () => {
     const notes = genGroove('rock', 1, 0, false).map((n, i) => ({ ...n, id: 'd' + i }));

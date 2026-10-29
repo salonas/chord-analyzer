@@ -141,7 +141,8 @@ function drawRoll(){
     g.fillStyle=sel?C.selInk:C.ink;
     if(sel&&w0>=10) for(let i=0;i<4;i++) g.fillRect(x0+t,y0+t+i,4-i,1);
     g.fillRect(x+w-5,y+4,1,rh-8);
-    if(w>34){ g.save(); g.beginPath(); g.rect(x,y,w-6,rh); g.clip(); g.fillText(noteText(plainSpell(n.m,st),st),x+(sel?8:5),y+rh/2); g.restore(); }
+    // "key names: only the chord" labels just the notes under the selected chord band
+    if(w>34&&(st.showNames||cur&&n.s<cur.b&&n.s+n.l>cur.a)){ g.save(); g.beginPath(); g.rect(x,y,w-6,rh); g.clip(); g.fillText(noteText(plainSpell(n.m,st),st),x+(sel?8:5),y+rh/2); g.restore(); }
   }
   // glides that count: a 2 px trace of the pitch that sounds, along the whole voice when slides bend it
   // and over the glide alone for a portamento; columns join so steep glides stay continuous

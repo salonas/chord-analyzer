@@ -91,6 +91,12 @@ function quality(sym){
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const fmtB=t=>{const x=(+(t/T).toFixed(3)).toString(); return tr(x.replace('.',','),x);};
 const numB=t=>(+(t/T).toFixed(4)).toString();
+// " (3 bars)" or " (2 bars and 1.5 beats)" in 4/4; nothing under one bar
+const barsText=t=>{
+  const n=Math.floor(t/(4*T)), r=t-n*4*T; if(!n) return '';
+  const b=tr(n===1?'compás':'compases',n===1?'bar':'bars'), rest=r?tr(` y ${fmtB(r)} ${r===T?'tiempo':'tiempos'}`,` and ${fmtB(r)} beat${r===T?'':'s'}`):'';
+  return ` (${n} ${b}${rest})`;
+};
 const sigOf=a=>[...a].sort((x,y)=>x-y).join(',');
 // Per-instrument shaping applied on top of a feeling. Heuristic starting points.
 // min/max: velocity window · sens: share of the feeling's contrast · accent/human: share of those parts (%)
@@ -147,4 +153,4 @@ const freq=m=>440*Math.pow(2,(m-69)/12);
 // Octave label conventions for the same MIDI number: scientific C4 = 60, FL Studio C5 = 60, Yamaha/Ableton C3 = 60
 const OCT_CONV={sci:{off:0,get name(){return tr('científica (C4 = MIDI 60)','scientific (C4 = MIDI 60)');}},fl:{off:1,name:'FL Studio (C5 = MIDI 60)'},yam:{off:-1,name:'Yamaha / Ableton (C3 = MIDI 60)'}};
 
-export { AUTO, BLACK, FLAT, HIGH, INSTRUMENTS, INST_ROWS, INTERVALS, IN_KEYS, LATIN, LETTERS, LOW, NAT, OCT_CONV, ROMAN, SEVENTHS, SHARP, T, TYPES, fmtB, freq, guessInst, instDefaults, intervalName, numB, sigOf, uid };
+export { AUTO, BLACK, FLAT, HIGH, INSTRUMENTS, INST_ROWS, INTERVALS, IN_KEYS, LATIN, LETTERS, LOW, NAT, OCT_CONV, ROMAN, SEVENTHS, SHARP, T, TYPES, barsText, fmtB, freq, guessInst, instDefaults, intervalName, numB, sigOf, uid };
