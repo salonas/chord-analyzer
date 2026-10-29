@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Salonas Chord Analyzer</title>
+<link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+<header class="banner">
+  <div class="sign">
+    <svg class="rope left" width="45" height="96" shape-rendering="crispEdges" aria-hidden="true"><path class="edge" d="M0 93h3v3h-3zM9 93h3v3h-3zM0 90h3v3h-3zM9 90h3v3h-3zM0 87h3v3h-3zM9 87h3v3h-3zM3 84h3v3h-3zM12 84h3v3h-3zM3 81h3v3h-3zM12 81h3v3h-3zM3 78h3v3h-3zM12 78h3v3h-3zM6 75h3v3h-3zM15 75h3v3h-3zM6 72h3v3h-3zM15 72h3v3h-3zM6 69h3v3h-3zM15 69h3v3h-3zM9 66h3v3h-3zM18 66h3v3h-3zM9 63h3v3h-3zM18 63h3v3h-3zM9 60h3v3h-3zM18 60h3v3h-3zM12 57h3v3h-3zM21 57h3v3h-3zM12 54h3v3h-3zM21 54h3v3h-3zM12 51h3v3h-3zM21 51h3v3h-3zM15 48h3v3h-3zM24 48h3v3h-3zM15 45h3v3h-3zM24 45h3v3h-3zM15 42h3v3h-3zM24 42h3v3h-3zM18 39h3v3h-3zM27 39h3v3h-3zM18 36h3v3h-3zM27 36h3v3h-3zM18 33h3v3h-3zM27 33h3v3h-3zM21 30h3v3h-3zM30 30h3v3h-3zM21 27h3v3h-3zM30 27h3v3h-3zM21 24h3v3h-3zM30 24h3v3h-3zM24 21h3v3h-3zM33 21h3v3h-3zM24 18h3v3h-3zM33 18h3v3h-3zM24 15h3v3h-3zM33 15h3v3h-3zM27 12h3v3h-3zM36 12h3v3h-3zM27 9h3v3h-3zM36 9h3v3h-3zM27 6h3v3h-3zM36 6h3v3h-3zM30 3h3v3h-3zM39 3h3v3h-3zM30 0h3v3h-3zM39 0h3v3h-3z"/><path class="light" d="M3 93h3v3h-3zM6 93h3v3h-3zM3 90h3v3h-3zM9 84h3v3h-3zM6 81h3v3h-3zM9 81h3v3h-3zM6 78h3v3h-3zM12 72h3v3h-3zM9 69h3v3h-3zM12 69h3v3h-3zM12 66h3v3h-3zM15 60h3v3h-3zM15 57h3v3h-3zM18 57h3v3h-3zM15 54h3v3h-3zM21 48h3v3h-3zM18 45h3v3h-3zM21 45h3v3h-3zM18 42h3v3h-3zM24 36h3v3h-3zM21 33h3v3h-3zM24 33h3v3h-3zM24 30h3v3h-3zM27 24h3v3h-3zM27 21h3v3h-3zM30 21h3v3h-3zM27 18h3v3h-3zM33 12h3v3h-3zM30 9h3v3h-3zM33 9h3v3h-3zM30 6h3v3h-3zM36 0h3v3h-3z"/><path class="dark" d="M6 90h3v3h-3zM3 87h3v3h-3zM6 87h3v3h-3zM6 84h3v3h-3zM9 78h3v3h-3zM9 75h3v3h-3zM12 75h3v3h-3zM9 72h3v3h-3zM15 66h3v3h-3zM12 63h3v3h-3zM15 63h3v3h-3zM12 60h3v3h-3zM18 54h3v3h-3zM15 51h3v3h-3zM18 51h3v3h-3zM18 48h3v3h-3zM21 42h3v3h-3zM21 39h3v3h-3zM24 39h3v3h-3zM21 36h3v3h-3zM27 30h3v3h-3zM24 27h3v3h-3zM27 27h3v3h-3zM24 24h3v3h-3zM30 18h3v3h-3zM27 15h3v3h-3zM30 15h3v3h-3zM30 12h3v3h-3zM33 6h3v3h-3zM33 3h3v3h-3zM36 3h3v3h-3zM33 0h3v3h-3z"/></svg>
+    <svg class="rope right" width="45" height="96" shape-rendering="crispEdges" aria-hidden="true"><path class="edge" d="M0 93h3v3h-3zM9 93h3v3h-3zM0 90h3v3h-3zM9 90h3v3h-3zM0 87h3v3h-3zM9 87h3v3h-3zM3 84h3v3h-3zM12 84h3v3h-3zM3 81h3v3h-3zM12 81h3v3h-3zM3 78h3v3h-3zM12 78h3v3h-3zM6 75h3v3h-3zM15 75h3v3h-3zM6 72h3v3h-3zM15 72h3v3h-3zM6 69h3v3h-3zM15 69h3v3h-3zM9 66h3v3h-3zM18 66h3v3h-3zM9 63h3v3h-3zM18 63h3v3h-3zM9 60h3v3h-3zM18 60h3v3h-3zM12 57h3v3h-3zM21 57h3v3h-3zM12 54h3v3h-3zM21 54h3v3h-3zM12 51h3v3h-3zM21 51h3v3h-3zM15 48h3v3h-3zM24 48h3v3h-3zM15 45h3v3h-3zM24 45h3v3h-3zM15 42h3v3h-3zM24 42h3v3h-3zM18 39h3v3h-3zM27 39h3v3h-3zM18 36h3v3h-3zM27 36h3v3h-3zM18 33h3v3h-3zM27 33h3v3h-3zM21 30h3v3h-3zM30 30h3v3h-3zM21 27h3v3h-3zM30 27h3v3h-3zM21 24h3v3h-3zM30 24h3v3h-3zM24 21h3v3h-3zM33 21h3v3h-3zM24 18h3v3h-3zM33 18h3v3h-3zM24 15h3v3h-3zM33 15h3v3h-3zM27 12h3v3h-3zM36 12h3v3h-3zM27 9h3v3h-3zM36 9h3v3h-3zM27 6h3v3h-3zM36 6h3v3h-3zM30 3h3v3h-3zM39 3h3v3h-3zM30 0h3v3h-3zM39 0h3v3h-3z"/><path class="light" d="M3 93h3v3h-3zM6 93h3v3h-3zM3 90h3v3h-3zM9 84h3v3h-3zM6 81h3v3h-3zM9 81h3v3h-3zM6 78h3v3h-3zM12 72h3v3h-3zM9 69h3v3h-3zM12 69h3v3h-3zM12 66h3v3h-3zM15 60h3v3h-3zM15 57h3v3h-3zM18 57h3v3h-3zM15 54h3v3h-3zM21 48h3v3h-3zM18 45h3v3h-3zM21 45h3v3h-3zM18 42h3v3h-3zM24 36h3v3h-3zM21 33h3v3h-3zM24 33h3v3h-3zM24 30h3v3h-3zM27 24h3v3h-3zM27 21h3v3h-3zM30 21h3v3h-3zM27 18h3v3h-3zM33 12h3v3h-3zM30 9h3v3h-3zM33 9h3v3h-3zM30 6h3v3h-3zM36 0h3v3h-3z"/><path class="dark" d="M6 90h3v3h-3zM3 87h3v3h-3zM6 87h3v3h-3zM6 84h3v3h-3zM9 78h3v3h-3zM9 75h3v3h-3zM12 75h3v3h-3zM9 72h3v3h-3zM15 66h3v3h-3zM12 63h3v3h-3zM15 63h3v3h-3zM12 60h3v3h-3zM18 54h3v3h-3zM15 51h3v3h-3zM18 51h3v3h-3zM18 48h3v3h-3zM21 42h3v3h-3zM21 39h3v3h-3zM24 39h3v3h-3zM21 36h3v3h-3zM27 30h3v3h-3zM24 27h3v3h-3zM27 27h3v3h-3zM24 24h3v3h-3zM30 18h3v3h-3zM27 15h3v3h-3zM30 15h3v3h-3zM30 12h3v3h-3zM33 6h3v3h-3zM33 3h3v3h-3zM36 3h3v3h-3zM33 0h3v3h-3z"/></svg>
+    <h1 class="plaque">Salonas Chord Analyzer</h1>
+  </div>
+  <div class="nav">
+    <a class="sbtn home" href="/projects/chord-analyzer">Volver al sitio</a>
+    <div class="seg lang" id="segLang" role="group" aria-label="Idioma"><button data-v="es" lang="es" aria-pressed="true">ES</button><button data-v="en" lang="en" aria-pressed="false">EN</button></div>
+  </div>
+</header>
+<div class="app">
+  <header class="projbar">
+    <div class="projtop">
+      <div class="brand">
+        <span class="eyebrow">Proyecto · piano roll y analizador de acordes</span>
+        <input type="text" id="projName" aria-label="Nombre del proyecto" maxlength="80" placeholder="Proyecto sin nombre">
+      </div>
+      <div class="row">
+        <span class="status" id="progStatus"></span>
+        <button class="sbtn main" id="bProgSave" title="Guarda el proyecto con todos sus patterns en la biblioteca"><i class="ico i-save" aria-hidden="true"></i>Guardar proyecto</button>
+        <button class="sbtn" id="bProgNew">Nuevo proyecto</button>
+        <div class="xmenu">
+          <button class="sbtn main" id="bExport" aria-expanded="false" aria-controls="exportList" title="Descargas del pattern y del proyecto"><i class="ico i-pack" aria-hidden="true"></i>Exportar<i class="ico i-play caret" aria-hidden="true"></i></button>
+          <div class="xlist" id="exportList" hidden>
+            <button class="sbtn" id="bExportAuto" title="Elige el formato según el pattern: .mid si no tiene slides, script de FL si usa deslizamiento nativo, y un .zip con el .mid y el clip de pitch si no"><i class="ico i-mid" aria-hidden="true"></i><span>Pattern (automático)</span><small id="exportAutoHint"></small></button>
+            <button class="sbtn" id="bMidi" title="El .mid de este pattern (96 PPQ, tempo y compás incluidos)"><i class="ico i-mid" aria-hidden="true"></i>MIDI del pattern</button>
+            <button class="sbtn" id="bFlScript" title="Un script para el piano roll de FL que dibuja este pattern con sus slides y portamentos propios de FL, que un .mid no puede llevar"><i class="ico i-mid" aria-hidden="true"></i>Script de FL</button>
+            <button class="sbtn" id="bPitchClip" title="Un clip de automatización de Channel pitch (.fst) con los slides y portamentos de este pattern, para instrumentos VST como sforzando"><i class="ico i-mid" aria-hidden="true"></i>Clip de pitch (VST)</button>
+            <button class="sbtn" id="bMidiAll" title="Un .zip con un archivo .mid por pattern"><i class="ico i-zip" aria-hidden="true"></i>MIDI de todos los patterns</button>
+            <button class="sbtn" id="bPack" title="Un .zip con cada pattern en .mid, cada acorde suelto en .mid, tu biblioteca, el texto del proyecto y, por pattern con slides, un script de FL y un clip de pitch"><i class="ico i-pack" aria-hidden="true"></i>Pack completo</button>
+          </div>
+        </div>
+        <button class="sbtn" id="bMidiIn" title="Trae un .mid exportado de FL: cada pista se vuelve un pattern de este proyecto. También puedes soltar el archivo sobre el piano roll."><i class="ico i-import" aria-hidden="true"></i>Importar .mid</button>
+        <input type="file" id="midiFile" accept=".mid,.midi,audio/midi,audio/x-midi" multiple hidden>
+      </div>
+    </div>
+    <div class="patbar">
+      <button class="sbtn pscroll" id="bPatPrev" title="Patterns anteriores" aria-label="Patterns anteriores" hidden><i class="ico i-play flip" aria-hidden="true"></i></button>
+      <div class="ptabs" role="tablist" aria-label="Patterns del proyecto" id="patTabs"></div>
+      <button class="sbtn pscroll" id="bPatNext" title="Patterns siguientes" aria-label="Patterns siguientes" hidden><i class="ico i-play" aria-hidden="true"></i></button>
+      <button class="sbtn" id="bPatAdd" aria-expanded="false">+ Pattern</button>
+    </div>
+    <form class="patedit newpat" id="newPat" hidden>
+      <b class="nptitle">Pattern nuevo</b>
+      <label class="fld" for="npName">Nombre<input type="text" id="npName" maxlength="60" autocomplete="off"></label>
+      <label class="fld" for="npInst">Instrumento<select id="npInst"></select></label>
+      <label class="fld" for="npFrom">Notas<select id="npFrom"><option value="empty">Empezar vacío</option><option value="dup">Copiar las del pattern actual</option></select></label>
+      <button class="sbtn main" type="submit">Crear pattern</button>
+      <button class="sbtn" type="button" id="npCancel">Cancelar</button>
+      <span class="hint" id="npHint">El instrumento se sugiere según el nombre (por ejemplo «Violas - 1»).</span>
+    </form>
+    <div class="patedit" id="patEdit">
+      <label class="fld" for="patName">Nombre del pattern<input type="text" id="patName" maxlength="60" autocomplete="off"></label>
+      <label class="fld" for="topInst">Instrumento<select id="topInst"></select></label>
+      <label class="fld vol" for="patVol" title="Solo cambia lo que suena en esta página, para todos los patterns de este instrumento. El MIDI y el texto exportados no cambian.">Volumen al tocar<span><input type="range" id="patVol" min="0" max="100" step="5" value="100"><output class="mono" id="patVolOut" for="patVol"></output></span></label>
+      <label class="fld bend" for="patBend" title="Semitonos que el instrumento sube o baja con el pitch bend: 2 en la mayoría de los canales de la plantilla; 12 en Pad y Guitarra Limpia, 5 en Saxo Barítono">Rango de bend (±st)<input type="number" id="patBend" min="1" max="24" step="1"></label>
+      <label class="fld glide" for="patGlideNative" title="Marcado: el .mid lleva portamento estándar (CC65 y CC84) para instrumentos que deslizan solos. Sin marcar: los slides se exportan como pitch bend, para sforzando y los .sf2."><span><input type="checkbox" id="patGlideNative"> Slide nativo</span></label>
+      <button class="sbtn" id="bPatDup">Duplicar</button>
+      <button class="sbtn" id="bPatDel">Borrar</button>
+      <span class="hint">El instrumento define cómo se aplica la expresión en este pattern (pestaña Expresión).</span>
+    </div>
+  </header>
+  <div class="transportbar">
+    <div class="transport" role="group" aria-label="Transporte">
+      <button class="tb primary" id="bProgPlay" title="Tocar o detener (Espacio)"><i class="ico i-play" aria-hidden="true"></i><span>Tocar</span></button>
+      <button class="tb" id="bLoop" aria-pressed="true" title="Repetir en bucle"><i class="ico i-loop" aria-hidden="true"></i>Bucle</button>
+      <span class="pos" id="pos" title="Compás.tiempo.tick (96 ticks por tiempo)">1.1.00</span>
+    </div>
+    <label class="num" for="bpm">BPM <span class="step"><input type="number" id="bpm" min="30" max="300" value="90"><span class="stk"><button type="button" class="sb up" tabindex="-1" aria-label="Subir BPM"></button><button type="button" class="sb dn" tabindex="-1" aria-label="Bajar BPM"></button></span></span></label>
+    <label class="num" for="snap">Ajuste <select id="snap">
+      <option value="4">1 compás</option><option value="1">1 tiempo</option><option value="0.5">½ tiempo</option>
+      <option value="0.25" selected>¼ tiempo</option><option value="0.3333333333">⅓ tiempo (tresillo)</option>
+      <option value="0.125">⅛ tiempo</option><option value="0">Sin ajuste</option></select></label>
+    <label class="num" for="beats">Acorde nuevo <span class="step"><input type="number" id="beats" min="0.25" max="64" step="0.25" value="4"><span class="stk"><button type="button" class="sb up" tabindex="-1" aria-label="Subir tiempos"></button><button type="button" class="sb dn" tabindex="-1" aria-label="Bajar tiempos"></button></span></span> tiempos</label>
+    <label class="num" for="rollZoom">Zoom <input type="range" id="rollZoom" min="12" max="200" value="56"></label>
+    <button class="sbtn" id="bAutoVel" title="Aplica el sentimiento y el instrumento de la pestaña Expresión a la selección o a todas las notas del pattern">Aplicar expresión</button>
+  </div>
+
+  <div class="work">
+    <section class="stage" aria-label="Piano roll">
+      <div class="rolltools">
+        <div class="row">
+          <button class="sbtn" id="bSelAll" title="Ctrl+A">Seleccionar todo</button>
+          <button class="sbtn" id="bDup" title="Ctrl+B: copia la selección justo después">Duplicar</button>
+          <button class="sbtn" id="bQuant" title="Ctrl+Q: ajusta inicio y duración a la grilla">Cuantizar</button>
+          <button class="sbtn" id="bDelSel" title="Supr">Borrar selección</button>
+          <button class="sbtn" id="bSep" aria-expanded="false" title="Saca la melodía, el bajo y los acordes de este pattern en patterns separados">Separar voces…</button>
+        </div>
+        <span class="hint" id="rollInfo"></span>
+      </div>
+      <form class="patedit newpat" id="sepForm" hidden>
+        <b class="nptitle">Separar voces</b>
+        <label class="fld" for="sepMethod">Cómo elegir la melodía<select id="sepMethod">
+          <option value="cont">Seguir la línea (continuidad y altura)</option>
+          <option value="top">Siempre la nota más aguda</option>
+          <option value="dur">Notas cortas sobre notas largas</option></select></label>
+        <label class="fld" for="sepBalance">Preferir: altura ↔ continuidad<input type="range" id="sepBalance" min="0" max="100" value="50"></label>
+        <label class="fld" for="sepBassMax"><span><input type="checkbox" id="sepBass" checked> Separar el bajo · nota más grave hasta</span><select id="sepBassMax"></select></label>
+        <label class="fld" for="sepMono"><span><input type="checkbox" id="sepMono" checked> Melodía de una sola voz</span><span class="hint">Corta superposiciones</span></label>
+        <button type="button" class="sbtn" id="sepPreview">Vista previa</button>
+        <button type="submit" class="sbtn main">Crear patterns</button>
+        <button type="button" class="sbtn" id="sepCancel">Cerrar</button>
+        <span class="hint" id="sepInfo">La vista previa selecciona en el piano roll las notas que irían a la melodía. El pattern original no se toca.</span>
+      </form>
+      <div class="roll" id="roll"><div class="rollInner" id="rollInner"><div class="modebar"><div class="moderow"><button type="button" class="mbtn" id="bSlide" aria-pressed="false" title="Modo de dibujo para notas nuevas: la nota que sigue sonando desliza hasta la nueva durante toda su duración (debe empezar antes de que termine la anterior, una nota a la vez)"><svg class="mi" viewBox="0 0 9 9" width="9" height="9" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M8 1h1v8H0V8h1V7h1V6h1V5h1V4h1V3h1V2h1V1z"/></svg>Slide</button><button type="button" class="mbtn" id="bPorta" aria-pressed="false" title="Modo de dibujo para notas nuevas: la nueva nota entra deslizándose desde la anterior durante un dieciseisavo (una nota a la vez)"><svg class="mi" viewBox="0 0 9 9" width="9" height="9" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M0 7h3v1H0zM3 6h1v1H3zM4 4h1v2H4zM5 2h1v2H5zM6 1h3v1H6zM7 0h1v1H7zM7 2h1v1H7z"/></svg>Porta</button></div></div><canvas id="rollCv" data-cur="cross" tabindex="0" aria-label="Piano roll: clic para crear notas, arrastra para moverlas, borde derecho para cambiar la duración, clic derecho para borrar"></canvas></div></div>
+      <div class="paper help">
+        <h3>Controles del piano roll</h3>
+        <dl>
+          <div><dt>Clic en la grilla</dt><dd>nota nueva</dd></div>
+          <div><dt>Arrastrar</dt><dd>mover</dd></div>
+          <div><dt>Borde derecho</dt><dd>duración</dd></div>
+          <div><dt>Clic derecho</dt><dd>borrar</dd></div>
+          <div><dt><kbd>Ctrl</kbd> + arrastre</dt><dd>seleccionar área</dd></div>
+          <div><dt><kbd>Alt</kbd></dt><dd>sin ajuste</dd></div>
+          <div><dt><kbd>Ctrl</kbd> + rueda</dt><dd>zoom</dd></div>
+          <div><dt>Regla de compases</dt><dd>punto de inicio</dd></div>
+          <div><dt>Franja de acordes</dt><dd>elegir acorde (doble clic: sus notas)</dd></div>
+          <div><dt>Teclas a la izquierda</dt><dd>armar acorde</dd></div>
+        </dl>
+      </div>
+      <section class="paper nb sheet" aria-label="Análisis de la progresión">
+        <span class="holes" aria-hidden="true"></span><span class="perf" aria-hidden="true"></span>
+        <h2 class="rule">Análisis de la progresión <small id="progSummary"></small></h2>
+        <div class="analysis" id="progAnalysis"></div>
+      </section>
+    </section>
+
+    <aside class="inspector" aria-label="Acorde activo">
+      <section class="panel">
+        <div class="eyebrow" id="srcLabel">Acorde activo</div>
+        <p class="chordname" id="chordName" aria-live="polite">—</p>
+        <div class="chorddesc" id="chordDesc"></div>
+        <div class="notes" id="noteChips"></div>
+        <div class="tools" role="toolbar" aria-label="Editar el acorde activo">
+          <button class="tb" id="bUndo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer"><i class="ico i-undo" aria-hidden="true"></i></button>
+          <button class="tb" id="bRedo" title="Rehacer (Ctrl+Y)" aria-label="Rehacer"><i class="ico i-redo" aria-hidden="true"></i></button>
+          <span class="sep"></span>
+          <button class="tb" id="bDown" title="Medio tono abajo (←)">‹ ½</button>
+          <button class="tb" id="bUp" title="Medio tono arriba (→)">½ ›</button>
+          <button class="tb" id="bOctDown" title="Octava abajo (Shift+←)">« 8ª</button>
+          <button class="tb" id="bOctUp" title="Octava arriba (Shift+→)">8ª »</button>
+          <span class="sep"></span>
+          <button class="tb" id="bInvDown" title="Inversión abajo (↓)">Inv ↓</button>
+          <button class="tb" id="bInvUp" title="Inversión arriba (↑)">Inv ↑</button>
+          <span class="sep"></span>
+          <button class="tb" id="bRoot" aria-pressed="false" title="Elegir la fundamental con el siguiente clic en una tecla"><i class="ico i-root" aria-hidden="true"></i>Raíz</button>
+          <button class="tb" id="bPlay" title="Escuchar el acorde (P)" aria-label="Escuchar el acorde"><i class="ico i-listen" aria-hidden="true"></i></button>
+          <button class="tb" id="bArp" title="Escuchar arpegiado" aria-label="Escuchar arpegiado"><i class="ico i-arpeggio" aria-hidden="true"></i></button>
+          <button class="tb" id="bClear" title="Vaciar el acorde activo" aria-label="Vaciar el acorde activo"><i class="ico i-clear" aria-hidden="true"></i></button>
+        </div>
+        <div class="hint" id="hint"></div>
+        <div class="box">
+          <div class="row">
+            <button class="sbtn main" id="bAdd" title="Enter">+ Al final</button>
+            <button class="sbtn" id="bInsertHead" title="Inserta en el punto de inicio y desplaza lo que sigue">Insertar en el cabezal</button>
+            <button class="sbtn" id="bReplace">Reemplazar</button>
+            <button class="sbtn" id="bSave"><i class="ico i-save" aria-hidden="true"></i>Guardar en biblioteca</button>
+          </div>
+          <div class="row" id="segTools">
+            <span class="dur">Duración
+              <button class="sbtn" id="bSegShorter" aria-label="Acortar">−</button>
+              <input type="number" id="segBeats" min="0.25" max="64" step="0.25" aria-label="Duración del acorde en tiempos">
+              <button class="sbtn" id="bSegLonger" aria-label="Alargar">+</button> tiempos</span>
+            <button class="sbtn" id="bSegLeft" aria-label="Mover el acorde a la izquierda">←</button>
+            <button class="sbtn" id="bSegRight" aria-label="Mover el acorde a la derecha">→</button>
+            <button class="sbtn" id="bSegDel">Quitar acorde</button>
+          </div>
+          <div class="hint" id="segHint"></div>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Posibles nombres <small id="candCount"></small></h2>
+        <ul class="cands" id="cands"></ul>
+      </section>
+      <section class="panel">
+        <h2>Pentagrama <small id="staffNote"></small></h2>
+        <svg class="staff" id="staff" viewBox="0 0 300 260" role="img" aria-label="Acorde activo en pentagrama"></svg>
+      </section>
+      <section class="panel">
+        <h2>Avisos</h2>
+        <ul class="warns" id="warns"></ul>
+      </section>
+    </aside>
+  </div>
+
+  <section aria-label="Paneles">
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-tab="kb" aria-selected="true"><i class="ico i-keyboard" aria-hidden="true"></i>Teclado</button>
+      <button class="tab" role="tab" data-tab="vel" aria-selected="false"><i class="ico i-expression" aria-hidden="true"></i>Expresión</button>
+      <button class="tab" role="tab" data-tab="drum" aria-selected="false"><i class="ico i-drums" aria-hidden="true"></i>Batería</button>
+      <button class="tab" role="tab" data-tab="lib" aria-selected="false"><i class="ico i-library" aria-hidden="true"></i>Biblioteca</button>
+      <button class="tab" role="tab" data-tab="io" aria-selected="false"><i class="ico i-text" aria-hidden="true"></i>Texto</button>
+      <button class="tab" role="tab" data-tab="set" aria-selected="false"><i class="ico i-settings" aria-hidden="true"></i>Ajustes</button>
+    </div>
+    <div class="dockpanel" role="tabpanel" data-panel="kb">
+      <div class="kbhead">
+        <div class="mono"><b>MIDI 12 – 132</b> · 121 teclas · 71 blancas, 50 negras · clic para armar el acorde activo</div>
+        <label class="num" for="zoom">Ancho de tecla <input type="range" id="zoom" min="14" max="44" value="24"></label>
+      </div>
+      <div class="minimap" id="minimap" title="Arrastra para moverte por el teclado"><canvas id="mini"></canvas><div class="vp" id="vp"></div></div>
+      <div class="scroller" id="scroller"><div class="kb" id="kb"></div></div>
+      <div class="legend">
+        <span><i class="sw c"></i>Círculo: nota del acorde</span>
+        <span><i class="sw r"></i>Cuadrado: fundamental</span>
+        <span><i class="sw h"></i>Inactiva: fuera del piano de 88 teclas (A0–C8)</span>
+        <span><i class="sw x"></i>Inactiva y más apagada: fuera de MIDI (sobre G9)</span>
+        <span><i class="sw n"></i>Nota en el piano roll</span>
+        <span><i class="sw s"></i>Nota seleccionada (relleno oscuro, borde grueso y triángulo)</span>
+      </div>
+    </div>
+    <div class="dockpanel" role="tabpanel" data-panel="vel" hidden>
+      <div class="cols2">
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+          <div class="row" style="justify-content:space-between">
+            <label class="num" for="inPreset" style="font-size:14px;color:var(--ink)"><b>Instrumento del pattern</b> <select id="inPreset"></select></label>
+          </div>
+          <div class="velset" id="instControls">
+            <label for="inMin">Velocity mínima</label><input type="range" id="inMin" min="1" max="127"><output class="mono" data-for="inMin"></output>
+            <label for="inMax">Velocity máxima</label><input type="range" id="inMax" min="1" max="127"><output class="mono" data-for="inMax"></output>
+            <label for="inSens">Sensibilidad</label><input type="range" id="inSens" min="10" max="150" step="5"><output class="mono" data-for="inSens" data-unit="%"></output>
+            <label for="inAccent">Acentos</label><input type="range" id="inAccent" min="0" max="150" step="5"><output class="mono" data-for="inAccent" data-unit="%"></output>
+            <label for="inHuman">Humanizar</label><input type="range" id="inHuman" min="0" max="150" step="5"><output class="mono" data-for="inHuman" data-unit="%"></output>
+            <label for="inLowTrim">Recorte de graves</label><input type="range" id="inLowTrim" min="0" max="16"><output class="mono" data-for="inLowTrim" data-unit="/8ª"></output>
+            <label for="inLowPivot">… por debajo de</label><input type="range" id="inLowPivot" min="12" max="84"><output class="mono" data-for="inLowPivot" data-note="1"></output>
+            <label for="inHighTrim">Recorte de agudos</label><input type="range" id="inHighTrim" min="0" max="16"><output class="mono" data-for="inHighTrim" data-unit="/8ª"></output>
+            <label for="inHighPivot">… por encima de</label><input type="range" id="inHighPivot" min="48" max="120"><output class="mono" data-for="inHighPivot" data-note="1"></output>
+          </div>
+          <span class="hint" id="regInfo"></span>
+          <div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding-top:10px">
+            <label class="num" for="exPreset" style="font-size:14px;color:var(--ink)"><b>Sentimiento</b> <select id="exPreset"></select></label>
+            <span class="mono" id="seedInfo"></span>
+          </div>
+          <div class="velset" id="exControls">
+            <span class="grp">Dinámica</span>
+            <label for="exBase">Base</label><input type="range" id="exBase" min="1" max="127"><output class="mono" data-for="exBase"></output>
+            <label for="exRange">Contraste</label><input type="range" id="exRange" min="30" max="160" step="5"><output class="mono" data-for="exRange" data-unit="%"></output>
+            <label for="exVoice">Equilibrio de voces</label><input type="range" id="exVoice" min="0" max="40"><output class="mono" data-for="exVoice"></output>
+            <label for="exAccent">Acento del compás</label><input type="range" id="exAccent" min="0" max="40"><output class="mono" data-for="exAccent"></output>
+            <label for="exArc">Arco de frase</label><div class="row"><select id="exArc"><option value="flat">Plano</option><option value="cresc">Crescendo</option><option value="dim">Diminuendo</option><option value="arch">Arco (sube y baja)</option></select><select id="exPhrase" aria-label="Largo de la frase"><option value="1">1 compás</option><option value="2">2 compases</option><option value="4">4 compases</option><option value="8">8 compases</option><option value="0">Todo el pattern</option></select></div><span></span>
+            <label for="exArcAmt">Intensidad del arco</label><input type="range" id="exArcAmt" min="0" max="40"><output class="mono" data-for="exArcAmt"></output>
+            <label for="exContour">Contorno melódico</label><input type="range" id="exContour" min="0" max="20"><output class="mono" data-for="exContour"></output>
+            <span class="grp">Teoría musical</span>
+            <label for="exTension">Tensión armónica</label><input type="range" id="exTension" min="-20" max="20"><output class="mono" data-for="exTension"></output>
+            <label for="exApoy">Apoyaturas</label><input type="range" id="exApoy" min="0" max="20"><output class="mono" data-for="exApoy"></output>
+            <label for="exCad">Llegada de cadencia</label><input type="range" id="exCad" min="-20" max="20"><output class="mono" data-for="exCad"></output>
+            <span class="grp">Interpretación</span>
+            <label for="exHuman">Humanizar (±)</label><input type="range" id="exHuman" min="0" max="25"><output class="mono" data-for="exHuman"></output>
+            <label for="exArt"><input type="checkbox" id="exArtOn"> Articulación</label><input type="range" id="exArt" min="40" max="100" step="5"><output class="mono" data-for="exArt" data-unit="%"></output>
+          </div>
+          <div class="row">
+            <button class="sbtn main" id="bVelApply">Aplicar expresión</button>
+            <button class="sbtn" id="bVelFlat">Todo a la base</button>
+            <button class="sbtn" id="bSeed" title="Cambia la variación de Humanizar de este proyecto">Nueva semilla</button>
+            <span class="hint" id="velTarget"></span>
+          </div>
+        </div>
+        <div class="hint" style="display:flex;flex-direction:column;gap:6px">
+          <span><b>Cómo se calcula:</b> velocity = base + contraste × sensibilidad × (voces + acento × acentos % + arco + contorno + tensión + apoyaturas + cadencia) + humanizar × humanizar % − recorte de registro. Ese resultado (1–127) se escala al rango del instrumento: con un órgano de 70–112, un 1 queda en 70, un 64 en 91 y un 127 en 112. Así un sentimiento suave no queda aplastado contra el mínimo.</span>
+          <span><b>Instrumento:</b> se guarda en cada pattern (como un canal de FL). Ajusta cuánto del sentimiento recibe ese sonido. Un órgano o un pad suelen pedir poco contraste y casi sin acentos; un piano o una guitarra lo aguantan completo. El recorte resta velocity por cada octava bajo o sobre el punto elegido, para que no se acumulen graves o agudos. Solo tiene efecto si tu soundfont cambia el volumen o el timbre con la velocity.</span>
+          <span><b>Equilibrio de voces:</b> en notas que empiezan juntas, la más aguda (la melodía) +100 %, el bajo +35 % y las internas −50 % del valor.</span>
+          <span><b>Acento del compás:</b> tiempo 1 +100 %, tiempo 3 +50 %, fuera del tiempo −60 %.</span>
+          <span><b>Arco de frase:</b> crescendo, diminuendo o arco a lo largo de la frase elegida; el valor es la diferencia entre el inicio y el final (o el centro).</span>
+          <span><b>Contorno melódico:</b> la melodía suena más fuerte cuanto más sube sobre su altura media (valor por octava).</span>
+          <span><b>Tensión armónica:</b> cada acorde recibe una tensión de 0 a 1 según su función en la tonalidad (tónica 0,1 · subdominante 0,4 · dominante 0,8 · color 0,5) y su disonancia (tríada mayor 0,1 … disminuido 0,75, más extensiones alteradas). Positivo: lo tenso suena más fuerte. Negativo: lo tenso se suaviza.</span>
+          <span><b>Apoyaturas:</b> una nota de la melodía fuera del acorde, en tiempo fuerte y que resuelve por grado conjunto, se acentúa y su resolución se aliviana a la mitad. Las notas de paso fuera del tiempo bajan un 30 %.</span>
+          <span><b>Llegada de cadencia:</b> suma o resta en el último acorde cuando hay una cadencia reconocida.</span>
+          <span><b>Humanizar:</b> no es azar: sale de la semilla del proyecto, la nota y su posición. Aplicarlo de nuevo da lo mismo; «Nueva semilla» cambia la variación de todo el proyecto.</span>
+          <span><b>Articulación</b> (opcional): acorta cada nota a ese porcentaje de su duración. Cambia el ritmo y puede cambiar cómo se cortan los acordes.</span>
+          <span>Los sentimientos son puntos de partida heurísticos, inspirados en las señales que los estudios de interpretación asocian a cada emoción (volumen, contraste, articulación, tensión). No miden el efecto emocional real; ajústalos a tu oído.</span>
+        </div>
+      </div>
+    </div>
+    <div class="dockpanel" role="tabpanel" data-panel="drum" hidden>
+      <div class="cols2">
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+          <h3>Generar un groove de base</h3>
+          <div class="row" style="align-items:flex-end;gap:10px">
+            <label class="fld" for="grStyle">Estilo<select id="grStyle"></select></label>
+            <label class="fld" for="grBars">Compases<span class="step"><input type="number" id="grBars" min="1" max="32" value="4"><span class="stk"><button type="button" class="sb up" tabindex="-1" aria-label="Subir compases"></button><button type="button" class="sb dn" tabindex="-1" aria-label="Bajar compases"></button></span></span></label>
+            <label class="fld" for="grFill">Relleno cada<select id="grFill"><option value="0">Sin relleno</option><option value="2">2 compases</option><option value="4" selected>4 compases</option><option value="8">8 compases</option></select></label>
+            <label class="fld" for="grCrash"><span><input type="checkbox" id="grCrash" checked> Crash al empezar cada frase</span></label>
+          </div>
+          <div class="row"><button class="sbtn main" id="bGroove">Crear pattern de batería</button><span class="hint" id="grInfo"></span></div>
+          <span class="hint">Crea un pattern nuevo con el instrumento «Batería y percusión» y le aplica el sentimiento de la pestaña Expresión. En patterns de batería la expresión usa reglas por pieza: bombo fuerte en 1 y 3, backbeat de caja en 2 y 4, notas fantasma suaves entre medio, hi-hat y ride con acento en el tiempo, y toms que crecen hacia el siguiente compás. Tensión armónica, apoyaturas y voces no se aplican.</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+          <h3>Mapa de tu plantilla</h3>
+          <div style="overflow-x:auto"><table class="dmap" id="drumMap"></table></div>
+          <span class="hint">Leído de «Plantilla Suprema Mk.IX»: Unruly Drums (bombo, toms, hi-hat, platillos), Frankensnare 16x7 sapele (caja) y Swirly Drums (percusión). Las teclas no se pisan entre canales, así que un solo pattern en «Batería (Drum Machine)», que es un canal Layer, puede tocar todo el kit si ese Layer agrupa esos canales. La apertura del hi-hat en las teclas con «CC4» depende del pedal (CC4); el MIDI exportado no lo incluye.</span>
+        </div>
+      </div>
+    </div>
+    <div class="dockpanel" role="tabpanel" data-panel="lib" hidden>
+      <div class="row" style="justify-content:space-between"><span class="status" id="storeStatus">guardado solo en este navegador</span></div>
+      <div class="cols2">
+        <div><h3>Proyectos</h3><ul class="lib" id="savedProgs"></ul></div>
+        <div><h3>Acordes</h3><ul class="lib" id="savedChords"></ul></div>
+      </div>
+    </div>
+    <div class="dockpanel" role="tabpanel" data-panel="io" hidden>
+      <div class="cols2">
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+          <h3>Exportar</h3>
+          <div class="seg" id="segExport"><button data-v="pat" aria-pressed="true">Pattern actual</button><button data-v="proj" aria-pressed="false">Proyecto completo</button><button data-v="lib" aria-pressed="false">Biblioteca completa</button></div>
+          <textarea id="exportText" readonly aria-label="Texto exportado" spellcheck="false"></textarea>
+          <div class="row">
+            <button class="sbtn main" id="bCopy"><i class="ico i-copy" aria-hidden="true"></i>Copiar</button>
+            <button class="sbtn" id="bDownload"><i class="ico i-txt" aria-hidden="true"></i>Descargar .txt</button>
+            <button class="sbtn" id="bApplyText" title="Reemplaza las notas del pattern actual por las del texto. Ctrl+Z lo deshace.">Aplicar al piano roll</button>
+            <button class="sbtn" id="bResetText" hidden>Descartar cambios</button>
+          </div>
+          <div class="applywarn" id="applyWarn" role="alertdialog" aria-labelledby="applyWarnMsg" hidden>
+            <p id="applyWarnMsg"></p>
+            <div class="row"><button class="sbtn main" id="bApplyOk">Reemplazar notas</button><button class="sbtn" id="bApplyCancel">Cancelar</button></div>
+          </div>
+          <span class="hint">Cada acorde: nombre | grado (función · tensión) | notas con octava | MIDI | duración. Si hay silencios, superposiciones o velocities distintas de 100, se agrega «# Notas» con inicio, duración y velocity de cada nota, para reimportar exacto. Si aplicaste un perfil, la línea «# Expresión» guarda sus parámetros.</span>
+          <span class="hint">En «Pattern actual» puedes editar o pegar el texto (por ejemplo, el que te devuelva una IA con más expresión) y usar «Aplicar al piano roll». Si el texto trae «# Notas», se usan el inicio, la duración y la velocity de cada nota; si no, los acordes con velocity 100.</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+          <h3>Importar</h3>
+          <textarea id="importText" aria-label="Texto para importar" spellcheck="false" placeholder="# Proyecto: Mi tema&#10;# Pattern: Verso&#10;1. Dm9 | ii9 | D3 C4 E4 F4 A4 | 50 60 64 65 69 | 4 tiempos&#10;G13: G2 F3 B3 E4 (2 tiempos)&#10;Cmaj7 C3 B3 E4 G4"></textarea>
+          <div class="row"><button class="sbtn main" id="bImport"><i class="ico i-import" aria-hidden="true"></i>Importar</button></div>
+          <span class="hint">Acepta el formato exportado, «Nombre: notas» o solo notas con octava (C4, D♭3, Sol#2). Duración opcional al final: «| 2 tiempos» o «(2 tiempos)».</span>
+        </div>
+      </div>
+    </div>
+    <div class="dockpanel" role="tabpanel" data-panel="set" hidden>
+      <div class="set">
+        <span>Nombres</span>
+        <div class="seg" id="segNames"><button data-v="letters" aria-pressed="true">C D E</button><button data-v="latin" aria-pressed="false">Do Re Mi</button></div>
+        <span>Alteraciones</span>
+        <div class="seg" id="segAcc"><button data-v="auto" aria-pressed="true">Auto</button><button data-v="sharp" aria-pressed="false">♯</button><button data-v="flat" aria-pressed="false">♭</button></div>
+        <span>Sonido al editar</span>
+        <div class="seg" id="segSound"><button data-v="on" aria-pressed="true">Sí</button><button data-v="off" aria-pressed="false">No</button></div>
+        <span>Nombres de octava</span>
+        <div><div class="seg" id="segOct"><button data-v="sci" aria-pressed="true">Científica · C4</button><button data-v="fl" aria-pressed="false">FL Studio · C5</button><button data-v="yam" aria-pressed="false">Yamaha / Ableton · C3</button></div><div class="hint" id="octNote"></div></div>
+        <span>Transponer el MIDI exportado</span>
+        <div class="seg" id="segShift"><button data-v="-24">−2 oct</button><button data-v="-12">−1 oct</button><button data-v="0" aria-pressed="true">Sin cambio</button><button data-v="12">+1 oct</button></div>
+        <span>Nombres en teclas</span>
+        <div class="seg" id="segKeyNames"><button data-v="on" aria-pressed="false">Todas</button><button data-v="off" aria-pressed="true">Solo el acorde</button></div>
+      </div>
+      <div class="keys">
+        <b>Piano roll</b> (con el foco en la grilla): <kbd>Supr</kbd> borrar · <kbd>Ctrl</kbd>+<kbd>A</kbd> todo · <kbd>Ctrl</kbd>+<kbd>B</kbd> duplicar · <kbd>Ctrl</kbd>+<kbd>Q</kbd> cuantizar · <kbd>↑</kbd><kbd>↓</kbd> ½ tono (<kbd>Shift</kbd>: octava) · <kbd>←</kbd><kbd>→</kbd> mover según el ajuste · <kbd>Esc</kbd> deseleccionar<br>
+        <b>General</b>: <kbd>Espacio</kbd> tocar/detener · <kbd>Enter</kbd> agregar el acorde activo al final · <kbd>P</kbd> escuchar el acorde activo · <kbd>←</kbd><kbd>→</kbd> ½ tono · <kbd>Shift</kbd>+<kbd>←</kbd><kbd>→</kbd> octava · <kbd>↑</kbd><kbd>↓</kbd> inversión · <kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd> deshacer/rehacer
+      </div>
+      <div class="keys"><b>Créditos de sonido</b>: Coro, Lead, Campana (Iglesia) y Chiptune suenan con muestras de Musyng Kite (WTFPL 2.0), Just t4 (fixed) de Milton Paredes, MP factory studios y RolandKnight (Creative Commons Sampling+ 1.0) y stgiga's Famicom Multichip Soundfont V2G (WTFPL 2.0). El resto, de las bibliotecas CC0 de Karoryfer, VSCO y VCSL. Detalle y enlaces en CREDITS.md del repositorio.</div>
+    </div>
+  </section>
+  <dialog class="dlg" id="pitchDlg" aria-labelledby="pitchTitle">
+    <header><h3 id="pitchTitle"></h3><p class="sub" id="pitchSub"></p></header>
+    <div id="pitchBody"></div>
+    <div class="row"><button class="sbtn main" id="bPitchOk">Entendido</button></div>
+  </dialog>
+  <footer>Compás de 4/4, 96 ticks por tiempo. Afinación igual: MIDI 69 = 440 Hz. El nombre de cada octava depende de la convención elegida en Ajustes; el número MIDI y la frecuencia no cambian. Los acordes se calculan cortando la línea de tiempo cada vez que cambia el conjunto de notas que suenan; la tonalidad y los patrones son una estimación.</footer>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
