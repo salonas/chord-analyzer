@@ -82,3 +82,24 @@ describe('harmony and melody in the text', () => {
     expect(progText(p, PREFS).split('\n').find(l => l.startsWith('1. '))).toMatch(/^1\. E\(5\) \| /);
   });
 });
+
+describe('top voice', () => {
+  // brimstone-03-pattern-3: the tune moves with the chords, so only the highest voice gives it
+  const BRIMSTONE = '38 0 4|50 0 4|62 0 4|69 0 3|72 1.5 1.5|70 3 1|37 4 4|46 4 2|57 4 2|61 4 4|65 4 2|53 5 2|45 6 2|67 6 2|49 7 1|41 8 4|50 8 2|62 8 4|69 8 3|72 9.5 1.5|53 10 2|69 11 1|70 11 1|39 12 4|49 12 4|55 12 2|61 12 4|67 12 4|70 12 2|57 14 2|72 14 2|38 16 4|50 16 3|62 16 4|69 16 1.5|45 17 1|69 17.5 1|72 17.5 1|46 18 1|70 18.5 1.5|74 18.5 1.5|50 19 1|37 20 4|43 20 3|53 20 3|61 20 4|65 20 2|72 20 2|67 22 2|70 22 2|45 23 1|55 23 1|41 24 2|57 24 2|62 24 4|69 24 2|41 26 2|46 26 2|58 26 2|70 26 2|72 26 2|39 28 2|55 28 2|61 28 4|69 28 2|39 30 2|48 30 2|58 30 2|67 30 2';
+  const r = splitHarmony(pattern(BRIMSTONE));
+  it('lists the highest note of each attack, not what is under another voice', () => {
+    expect(r.top.map(x => [x.notes[0], beats(x.s)]).slice(0, 8)).toEqual([[69, 0], [72, 1.5], [70, 3], [65, 4], [67, 6], [69, 8], [72, 9.5], [70, 11]]);
+  });
+  it('is read on its own when the tune found covers under half of it', () => {
+    const t = progText(pattern(BRIMSTONE), { ...PREFS, octConv: 'fl' }).split('\n');
+    expect(t.filter(l => /^# (Melodía|Voz superior):/.test(l)).length).toBe(2);
+    expect(t).toContain('C6 (72) | 1.5 | 1.5 | D(5) | ♭7 | media (0,5) | tensión');
+  });
+  it('is not repeated when the tune is already most of it', () => {
+    expect(progText(pattern(ROWS), PREFS)).not.toMatch(/# Voz superior/);
+  });
+  it('reads back without turning its lines into chords', () => {
+    const back = parseText(progText(pattern(BRIMSTONE), PREFS), PREFS).projects[0].patterns[0];
+    expect(back.notes.length).toBe(BRIMSTONE.split('|').length);
+  });
+});

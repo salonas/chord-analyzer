@@ -36,6 +36,18 @@ function noteRoles(ns){
 
 const subset=(a,b)=>[...a].every(x=>b.has(x));
 
+// The highest voice: each note that starts above everything still sounding, chord tops included
+function topVoice(ns){
+  const top=[];
+  for(let i=0;i<ns.length;){
+    let j=i; while(j<ns.length&&ns[j].s-ns[i].s<=TOL) j++;
+    const h=ns.slice(i,j).reduce((a,n)=>n.m>=a.m?n:a);
+    if(!ns.some(o=>o.s<ns[i].s-TOL&&o.s+o.l>h.s+TOL&&o.m>=h.m)) top.push({notes:[h.m],s:h.s,l:h.l});
+    i=j;
+  }
+  return top;
+}
+
 // Chords change when the pitch classes above the bass change, the bass changes, or the whole chord is struck again.
 // Returns {chords:[{a,b,notes,bass:[{m,s,pass}],adds:[{m,s}]}], mel:[{notes:[...],s,l}]} in ticks.
 function splitHarmony(p){
@@ -44,7 +56,7 @@ function splitHarmony(p){
   if(S.length&&S.every(s=>isBlock(p,s))){
     const role=new Map(p.notes.map(n=>[n.id,'harm']));
     const chords=S.map(s=>({a:s.a,b:s.b,notes:s.notes,pcs:new Set(s.notes.map(m=>m%12)),bass:[{m:s.notes[0],s:s.a}],adds:[]}));
-    return {chords,mel:[],role,chordAt:t=>chords.find(c=>c.a<=t&&t<c.b)};
+    return {chords,mel:[],top:[],role,chordAt:t=>chords.find(c=>c.a<=t&&t<c.b)};
   }
   const ns=[...p.notes].sort((a,b)=>a.s-b.s||a.m-b.m), role=noteRoles(ns);
   const H=ns.filter(n=>isHarm(role.get(n.id)));
@@ -97,7 +109,7 @@ function splitHarmony(p){
     const g=mel.find(x=>Math.abs(x.s-n.s)<=TOL&&x.notes[0]%12===n.m%12);
     if(g){ g.notes.push(n.m); g.l=Math.max(g.l,n.l); } else mel.push({notes:[n.m],s:n.s,l:n.l});
   });
-  return {chords,mel,role,chordAt:inChord};
+  return {chords,mel,top:topVoice(ns),role,chordAt:inChord};
 }
 // The chords in the shape of segs() for the chord lane, the analysis sheet and the chord tools:
 // ids are the chord's own notes (not the tune), so deleting a chord leaves the melody
