@@ -1,7 +1,7 @@
 // Text export and import (reimportable plain text).
 import { HIGH, LATIN, LETTERS, LOW, NAT, OCT_CONV, T, barsText, fmtB, numB, sigOf, uid } from './data.js';
 import { isDrum, isPure, normProg, progEnd, segStep, segs } from './model.js';
-import { FN_NAME, analyze, analyzeProgression, candSymbol, keyName, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
+import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, keyName, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
 import { exprSummary, instLabel, instText } from './expression.js';
 import { splitHarmony } from './harmony.js';
 import { drumText } from './drums.js';
@@ -23,7 +23,15 @@ function chordLabel(r,prefs){
   if(r.notes.length&&new Set(r.notes.map(m=>m%12)).size===1) return `${tr('nota','note')}: ${r.spelled.map(n=>noteText(n,prefs)).join('+')}${r.notes.length>1?tr(' (doblada)',' (doubled)'):''}`;
   return r.label;
 }
-const tenText=(r,x)=>r.c?tr(String(x).replace('.',','),String(x)):'—';
+const tenText=(r,x)=>r.c?numText(x):'—';
+const numText=x=>tr(String(x).replace('.',','),String(x));
+// a pattern that only closes when the pattern repeats says so: "ii–V (continúa en I al repetir)"
+function foundText(f,N){
+  const seq=f.wrap&&(PATTERNS.find(p=>p.name===f.name)||{}).seq;
+  if(!seq) return f.name;
+  const inside=N-f.from;
+  return `${seq.slice(0,inside).join('–')} (${tr('continúa en','continues to')} ${seq.slice(inside).join('–')} ${tr('al repetir','when it repeats')})`;
+}
 const octTail=prefs=>tr(` — octavas: ${OCT_CONV[prefs.octConv].name}`,` — octaves: ${OCT_CONV[prefs.octConv].name}`);
 // a melody note against the chord under it: interval from the root, tension and role
 const OUT_DEG={0:'1',1:'♭9',2:'9',3:'♯9',4:'3',5:'4',6:'♯11',7:'5',8:'♭6',9:'13',10:'♭7',11:'7'};
@@ -36,14 +44,21 @@ function against(m,r){
   return {iv:OUT_DEG[rel],ten:degs.some(x=>x.pc===(rel+11)%12)?'high':'mid',tone:false};
 }
 const TEN_WORD={get low(){return tr('baja','low');},get mid(){return tr('media','mid');},get high(){return tr('alta','high');}};
-function melodyRole(mel,i,info,toneAt,prefs){
+// the melody tension in the same 0–1 scale as the chords, with its word: "alta (0,85)"
+const TEN_VAL={low:.15,mid:.5,high:.85};
+const melTen=f=>f?`${TEN_WORD[f.ten]} (${numText(TEN_VAL[f.ten])})`:'—';
+// a note that is not in its chord but is in the next one, within two beats of the change, announces it
+const ANTICIPATION=2*T;
+function melodyRole(mel,i,info,toneAt,prefs,next){
   const k=info[i]; if(!k) return '—';
   if(k.tone) return tr('nota del acorde','chord tone');
   const m=mel[i].notes[0], pv=mel[i-1], nx=mel[i+1], d1=pv?m-pv.notes[0]:null, d2=nx?nx.notes[0]-m:null;
+  const ahead=next&&next.r&&next.r.c&&mel[i].s<next.a&&mel[i].s>=next.a-ANTICIPATION&&against(m,next.r).tone;
   const step=x=>x!==null&&x!==0&&Math.abs(x)<=2;
   if(step(d1)&&step(d2)) return Math.sign(d1)===Math.sign(d2)?tr('paso','passing'):tr('bordadura','neighbor');
   if(step(d2)&&toneAt(i+1)) return `${tr('apoyatura','appoggiatura')} → ${noteText(plainSpell(nx.notes[0],prefs),prefs)}`;
   if(step(d1)) return tr('escapada','escape tone');
+  if(ahead) return `${tr('anticipación','anticipation')} → ${next.label}`;
   return k.ten==='mid'?tr('tensión','tension'):tr('libre','free');
 }
 function harmonyLines(p,prefs,L){
@@ -59,12 +74,13 @@ function harmonyLines(p,prefs,L){
       L.push(`${i+1}. ${chordLabel(r,prefs)} | ${A.romans[i]?A.romans[i].text:'?'} (${FN_NAME[A.fn[i]]} · ${tenText(r,A.ten[i])}) | ${numB(c.a)}–${numB(c.b)} | ${r.spelled.slice(1).map(n=>noteText(n,prefs)).join(' ')||'—'}${adds?` (${adds})`:''} | ${bass}`);
     });
     if(!Hm.mel.length) return;
-    L.push(tr('# Melodía: nota (MIDI) | inicio | duración | sobre | intervalo | tensión | rol','# Melody: note (MIDI) | start | length | over | interval | tension | role')+octTail(prefs));
+    L.push(tr('# Melodía: nota (MIDI) | inicio | duración | sobre | intervalo | tensión 0–1 | rol','# Melody: note (MIDI) | start | length | over | interval | tension 0–1 | role')+octTail(prefs));
     const ci=x=>Hm.chords.indexOf(Hm.chordAt(x.s)), info=Hm.mel.map(x=>against(x.notes[0],A.rs[ci(x)]));
     const toneAt=j=>info[j]&&info[j].tone;
     Hm.mel.forEach((x,i)=>{
       const k=ci(x), name=x.notes.map(nt).join('+'), r=A.rs[k], f=info[i];
-      L.push(`${name} (${x.notes.join(' ')}${x.notes.length>1?tr(', doblada',', doubled'):''}) | ${numB(x.s)} | ${numB(x.l)} | ${r?chordLabel(r,prefs):'—'} | ${f?f.iv:'—'} | ${f?TEN_WORD[f.ten]:'—'} | ${melodyRole(Hm.mel,i,info,toneAt,prefs)}`);
+      const nr=A.rs[k+1], next=k>=0&&nr?{r:nr,a:Hm.chords[k+1].a,label:chordLabel(nr,prefs)}:null;
+      L.push(`${name} (${x.notes.join(' ')}${x.notes.length>1?tr(', doblada',', doubled'):''}) | ${numB(x.s)} | ${numB(x.l)} | ${r?chordLabel(r,prefs):'—'} | ${f?f.iv:'—'} | ${melTen(f)} | ${melodyRole(Hm.mel,i,info,toneAt,prefs,next)}`);
     });
   }};
 }
@@ -76,7 +92,7 @@ function progText(p,prefs){
   const A=pure?analyzeProgression(S.map(s=>segStep(p,s)),prefs):H.A;
   if(pure?S.length:H.Hm.chords.length) L.push(tr(`# Tonalidad estimada: ${keyName(A.key,prefs)} · ${totalText(p)}`,`# Estimated key: ${keyName(A.key,prefs)} · ${totalText(p)}`));
   else if(p.notes.length) L.push(`# ${totalText(p)}`);
-  if(A.found&&A.found.length) L.push(`${tr('# Patrones','# Patterns')}: ${A.found.map(f=>f.name).join('; ')}`);
+  if(A.found&&A.found.length) L.push(`${tr('# Patrones','# Patterns')}: ${A.found.map(f=>foundText(f,A.rs.length)).join('; ')}`);
   if(A.cad) L.push(`${tr('# Final','# Ending')}: ${A.cad}`);
   L.push(`${tr('# Instrumento','# Instrument')}: ${instText(p.inst,prefs,velUsed(p))}`);
   if(p.expr) L.push(`${tr('# Expresión','# Expression')}: ${exprSummary(p.expr)}`);

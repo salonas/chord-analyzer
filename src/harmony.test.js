@@ -27,6 +27,11 @@ describe('splitHarmony', () => {
     const d = splitHarmony(pattern('48 0 1|60 0 1|64 .5 .5'));
     expect([d.chords.length, d.mel.map(m => m.notes)]).toEqual([0, [[48, 60], [64]]]);
   });
+  it('a note in octaves plus its fifth is a power chord, even when the fifth moves on first', () => {
+    const d = splitHarmony(pattern('38 0 4|50 0 4|62 0 4|69 0 3|72 1.5 1.5|70 3 1'));
+    expect(d.chords.map(c => [beats(c.a), beats(c.b), c.notes])).toEqual([[0, 4, [38, 50, 62, 69]]]);
+    expect(d.mel.map(m => m.notes[0])).toEqual([72, 70]);
+  });
   it('plain blocks stay one chord per block, a lone note too', () => {
     expect(splitHarmony(pattern('48 0 2|52 0 2|55 0 2|67 2 2')).chords.map(c => c.notes)).toEqual([[48, 52, 55], [67]]);
   });
@@ -54,9 +59,13 @@ describe('harmony and melody in the text', () => {
       '4. G7 | V7 (dominante · 0,68) | 10–12 | F3 B3 D4 (+D3 en 10,5) | G2']);
   });
   it('explains each melody note against its chord', () => {
-    expect(L).toContain('E4 (64) | 3.5 | 0.5 | Cmaj7 | 3 | baja | nota del acorde');
-    expect(L).toContain('F4 (65) | 5 | 0.5 | Am7 | ♭6 | alta | bordadura');
-    expect(L).toContain('A4 (69) | 11.5 | 0.5 | G7 | 9 | media | tensión');
+    expect(L).toContain('E4 (64) | 3.5 | 0.5 | Cmaj7 | 3 | baja (0,15) | nota del acorde');
+    expect(L).toContain('F4 (65) | 5 | 0.5 | Am7 | ♭6 | alta (0,85) | bordadura');
+    expect(L).toContain('A4 (69) | 11.5 | 0.5 | G7 | 9 | media (0,5) | tensión');
+  });
+  it('a note outside its chord that the next chord owns, just before the change, is an anticipation', () => {
+    const t = progText(pattern('48 0 4|52 0 4|55 0 4|50 4 4|53 4 4|57 4 4|72 .5 .5|77 2.5 .5'), PREFS);
+    expect(t).toContain('F5 (77) | 2.5 | 0.5 | C | 4 | alta (0,85) | anticipación → Dm');
   });
   it('reads back the exact notes and the chord names', () => {
     const back = parseText(t, PREFS).projects[0].patterns[0];

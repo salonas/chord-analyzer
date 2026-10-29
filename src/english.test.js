@@ -24,7 +24,7 @@ const TURNAROUND_EN = `# Project: Ejemplo: turnaround en Do
 
 # Pattern: Turnaround
 # Estimated key: C major · total 12 beats (3 bars)
-# Patterns: Turnaround I–vi–ii–V; ii–V–I; Circle of fifths (3 chords in a row)
+# Patterns: Turnaround I–vi–ii–V; ii–V (continues to I when it repeats); Circle of fifths (3 chords in a row)
 # Ending: Half cadence (ends on V)
 # Instrument: Generic (no adjustment) · velocity limits 1–127 · used 100 · sensitivity 100 % · accents 100 % · humanize velocity 100 % · low trim 0/octave below C2 · high trim 0/octave above C7
 # Format: n. chord | degree (function · tension 0–1) | notes | MIDI | length — octaves: scientific (C4 = MIDI 60)
@@ -60,7 +60,7 @@ describe('English text export', () => {
     const t = inEnglish(() => projectText(clone(fx.loose.project), PREFS));
     expect(t).toContain('\n# Notes (exact): note | MIDI | start | length | velocity | channel');
     expect(t).toContain('\n# Harmony: n. chord | degree (function · tension 0–1) | start–end (beats) | voices | bass');
-    expect(t).toContain('\nC5 (72) | 2 | 0.75 | C(no5) | 1 | low | chord tone');
+    expect(t).toContain('\nC5 (72) | 2 | 0.75 | C(no5) | 1 | low (0.15) | chord tone');
     expect(t).not.toMatch(/\d,\d/);
   });
   it('writes the applied expression as «# Expression» with the scope in English', () => {
