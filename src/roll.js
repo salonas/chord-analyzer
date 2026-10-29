@@ -364,12 +364,23 @@ R.cv.addEventListener('pointercancel',()=>{ tap=null; if(R.drag) endDrag(); });
 // note previews (roll, keys, transposing) stop when the button or key that started them is let go
 ['pointerup','pointercancel','keyup','blur'].forEach(ev=>addEventListener(ev,releasePreview));
 R.el.addEventListener('scroll',requestDraw,{passive:true});
+// The canvas is sticky inside the scroller and drawn from scrollLeft/scrollTop. A native wheel scroll moves the content
+// first and the scroll event redraws a frame later, so the drawing lags behind (thin slide lines show it most):
+// the wheel scrolls by hand and draws in the same event instead, and the zoom draws once the scroll is set.
 R.el.addEventListener('wheel',e=>{
-  if(!(e.ctrlKey||e.metaKey)) return;
   e.preventDefault();
-  const r=R.el.getBoundingClientRect(), x=e.clientX-r.left-R.K, t=(x+R.el.scrollLeft)/st.beatW;
-  setZoom(st.beatW*(e.deltaY<0?1.15:1/1.15));
-  R.el.scrollLeft=t*st.beatW-x;
+  if(e.ctrlKey||e.metaKey){
+    const r=R.el.getBoundingClientRect(), x=e.clientX-r.left-R.K, t=(x+R.el.scrollLeft)/st.beatW;
+    setZoom(st.beatW*(e.deltaY<0?1.15:1/1.15));
+    R.el.scrollLeft=t*st.beatW-x;
+    drawRoll();
+    return;
+  }
+  const unit=e.deltaMode===1?R.rh*3:e.deltaMode===2?R.el.clientHeight:1;
+  let dx=e.deltaX*unit, dy=e.deltaY*unit;
+  if(e.shiftKey&&!dx){ dx=dy; dy=0; }
+  R.el.scrollLeft+=dx; R.el.scrollTop+=dy;
+  drawRoll();
 },{passive:false});
 function setZoom(v){ st.beatW=Math.min(200,Math.max(12,v)); $('rollZoom').value=Math.round(st.beatW); fillRange($('rollZoom')); rollSize(); drawRoll(); savePrefs(); }
 new ResizeObserver(()=>{rollSize();drawRoll();}).observe(R.el);
