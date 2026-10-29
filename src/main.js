@@ -13,7 +13,7 @@ import { PITCH_RANGE, pitchClip } from './flpitch.js';
 import { parseMidi, separatePatterns, separateVoices } from './importer.js';
 import { BEND_RANGE, glidePlan, hasGlide, rangeOf } from './glide.js';
 import { audio, loadManifest, mixOf, playNotes, setMix } from './audio.js';
-import { P, R, addAtEnd, centerRoll, commit, curSeg, drawRoll, playProg, pxDisc, readColors, redo, rollSize, selChanged, setPlayBtn, setZoom, stopProg, syncGlideBtns, toggleKey, undo, velTargets } from './roll.js';
+import { P, R, addAtEnd, centerRoll, commit, curSeg, deleteSel, drawRoll, liveNotes, playProg, pxDisc, readColors, redo, rollSize, selChanged, setPlayBtn, setZoom, stopProg, syncGlideBtns, toggleKey, undo, velTargets } from './roll.js';
 import { LANG_KEY, getLang, setLang, shareLang, sharedLang, tr, translateStatic } from './i18n.js';
 
 // the static texts of index.html are read in Spanish before any code below rewrites one
@@ -750,7 +750,11 @@ $('cands').addEventListener('click',e=>{
 });
 $('bRoot').onclick=()=>{st.rootMode=!st.rootMode; renderActive();};
 $('bUndo').onclick=undo; $('bRedo').onclick=redo;
+// with a roll selection or a block chord picked, the buttons below edit those notes; otherwise the armed copy
+function settleLive(live){ st.pick=0; if(st.src==='sel') selChanged(true); else render(); if(st.sound) playNotes([...new Set(live.map(n=>n.m))].sort((a,b)=>a-b),0); }
 function shift(d){
+  const live=liveNotes();
+  if(live){ if(!live.length||live.some(n=>n.m+d<LOW||n.m+d>HIGH)) return; commit(); live.forEach(n=>{n.m+=d;}); settleLive(live); return; }
   const n=[...st.notes].map(m=>m+d); if(!n.length||n.some(m=>m<LOW||m>HIGH)) return;
   commit(); st.notes=new Set(n); if(st.lockedRoot!==null) st.lockedRoot=((st.lockedRoot+d)%12+12)%12;
   render(); if(st.sound) playNotes(n.sort((a,b)=>a-b),0);
@@ -758,6 +762,12 @@ function shift(d){
 $('bDown').onclick=()=>shift(-1); $('bUp').onclick=()=>shift(1);
 $('bOctDown').onclick=()=>shift(-12); $('bOctUp').onclick=()=>shift(12);
 function invert(up){
+  const live=liveNotes();
+  if(live){
+    const ps=new Set(live.map(n=>n.m)); if(!ps.size) return;
+    const p=up?Math.min(...ps):Math.max(...ps); let m=p+(up?12:-12); while(ps.has(m)) m+=up?12:-12; if(m>HIGH||m<LOW) return;
+    commit(); live.filter(n=>n.m===p).forEach(n=>{n.m=m;}); settleLive(live); return;
+  }
   const n=[...st.notes].sort((a,b)=>up?a-b:b-a); if(!n.length) return;
   let m=n[0]+(up?12:-12); while(st.notes.has(m)) m+=up?12:-12; if(m>HIGH||m<LOW) return;
   commit(); st.notes.delete(n[0]); st.notes.add(m); st.pick=0; render();
@@ -766,7 +776,7 @@ function invert(up){
 $('bInvUp').onclick=()=>invert(true); $('bInvDown').onclick=()=>invert(false);
 $('bPlay').onclick=()=>playNotes([...st.notes].sort((a,b)=>a-b),0.012);
 $('bArp').onclick=()=>playNotes([...st.notes].sort((a,b)=>a-b),0.18);
-$('bClear').onclick=()=>{ if(!st.notes.size) return; commit(); st.notes.clear(); st.lockedRoot=null; st.rootMode=false; st.pick=0; render(); };
+$('bClear').onclick=()=>{ if(st.src==='sel'&&R.sel.size){ deleteSel(); return; } if(!st.notes.size) return; commit(); st.notes.clear(); st.lockedRoot=null; st.rootMode=false; st.pick=0; render(); };
 $('zoom').oninput=e=>{const frac=(scroller.scrollLeft+scroller.clientWidth/2)/scroller.scrollWidth; kb.style.setProperty('--kw',e.target.value+'px'); scroller.scrollLeft=frac*scroller.scrollWidth-scroller.clientWidth/2; syncVp();};
 $('rollZoom').oninput=e=>{ const vw=R.el.clientWidth-R.K, t=(R.el.scrollLeft+vw/2)/st.beatW; setZoom(+e.target.value); R.el.scrollLeft=t*st.beatW-vw/2; };
 $('snap').onchange=e=>{ st.snap=+e.target.value; savePrefs(); drawRoll(); };
