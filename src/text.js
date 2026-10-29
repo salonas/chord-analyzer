@@ -51,7 +51,7 @@ const melTen=f=>f?`${TEN_WORD[f.ten]} (${numText(TEN_VAL[f.ten])})`:'—';
 // a note that is not in its chord but is in the next one, within two beats of the change, and is the last
 // melody note before the change, announces it; an earlier one in that window is just a tension
 const ANTICIPATION=2*T;
-function melodyRole(mel,i,info,toneAt,prefs,next){
+function melodyRole(mel,i,info,toneAt,prefs,next,key){
   const k=info[i]; if(!k) return '—';
   if(k.tone) return tr('nota del acorde','chord tone');
   const m=mel[i].notes[0], pv=mel[i-1], nx=mel[i+1], d1=pv?m-pv.notes[0]:null, d2=nx?nx.notes[0]-m:null;
@@ -59,7 +59,7 @@ function melodyRole(mel,i,info,toneAt,prefs,next){
   const ahead=toward&&(!nx||nx.s>=next.a);
   const step=x=>x!==null&&x!==0&&Math.abs(x)<=2;
   if(step(d1)&&step(d2)) return Math.sign(d1)===Math.sign(d2)?tr('paso','passing'):tr('bordadura','neighbor');
-  if(step(d2)&&toneAt(i+1)) return `${tr('apoyatura','appoggiatura')} → ${noteText(plainSpell(nx.notes[0],prefs),prefs)}`;
+  if(step(d2)&&toneAt(i+1)) return `${tr('apoyatura','appoggiatura')} → ${noteText(plainSpell(nx.notes[0],prefs,key),prefs)}`;
   if(step(d1)) return tr('escapada','escape tone');
   if(ahead) return `${tr('anticipación','anticipation')} → ${next.label}`;
   return k.ten==='mid'||toward?tr('tensión','tension'):tr('libre','free');
@@ -68,7 +68,7 @@ function harmonyLines(p,prefs,L){
   const Hm=splitHarmony(p);
   const A=analyzeProgression(Hm.chords.map(c=>({notes:c.notes,...(p.names[sigOf(c.notes)]||{})})),prefs);
   return {Hm,A,write(){
-    const nt=m=>noteText(plainSpell(m,prefs),prefs);
+    const nt=m=>noteText(plainSpell(m,prefs,A.key),prefs);
     L.push(tr('# Armonía: n. acorde | grado (función · tensión 0–1) | inicio–fin (tiempos) | voces | bajo','# Harmony: n. chord | degree (function · tension 0–1) | start–end (beats) | voices | bass')+octTail(prefs));
     if(!Hm.chords.length) L.push(tr('— sin acordes','— no chords'));
     Hm.chords.forEach((c,i)=>{
@@ -76,15 +76,21 @@ function harmonyLines(p,prefs,L){
       const bass=c.bass.map((x,j)=>(j===0?noteText(r.spelled[0],prefs):nt(x.m))+(x.pass?tr(' (paso)',' (passing)'):'')).join(' → ');
       L.push(`${i+1}. ${chordLabel(r,prefs)} | ${A.romans[i]?A.romans[i].text:'?'} (${FN_NAME[A.fn[i]]} · ${tenText(r,A.ten[i])}) | ${numB(c.a)}–${numB(c.b)} | ${r.spelled.slice(1).map(n=>noteText(n,prefs)).join(' ')||'—'}${adds?` (${adds})`:''} | ${bass}`);
     });
-    if(!Hm.mel.length) return;
-    L.push(tr('# Melodía: nota (MIDI) | inicio | duración | sobre | intervalo | tensión 0–1 | rol','# Melody: note (MIDI) | start | length | over | interval | tension 0–1 | role')+octTail(prefs));
-    const ci=x=>Hm.chords.indexOf(Hm.chordAt(x.s)), info=Hm.mel.map(x=>against(x.notes[0],A.rs[ci(x)]));
-    const toneAt=j=>info[j]&&info[j].tone;
-    Hm.mel.forEach((x,i)=>{
-      const k=ci(x), name=x.notes.map(nt).join('+'), r=A.rs[k], f=info[i];
-      const nr=A.rs[k+1], next=k>=0&&nr?{r:nr,a:Hm.chords[k+1].a,label:chordLabel(nr,prefs)}:null;
-      L.push(`${name} (${x.notes.join(' ')}${x.notes.length>1?tr(', doblada',', doubled'):''}) | ${numB(x.s)} | ${numB(x.l)} | ${r?chordLabel(r,prefs):'—'} | ${f?f.iv:'—'} | ${melTen(f)} | ${melodyRole(Hm.mel,i,info,toneAt,prefs,next)}`);
-    });
+    const melLines=(list,head)=>{
+      L.push(head+octTail(prefs));
+      const ci=x=>Hm.chords.indexOf(Hm.chordAt(x.s)), info=list.map(x=>against(x.notes[0],A.rs[ci(x)]));
+      const toneAt=j=>info[j]&&info[j].tone;
+      list.forEach((x,i)=>{
+        const k=ci(x), name=x.notes.map(nt).join('+'), r=A.rs[k], f=info[i];
+        const nr=A.rs[k+1], next=k>=0&&nr?{r:nr,a:Hm.chords[k+1].a,label:chordLabel(nr,prefs)}:null;
+        L.push(`${name} (${x.notes.join(' ')}${x.notes.length>1?tr(', doblada',', doubled'):''}) | ${numB(x.s)} | ${numB(x.l)} | ${r?chordLabel(r,prefs):'—'} | ${f?f.iv:'—'} | ${melTen(f)} | ${melodyRole(list,i,info,toneAt,prefs,next,A.key)}`);
+      });
+    };
+    const cols=tr('nota (MIDI) | inicio | duración | sobre | intervalo | tensión 0–1 | rol','note (MIDI) | start | length | over | interval | tension 0–1 | role');
+    if(Hm.mel.length) melLines(Hm.mel,`${tr('# Melodía','# Melody')}: ${cols}`);
+    // a tune that moves with the chords is told apart from them only by being the highest voice: when the tune found
+    // covers under half of that voice, the voice is read on its own
+    if(Hm.top.filter(x=>Hm.mel.some(y=>y.s===x.s&&y.notes[0]===x.notes[0])).length*2<Hm.top.length) melLines(Hm.top,`${tr('# Voz superior','# Top voice')}: ${cols}`);
   }};
 }
 function progText(p,prefs){
@@ -109,7 +115,7 @@ function progText(p,prefs){
   H.write();
   const ch=instLabel(p.inst);
   L.push(tr('# Notas (exactas): nota | MIDI | inicio | duración | velocity | canal — inicio y duración en tiempos de negra desde el compás 1; octavas: '+OCT_CONV[prefs.octConv].name,'# Notes (exact): note | MIDI | start | length | velocity | channel — start and length in quarter-note beats from bar 1; octaves: '+OCT_CONV[prefs.octConv].name));
-  [...p.notes].sort((a,b)=>a.s-b.s||a.m-b.m).forEach(n=>L.push(`${noteText(plainSpell(n.m,prefs),prefs)} | ${n.m} | ${numB(n.s)} | ${numB(n.l)} | ${n.v||100} | ${ch}${n.g?` | ${GLIDE_WORD[n.g]}`:''}`));
+  [...p.notes].sort((a,b)=>a.s-b.s||a.m-b.m).forEach(n=>L.push(`${noteText(plainSpell(n.m,prefs,A.key),prefs)} | ${n.m} | ${numB(n.s)} | ${numB(n.l)} | ${n.v||100} | ${ch}${n.g?` | ${GLIDE_WORD[n.g]}`:''}`));
   return L.join('\n');
 }
 function libText(lib,prefs){
@@ -183,7 +189,7 @@ function parseText(txt,prefs){
     if((m=line.match(/^#\s*(?:Octavas|Octaves):.*?C(\d)\s*=\s*MIDI\s*60/i))){ parseOff=+m[1]-4; continue; }
     if(/^#\s*(?:Acordes guardados|Saved chords)/i.test(line)){ inChords=true; pat=null; sect=null; continue; }
     if(/^#\s*(?:Armon[ií]a|Harmony)\s*:/i.test(line)){ if(!pat) startPat(tr('Importado','Imported')); sect='harm'; continue; }
-    if(/^#\s*(?:Melod[ií]a|Melody)\s*:/i.test(line)){ sect='mel'; continue; }
+    if(/^#\s*(?:Melod[ií]a|Melody|Voz superior|Top voice)\s*:/i.test(line)){ sect='mel'; continue; }
     if(/^#\s*(?:Notas|Notes)/i.test(line)){ if(!pat) startPat(tr('Importado','Imported')); pat.noteMode=true; sect=null; continue; }
     if(sect&&!line.startsWith('#')){ if(sect==='harm'){ const h=parseHarmonyLine(line,parseOff??octOff(prefs)); if(h) pat.steps.push(h); } continue; }
     if(pat&&(m=line.match(/^#\s*(?:Deslizamiento|Glide)\s*:\s*bend\s*±?\s*(\d+)/i))){ pat.bend=+m[1]; pat.glideNative=/nativ/i.test(line); continue; }

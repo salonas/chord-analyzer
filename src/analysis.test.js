@@ -86,3 +86,27 @@ describe('chord types 13♯11 and 7(no3)', () => {
     expect(B.romans.map(r => r.text)).toEqual(['♭II13♯11', 'I']);
   });
 });
+
+describe('D minor with a Phrygian ♭II (brimstone-03-pattern-3)', () => {
+  const steps = [[38, 50, 62, 69], [41, 50, 62, 69], [37, 45, 55, 61, 67, 70], [39, 49, 55, 61, 67, 70], [38, 50, 62, 69]].map(notes => ({ notes }));
+  const A = analyzeProgression(steps, PREFS_BY.default);
+  it('reads D minor, not B♭ major', () => {
+    expect([A.key.tonic, A.key.mode]).toEqual([2, 'minor']);
+  });
+  it('names the D–F–A chord Dm/F instead of F6 without its fifth', () => {
+    expect(A.rs.map(r => r.label)).toEqual(['D5', 'Dm/F', 'A7♭9/C♯', 'E♭7', 'D5']);
+    expect(A.romans.map(r => r.text)).toEqual(['I5', 'i⁶', 'V7♭9/3', '♭II7', 'I5']);
+  });
+  it('spells B♭ and C♯ after the key and writes no double accidental', () => {
+    const spelled = A.rs.flatMap(r => r.spelled);
+    expect(spelled.filter(s => s.midi === 70).every(s => s.l === 6 && s.a === -1)).toBe(true);
+    expect(spelled.filter(s => s.midi === 61).every(s => s.l === 0 && s.a === 1)).toBe(true);
+    expect(spelled.some(s => Math.abs(s.a) > 1)).toBe(false);
+  });
+  it('keeps the sharps when the preference asks for them, still without double accidentals', () => {
+    const B = analyzeProgression(steps, { ...PREFS_BY.default, accPref: 'sharp' });
+    expect([B.key.tonic, B.key.mode]).toEqual([2, 'minor']);
+    expect(B.rs[3].label).toBe('D♯7');
+    expect(B.rs.flatMap(r => r.spelled).some(s => Math.abs(s.a) > 1)).toBe(false);
+  });
+});

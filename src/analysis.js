@@ -5,15 +5,29 @@ import { tr } from './i18n.js';
 // ---------- naming ----------
 const accStr=a=>({'-2':'♭♭','-1':'♭','0':'','1':'♯','2':'♯♯'})[a];
 const letterName=(l,a,prefs)=>(prefs.naming==='latin'?LATIN:LETTERS)[l]+accStr(a);
-function defaultSpell(pc,prefs){return (prefs.accPref==='flat'?FLAT:prefs.accPref==='sharp'?SHARP:AUTO)[pc]}
-function rootSpell(pc,q,prefs){
+// With auto accidentals and a known key, the notes of its scale take its spelling (B♭ in D minor, C♯ as its leading tone)
+const FLAT_KEYS=new Set([5,10,3,8,1]), SHARP_KEYS=new Set([7,2,9,4,11,6]), MAJOR_SCALE=new Set([0,2,4,5,7,9,11]);
+function keySpell(pc,key,prefs){
+  if(!key||prefs.accPref==='sharp'||prefs.accPref==='flat') return null;
+  const minor=key.mode==='minor', major=minor?(key.tonic+3)%12:key.tonic;
+  if(minor&&pc===(key.tonic+11)%12) return SHARP[pc];
+  if(!MAJOR_SCALE.has((pc-major+12)%12)) return null;
+  return FLAT_KEYS.has(major)?FLAT[pc]:SHARP_KEYS.has(major)?SHARP[pc]:null;
+}
+function defaultSpell(pc,prefs,key){
+  if(prefs.accPref==='flat') return FLAT[pc];
+  if(prefs.accPref==='sharp') return SHARP[pc];
+  return keySpell(pc,key,prefs)||AUTO[pc];
+}
+function rootSpell(pc,q,prefs,key){
   if(prefs.accPref==='sharp') return SHARP[pc];
   if(prefs.accPref==='flat') return FLAT[pc];
+  const k=keySpell(pc,key,prefs); if(k) return k;
   if((q==='min'||q==='dim'||q==='hdim')&&(pc===1||pc===8)) return SHARP[pc];
   return AUTO[pc];
 }
 function spellMidi(m,l,a){return {midi:m,l,a,oct:Math.round((m-a-NAT[l])/12)-1}}
-function plainSpell(m,prefs){const [l,a]=defaultSpell(m%12,prefs);return spellMidi(m,l,a)}
+function plainSpell(m,prefs,key){const [l,a]=defaultSpell(m%12,prefs,key);return spellMidi(m,l,a)}
 const octOff=prefs=>(OCT_CONV[prefs.octConv]||OCT_CONV.sci).off;
 const noteText=(n,prefs)=>letterName(n.l,n.a,prefs)+(n.oct+octOff(prefs));
 
@@ -29,7 +43,7 @@ function analyze(notes,locked){
       if(![...rel].every(x=>full.has(x))) continue;
       const missing=t.degs.filter(d=>!rel.has(d.pc));
       if(missing.some(d=>!d.opt)) continue;
-      let score=t.rank+missing.length*2+(bass!==r?3:0);
+      let score=t.rank+missing.length*2+(bass!==r?3:0)+(missing.some(d=>d.n===5)&&/^m?6$/.test(t.sym)?1.5:0);
       if(locked!=null && locked===r) score-=10;
       out.push({root:r,type:t,missing,score,slash:bass!==r,bass});
     }
@@ -37,14 +51,18 @@ function analyze(notes,locked){
   out.sort((a,b)=>a.score-b.score);
   return out.slice(0,10);
 }
-function spellCandidate(c,notes,prefs){
-  const [rl,ra]=rootSpell(c.root,c.type.q,prefs);
+function spellCandidate(c,notes,prefs,key){
+  const [rl,ra]=rootSpell(c.root,c.type.q,prefs,key);
   const byPc={};
   for(const d of c.type.degs){
     const pc=(d.pc+c.root)%12, l=(rl+d.step)%7;
     let a=((pc-NAT[l])%12+12)%12; if(a>6)a-=12;
-    if(Math.abs(a)<=2) byPc[pc]={l,a,deg:d};
-    else { const [L,A]=defaultSpell(pc,prefs); byPc[pc]={l:L,a:A,deg:d}; }
+    // notes of the key take its names; otherwise the chord's, except for a double accidental (only the 𝄫7 of a
+    // diminished seventh has one) or a sharp or flat on a white key (E♯, B♯, F♭, C♭), which take the plain name
+    const ks=keySpell(pc,key,prefs), odd=(a===1&&(l===2||l===6))||(a===-1&&(l===0||l===3));
+    if(ks) byPc[pc]={l:ks[0],a:ks[1],deg:d};
+    else if(!odd&&(Math.abs(a)<=1||(a===-2&&d.acc===-2))) byPc[pc]={l,a,deg:d};
+    else { const [L,A]=defaultSpell(pc,prefs,key); byPc[pc]={l:L,a:A,deg:d}; }
   }
   return {rootName:letterName(rl,ra,prefs),byPc,
     notes:notes.map(m=>{const s=byPc[m%12];return {...spellMidi(m,s.l,s.a),deg:s.deg}})};
@@ -64,12 +82,12 @@ function candSymbol(c,sp,prefs){
   const b=sp.byPc[c.bass];
   return {main:s,slash:c.slash?'/'+letterName(b.l,b.a,prefs):''};
 }
-function resolveStep(step,prefs){
+function resolveStep(step,prefs,key){
   const notes=[...step.notes].sort((a,b)=>a-b);
   const cands=analyze(notes,null);
   const c=cands.find(x=>x.root===step.root&&x.type.sym===step.sym)||cands[0]||null;
-  const sp=c?spellCandidate(c,notes,prefs):null;
-  const spelled=sp?sp.notes:notes.map(m=>plainSpell(m,prefs));
+  const sp=c?spellCandidate(c,notes,prefs,key):null;
+  const spelled=sp?sp.notes:notes.map(m=>plainSpell(m,prefs,key));
   let label;
   if(c){const sy=candSymbol(c,sp,prefs); label=sy.main+sy.slash;}
   else if(notes.length===1) label=noteText(spelled[0],prefs);
@@ -90,7 +108,7 @@ function detectKey(items){
     const sc=mode==='major'?MAJ:MIN; let s=0;
     items.forEach(it=>{
       const own7=it.q==='dom'?(it.root+10)%12:-1;
-      it.pcs.forEach(p=>{const r=(p-t+12)%12; s+=sc.includes(r)?1:p===own7?0:(mode==='minor'&&r===11?.3:-1.2);});
+      it.pcs.forEach(p=>{const r=(p-t+12)%12; s+=sc.includes(r)?1:p===own7?0:(mode==='minor'&&(r===11||r===1)?.3:-1.2);});
       if(it.q){ const e=EXPK[mode][(it.root-t+12)%12]; if(e&&e.includes(it.q)) s+=1.5; else if(e&&it.q==='sus') s+=.5; }
     });
     const tq=mode==='major'?['maj','dom']:['min'];
@@ -100,7 +118,7 @@ function detectKey(items){
     items.forEach((it,i)=>{
       if(it.root===t&&tq.includes(it.q)) s+=.5;
       const nx=items[i+1];
-      if(nx&&nx.root===t&&(it.q==='dom'||(it.q==='maj'&&mode==='minor'))&&(it.root-t+12)%12===7) s+=3;
+      if(nx&&nx.root===t&&(it.q==='dom'||it.q==='aug'||(it.q==='maj'&&mode==='minor'))&&(it.root-t+12)%12===7) s+=3;
     });
     if(mode==='major') s+=.01;
     res.push({tonic:t,mode,score:s});
@@ -138,10 +156,12 @@ const PATTERNS=[
  ['Blues de 12 compases','12-bar blues','I I I I IV IV I I V IV I I'],['Blues de 12 (quick change)','12-bar blues (quick change)','I IV I I IV IV I I V IV I V'],
 ].map(([es,en,p])=>({get name(){return tr(es,en);},seq:p.split(' ')}));
 function analyzeProgression(steps,prefs){
-  const rs=steps.map(s=>resolveStep(s,prefs));
-  const items=rs.map(r=>r.c?{root:r.c.root,q:r.c.type.q,pcs:[...new Set(r.notes.map(m=>m%12))]}:{root:r.notes.length?r.notes[0]%12:0,q:null,pcs:[...new Set(r.notes.map(m=>m%12))]});
-  if(!items.length) return {rs,romans:[],found:[]};
+  // the key comes from the chords' roots and notes, which do not depend on how they are spelled; the spelling then follows the key
+  const first=steps.map(s=>resolveStep(s,prefs));
+  const items=first.map(r=>r.c?{root:r.c.root,q:r.c.type.q,pcs:[...new Set(r.notes.map(m=>m%12))]}:{root:r.notes.length?r.notes[0]%12:0,q:null,pcs:[...new Set(r.notes.map(m=>m%12))]});
+  if(!items.length) return {rs:first,romans:[],found:[]};
   const keys=detectKey(items), key=keys[0], alt=keys.find(k=>k!==key&&key.score-k.score<2);
+  const rs=steps.map(s=>resolveStep(s,prefs,key));
   const romans=rs.map(r=>r.c?romanFor(r.c,key):null);
   romans.forEach((ro,i)=>{
     const c=rs[i].c, nx=romans[i+1], nc=rs[i+1]&&rs[i+1].c;
