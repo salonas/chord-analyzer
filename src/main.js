@@ -50,11 +50,11 @@ function drawMini(){
   g.fillStyle=C.hatch; g.fillRect(0,0,whiteIdx[21]*ww,H); g.fillRect((whiteIdx[108]+1)*ww,0,W,H); g.fillRect((whiteIdx[127]+1)*ww,0,W,H);
   g.fillStyle=C.ivoryEdge; for(let i=7;i<WHITES;i+=7) g.fillRect(i*ww,0,1,H);
   for(let m=LOW;m<=HIGH;m++){
-    const black=BLACK.has(m%12), on=st.notes.has(m);
+    const black=BLACK.has(m%12), on=shownNotes().has(m);
     if(black){ g.fillStyle=on?C.selB:C.ebony; g.fillRect((whiteIdx[m]+.5)*ww-ww*.3,0,ww*.6,H*.6); }
     else if(on){ g.fillStyle=C.selW; g.fillRect(whiteIdx[m]*ww,0,ww,H); }
   }
-  g.fillStyle=C.marker; st.notes.forEach(m=>pxDisc(g,(whiteIdx[m]+.5)*ww,H-6,6));
+  g.fillStyle=C.marker; shownNotes().forEach(m=>pxDisc(g,(whiteIdx[m]+.5)*ww,H-6,6));
   syncVp();
 }
 function syncVp(){ const sw=scroller.scrollWidth||1; vp.style.left=(scroller.scrollLeft/sw*100)+'%'; vp.style.width=(scroller.clientWidth/sw*100)+'%'; }
@@ -126,7 +126,22 @@ function renderStaff(spelled){
 }
 
 // ---------- render: active chord (inspector) ----------
-let lastCur=null;
+let lastCur=null, spelledNow=[];
+// the keys show the active chord; with "Real time: All" a playing pattern shows what sounds at the playhead instead (R.live)
+function shownNotes(){ return R.live||st.notes; }
+function paintKeys(){
+  const shown=shownNotes(), rootPc=R.rootPc;
+  for(let m=LOW;m<=HIGH;m++){
+    const k=keyEl[m], on=shown.has(m), pc=m%12, inChord=st.notes.has(m);
+    const s=(inChord&&spelledNow.find(n=>n.midi===m))||plainSpell(m,st);
+    const root=on&&inChord&&rootPc===pc;
+    k.classList.toggle('on',on); k.classList.toggle('root',root);
+    k.setAttribute('aria-pressed',on);
+    k.setAttribute('aria-label',noteText(s,st)+(on?(root?tr(', fundamental',', root'):inChord?tr(', en el acorde',', in the chord'):tr(', sonando',', sounding')):''));
+    k.querySelector('.mk').textContent=on?letterName(s.l,s.a,st):'';
+    k.querySelector('.nm').textContent=(st.showNames&&!on)?letterName(s.l,s.a,st):'';
+  }
+}
 function renderActive(){
   const notes=[...st.notes].sort((a,b)=>a-b);
   const cands=analyze(notes,st.lockedRoot);
@@ -167,15 +182,7 @@ function renderActive(){
     return `<button class="chip${isR?' isroot':''}" data-m="${n.midi}" title="${tr(`Quitar ${esc(noteText(n,st))} del acorde activo`,`Remove ${esc(noteText(n,st))} from the active chord`)}">${n.deg?`<span class="deg">${esc(n.deg.label)}</span>`:''}<b>${esc(noteText(n,st))}</b><span>${fmtFreq(freq(n.midi))} Hz</span><span>${n.midi<=127?'MIDI '+n.midi:tr('sin MIDI','no MIDI')}</span></button>`;
   }).join('')||`<div class="chip none"><span>${tr('Sin notas','No notes')}</span></div>`;
 
-  for(let m=LOW;m<=HIGH;m++){
-    const k=keyEl[m], on=st.notes.has(m), pc=m%12;
-    const s=on?spelled.find(n=>n.midi===m):plainSpell(m,st);
-    k.classList.toggle('on',on); k.classList.toggle('root',on&&rootPc===pc);
-    k.setAttribute('aria-pressed',on);
-    k.setAttribute('aria-label',noteText(s,st)+(on?(rootPc===pc?tr(', fundamental',', root'):tr(', en el acorde',', in the chord')):''));
-    k.querySelector('.mk').textContent=on?letterName(s.l,s.a,st):'';
-    k.querySelector('.nm').textContent=(st.showNames&&!on)?letterName(s.l,s.a,st):'';
-  }
+  spelledNow=spelled; paintKeys();
 
   $('candCount').textContent=cands.length?tr(`${cands.length} coincidencia${cands.length>1?'s':''}`,`${cands.length} match${cands.length>1?'es':''}`):'';
   $('cands').innerHTML=cands.length?cands.map((c,i)=>{
@@ -789,7 +796,7 @@ $('bProgPlay').onclick=()=>P.playing?stopProg():playProg();
 $('bLoop').onclick=()=>{ st.loop=!st.loop; savePrefs(); $('bLoop').setAttribute('aria-pressed',st.loop); };
 function segSync(){
   const set=(id,v)=>$(id).querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v));
-  set('segNames',st.naming); set('segAcc',st.accPref); set('segSound',st.sound?'on':'off'); set('segKeyNames',st.showNames?'on':'off');
+  set('segNames',st.naming); set('segAcc',st.accPref); set('segSound',st.sound?'on':'off'); set('segKeyNames',st.showNames?'on':'off'); set('segLive',st.liveAll?'all':'chords');
   set('segOct',st.octConv); set('segShift',String(st.midiShift||0)); set('segLang',st.lang);
   document.querySelectorAll('.oct').forEach(o=>{ o.textContent='C'+(+o.dataset.o+octOff(st)); });
   const c4=noteText(plainSpell(60,st),st);
@@ -801,6 +808,7 @@ $('segSound').onclick=e=>{const b=e.target.closest('button'); if(!b)return; st.s
 $('segOct').onclick=e=>{const b=e.target.closest('button'); if(!b)return; st.octConv=b.dataset.v; savePrefs(); render();};
 $('segShift').onclick=e=>{const b=e.target.closest('button'); if(!b)return; st.midiShift=+b.dataset.v; savePrefs(); segSync(); toast(st.midiShift?tr(`El MIDI exportado sube o baja ${st.midiShift/12} octava${Math.abs(st.midiShift)>12?'s':''}; la página no cambia.`,`The exported MIDI moves ${st.midiShift/12} octave${Math.abs(st.midiShift)>12?'s':''}; the page does not change.`):tr('El MIDI se exporta sin transponer.','The MIDI is exported without transposing.'));};
 $('segKeyNames').onclick=e=>{const b=e.target.closest('button'); if(!b)return; st.showNames=b.dataset.v==='on'; savePrefs(); renderActive(); drawRoll();};
+$('segLive').onclick=e=>{const b=e.target.closest('button'); if(!b)return; st.liveAll=b.dataset.v==='all'; if(!st.liveAll) R.live=null; savePrefs(); segSync(); paintKeys(); drawMini();};
 $('segLang').onclick=e=>{const b=e.target.closest('button'); if(!b||b.dataset.v===st.lang)return; st.lang=b.dataset.v; setLang(st.lang); shareLang(st.lang); savePrefs(); applyLanguage();};
 // another tab, or the site before coming back with the browser's back button, may have changed it
 function followSharedLang(){ const l=sharedLang(); if(!l||l===st.lang) return; st.lang=l; setLang(l); savePrefs(); applyLanguage(); }
@@ -859,4 +867,4 @@ requestAnimationFrame(()=>{ rollSize(); centerRoll(); centerKeyboard(); drawRoll
 // the canvas does not trigger font loading by itself
 if(document.fonts) Promise.all([R.F.small,R.F.lane].map(f=>document.fonts.load(f))).then(()=>drawRoll());
 
-export { drawMini, lastCur, render, renderActive };
+export { drawMini, lastCur, paintKeys, render, renderActive };

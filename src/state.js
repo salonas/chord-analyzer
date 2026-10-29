@@ -5,7 +5,7 @@ import { browserLanguages, detectLanguage, setLang, sharedLang } from './i18n.js
 
 const st={notes:new Set(),lockedRoot:null,rootMode:false,showNames:false,
   naming:'letters',accPref:'auto',sound:true,pick:0,prefer:null,mix:{},
-  proj:null,prog:null,octConv:'sci',midiShift:0,src:'builder',srcSig:'',segA:null,exportMode:'pat',snap:.25,beatW:56,loop:true,tab:'kb',ex:null,lang:detectLanguage(browserLanguages())};
+  proj:null,prog:null,octConv:'sci',midiShift:0,src:'builder',srcSig:'',segA:null,exportMode:'pat',snap:.25,beatW:56,loop:true,liveAll:false,tab:'kb',ex:null,lang:detectLanguage(browserLanguages())};
 let lib={chords:[],projects:[]};
 const hist=[], fut=[];
 
@@ -25,7 +25,7 @@ setLang(st.lang);
 })();
 let draftTimer;
 function saveDraft(){clearTimeout(draftTimer); draftTimer=setTimeout(()=>save('pca.draft',{notes:[...st.notes],lockedRoot:st.lockedRoot,proj:st.proj}),250);}
-function savePrefs(){save('pca.prefs',{ex:st.ex,exportMode:st.exportMode,octConv:st.octConv,midiShift:st.midiShift,naming:st.naming,accPref:st.accPref,sound:st.sound,showNames:st.showNames,snap:st.snap,beatW:st.beatW,loop:st.loop,tab:st.tab,lang:st.lang,mix:st.mix});}
+function savePrefs(){save('pca.prefs',{ex:st.ex,exportMode:st.exportMode,octConv:st.octConv,midiShift:st.midiShift,naming:st.naming,accPref:st.accPref,sound:st.sound,showNames:st.showNames,snap:st.snap,beatW:st.beatW,loop:st.loop,liveAll:st.liveAll,tab:st.tab,lang:st.lang,mix:st.mix});}
 
 // ---------- library storage (this browser only) ----------
 function persistLib(){save('pca.lib',lib);}
