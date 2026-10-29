@@ -11,6 +11,7 @@ import { buildPack, fileBase, midiFile, zipFiles } from './midi.js';
 import { FL_SCRIPT_DIR, flScript } from './flscript.js';
 import { PITCH_RANGE, pitchClip } from './flpitch.js';
 import { parseMidi, separatePatterns, separateVoices } from './importer.js';
+import { harmonySegs } from './harmony.js';
 import { BEND_RANGE, glidePlan, hasGlide, rangeOf } from './glide.js';
 import { audio, loadManifest, mixOf, playNotes, setMix } from './audio.js';
 import { P, R, addAtEnd, centerRoll, commit, curSeg, deleteSel, drawRoll, liveNotes, playProg, pxDisc, readColors, redo, rollSize, selChanged, setPlayBtn, setZoom, stopProg, syncGlideBtns, toggleKey, undo, velTargets } from './roll.js';
@@ -235,7 +236,7 @@ function renderProgression(){
   const p=st.prog, pr=st.proj;
   if(document.activeElement!==$('projName')) $('projName').value=pr.name||'';
   if(document.activeElement!==$('patName')) $('patName').value=p.name||'';
-  $('patTabs').innerHTML=pr.patterns.map((x,i)=>`<button class="ptab" role="tab" data-id="${x.id}" aria-selected="${x.id===p.id}" title="${tr('Doble clic para renombrar','Double-click to rename')}"><span class="pn">${i+1}. ${esc(x.name||tr('Sin nombre','Untitled'))}</span><span class="pi">${esc(instLabel(x.inst))} · ${isDrum(x)?tr(`${x.notes.length} golpe${x.notes.length===1?'':'s'}`,`${x.notes.length} hit${x.notes.length===1?'':'s'}`):tr(`${segs(x).length} acorde${segs(x).length===1?'':'s'}`,`${segs(x).length} chord${segs(x).length===1?'':'s'}`)}</span></button>`).join('');
+  $('patTabs').innerHTML=pr.patterns.map((x,i)=>`<button class="ptab" role="tab" data-id="${x.id}" aria-selected="${x.id===p.id}" title="${tr('Doble clic para renombrar','Double-click to rename')}"><span class="pn">${i+1}. ${esc(x.name||tr('Sin nombre','Untitled'))}</span><span class="pi">${esc(instLabel(x.inst))} · ${isDrum(x)?tr(`${x.notes.length} golpe${x.notes.length===1?'':'s'}`,`${x.notes.length} hit${x.notes.length===1?'':'s'}`):(n=>tr(`${n} acorde${n===1?'':'s'}`,`${n} chord${n===1?'':'s'}`))(harmonySegs(x).length)}</span></button>`).join('');
   showPatTab(p.id);
   if(document.activeElement!==$('topInst')) $('topInst').value=p.inst.preset;
   syncVol(); syncGlide();
@@ -249,7 +250,8 @@ function renderProgression(){
   if(document.activeElement!==$('bpm')) $('bpm').value=pr.bpm||90;
   if(document.activeElement!==$('beats')) $('beats').value=p.beats||4;
   $('seedInfo').textContent=tr(`Semilla del proyecto: ${pr.seed}`,`Project seed: ${pr.seed}`);
-  R.segs=isDrum(p)?[]:segs(p);
+  // the lane and the sheet show chords, not every change of the notes (a tune over chords would give one per note)
+  R.segs=isDrum(p)?[]:harmonySegs(p);
   $('bSep').disabled=isDrum(p)||!p.notes.length;
   const A=analyzeProgression(R.segs.map(S=>segStep(p,S)),st); R.A=A;
   R.lane=R.segs.map((S,i)=>({a:S.a,b:S.b,label:A.rs[i].label,roman:A.romans[i]?`${A.romans[i].text} · ${A.fn[i]}`:'—'}));
@@ -266,6 +268,7 @@ function renderProgression(){
   syncGlideBtns();
   let h='';
   if(R.segs.length) h=analysisSheet(A,p);
+  else if(!isDrum(p)&&p.notes.length) h=`<div class="empty">${tr('Solo melodía: ningún acorde. Un acorde empieza con tres notas a la vez, o con dos si una dura un tiempo o más.','Melody only: no chords. A chord starts with three notes at once, or two if one lasts a beat or more.')}</div>`;
   else h=isDrum(p)?drumSummaryHtml(p):`<div class="empty">${tr('Dibuja notas en el piano roll o arma un acorde y pulsa «+ Al final» (Enter). La tonalidad, los grados y los patrones aparecen aquí.','Draw notes in the piano roll or build a chord and press “+ At the end” (Enter). The key, the degrees and the patterns show up here.')}</div>`;
   $('progAnalysis').innerHTML=h;
 }
@@ -287,7 +290,7 @@ function renderLibrary(){
     return `<li><div style="min-width:0"><span class="n">${esc(r.label)}</span><span class="v">${r.spelled.map(x=>esc(noteText(x,st))).join(' ')}</span></div><div class="acts"><button class="sbtn" data-load="${i}">${tr('Cargar','Load')}</button><button class="sbtn" data-add="${i}" title="${tr('Agregar al final de la progresión','Add at the end of the progression')}">${tr('+ Al final','+ At the end')}</button><button class="sbtn" data-del="${i}" aria-label="${tr('Quitar','Remove')} ${esc(r.label)}">${tr('Quitar','Remove')}</button></div></li>`;
   }).join(''):`<li class="empty">${tr('Aún no hay acordes guardados.','No saved chords yet.')}</li>`;
   $('savedProgs').innerHTML=lib.projects.length?lib.projects.map((pr,i)=>{
-    const pats=pr.patterns.map(p=>`${p.name||tr('Sin nombre','Untitled')} (${segs(p).length} ${tr('acordes','chords')})`).join(' · ');
+    const pats=pr.patterns.map(p=>`${p.name||tr('Sin nombre','Untitled')} (${(isDrum(p)?segs(p):harmonySegs(p)).length} ${tr('acordes','chords')})`).join(' · ');
     return `<li><div style="min-width:0"><span class="n">${esc(pr.name||tr('Sin nombre','Untitled'))}</span><span class="v">${pr.bpm} BPM · ${pr.patterns.length} pattern${pr.patterns.length===1?'':'s'}: ${esc(pats)}</span></div><div class="acts"><button class="sbtn" data-pload="${i}">${tr('Abrir','Open')}</button><button class="sbtn" data-pdel="${i}" aria-label="${tr('Quitar','Remove')} ${esc(pr.name)}">${tr('Quitar','Remove')}</button></div></li>`;
   }).join(''):`<li class="empty">${tr('Aún no hay proyectos guardados. «Guardar» en la barra superior guarda el proyecto con todos sus patterns.','No saved projects yet. “Save project” in the top bar saves the project with all its patterns.')}</li>`;
 }

@@ -96,8 +96,8 @@ describe('glides in the text', () => {
     const p = line(); p.bend = 12; p.glideNative = true;
     const t = progText(clone(p), PREFS);
     expect(t).toContain('# Deslizamiento: bend ±12 st · nativo (CC65 y CC84)');
-    expect(t).toContain('| 100 | porta');
-    expect(t).toContain('| 100 | slide');
+    expect(t).toContain('| 100 | Genérico (sin ajuste) | porta');
+    expect(t).toContain('| 100 | Genérico (sin ajuste) | slide');
     const back = parseText(t, PREFS).projects[0].patterns[0];
     expect([back.bend, back.glideNative]).toEqual([12, true]);
     expect(back.notes.map(n => n.g || '')).toEqual(['', 'p', 's', 'p', '', 's']);

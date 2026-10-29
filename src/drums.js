@@ -1,5 +1,5 @@
 // Drum kit of the FL template, drum expression rules and grooves.
-import { T, fmtB, numB, uid } from './data.js';
+import { T, barsText, fmtB, numB, uid } from './data.js';
 import { hash01, progEnd } from './model.js';
 import { noteText, plainSpell } from './analysis.js';
 import { exprSummary, instText } from './expression.js';
@@ -27,7 +27,7 @@ const DRUMS_EN={34:['Kick+','Kick (dirtier)'],35:['Kick d','Kick (dirty)'],36:['
 const CH_EN={Bombo:'Kick',Caja:'Snare',Platillos:'Cymbals'};
 const DRUMS=Object.fromEntries(Object.entries(DRUMS_ES).map(([m,d])=>[m,{get s(){return tr(d.s,DRUMS_EN[m][0]);},get n(){return tr(d.n,DRUMS_EN[m][1]);},p:d.p,get ch(){return tr(d.ch,CH_EN[d.ch]||d.ch);}}]));
 function drumText(p,prefs){
-  const L=[`# Pattern: ${p.name||tr('Sin nombre','Untitled')}`,tr(`# Batería · ${p.notes.length} golpes · total ${fmtB(progEnd(p))} tiempos`,`# Drums · ${p.notes.length} hit${p.notes.length===1?'':'s'} · total ${fmtB(progEnd(p))} beats`),`${tr('# Instrumento','# Instrument')}: ${instText(p.inst,prefs)}`];
+  const L=[`# Pattern: ${p.name||tr('Sin nombre','Untitled')}`,tr(`# Batería · ${p.notes.length} golpes · total ${fmtB(progEnd(p))} tiempos${barsText(progEnd(p))}`,`# Drums · ${p.notes.length} hit${p.notes.length===1?'':'s'} · total ${fmtB(progEnd(p))} beats${barsText(progEnd(p))}`),`${tr('# Instrumento','# Instrument')}: ${instText(p.inst,prefs,p.notes.length?[Math.min(...p.notes.map(n=>n.v||100)),Math.max(...p.notes.map(n=>n.v||100))]:null)}`];
   if(p.expr) L.push(`${tr('# Expresión','# Expression')}: ${exprSummary(p.expr)}`);
   L.push(tr('# Notas (exactas): nota | MIDI | inicio | duración | velocity | pieza — inicio y duración en tiempos de negra desde el compás 1','# Notes (exact): note | MIDI | start | length | velocity | piece — start and length in quarter-note beats from bar 1'));
   [...p.notes].sort((a,b)=>a.s-b.s||a.m-b.m).forEach(n=>L.push(`${noteText(plainSpell(n.m,prefs),prefs)} | ${n.m} | ${numB(n.s)} | ${numB(n.l)} | ${n.v||100}${DRUMS[n.m]?' | '+DRUMS[n.m].n:''}`));

@@ -19,10 +19,12 @@ const FEELINGS={
 const EX_KEYS=['base','range','voice','accent','arc','phrase','arcAmt','contour','tension','apoy','cad','human','art'];
 const exDefaults=key=>({preset:key,...FEELINGS[key].p,artOn:FEELINGS[key].p.art<100});
 const instLabel=i=>i&&INSTRUMENTS[i.preset]?INSTRUMENTS[i.preset].label:tr('Personalizado','Custom');
-function instText(i,prefs){
+// used: [lowest, highest] velocity of the notes, next to the instrument's limits
+function instText(i,prefs,used){
   const lo=noteText(plainSpell(i.lowPivot,prefs),prefs), hi=noteText(plainSpell(i.highPivot,prefs),prefs);
-  return tr(`${instLabel(i)} · velocity ${i.min}–${i.max} · sensibilidad ${i.sens} % · acentos ${i.accent} % · humanizar ${i.human} % · recorte de graves ${i.lowTrim}/octava bajo ${lo} · recorte de agudos ${i.highTrim}/octava sobre ${hi}`,
-    `${instLabel(i)} · velocity ${i.min}–${i.max} · sensitivity ${i.sens} % · accents ${i.accent} % · humanize ${i.human} % · low trim ${i.lowTrim}/octave below ${lo} · high trim ${i.highTrim}/octave above ${hi}`);
+  const u=used?(used[0]===used[1]?`${used[0]}`:`${used[0]}–${used[1]}`):'';
+  return tr(`${instLabel(i)} · velocity límites ${i.min}–${i.max}${u?` · usado ${u}`:''} · sensibilidad ${i.sens} % · acentos ${i.accent} % · humanizar velocity ${i.human} % · recorte de graves ${i.lowTrim}/octava bajo ${lo} · recorte de agudos ${i.highTrim}/octava sobre ${hi}`,
+    `${instLabel(i)} · velocity limits ${i.min}–${i.max}${u?` · used ${u}`:''} · sensitivity ${i.sens} % · accents ${i.accent} % · humanize velocity ${i.human} % · low trim ${i.lowTrim}/octave below ${lo} · high trim ${i.highTrim}/octave above ${hi}`);
 }
 // p.expr.scope is stored in Spanish («todas» or «N seleccionadas») and translated when shown
 const scopeText=sc=>tr(sc,sc==='todas'?'all':String(sc).replace(/^(\d+) seleccionadas$/,'$1 selected'));
@@ -33,10 +35,11 @@ function exprSummary(e){
   const arc=tr({flat:'plano',cresc:'crescendo',dim:'diminuendo',arch:'arco'},{flat:'flat',cresc:'crescendo',dim:'diminuendo',arch:'arch'})[e.arc];
   const ph=e.phrase?tr(`${e.phrase} ${e.phrase>1?'compases':'compás'}`,`${e.phrase} bar${e.phrase>1?'s':''}`):tr('todo el pattern','the whole pattern');
   const arcT=e.arc!=='flat'?tr(` ${e.arcAmt} en ${ph}`,` ${e.arcAmt} over ${ph}`):'', sc=scopeText(e.scope);
-  if(e.drums) return tr(`${lab} · base ${e.base} · contraste ${e.range} % · acento ${e.accent} · ${arc}${arcT} · humanizar ±${e.human} (semilla ${e.seed}) · golpes: ${sc}`,
-    `${lab} · base ${e.base} · contrast ${e.range} % · accent ${e.accent} · ${arc}${arcT} · humanize ±${e.human} (seed ${e.seed}) · hits: ${sc}`);
-  return tr(`${lab} · base ${e.base} · contraste ${e.range} % · voces ${e.voice} · acento ${e.accent} · ${arc}${arcT} · contorno ${e.contour} · tensión armónica ${e.tension} · apoyaturas ${e.apoy} · cadencia ${e.cad} · humanizar ±${e.human} (semilla ${e.seed})${e.artOn?` · articulación ${e.art} %`:''} · notas: ${sc}`,
-    `${lab} · base ${e.base} · contrast ${e.range} % · voices ${e.voice} · accent ${e.accent} · ${arc}${arcT} · contour ${e.contour} · harmonic tension ${e.tension} · appoggiaturas ${e.apoy} · cadence ${e.cad} · humanize ±${e.human} (seed ${e.seed})${e.artOn?` · articulation ${e.art} %`:''} · notes: ${sc}`);
+  // humanize only moves velocity: the starts stay on the grid
+  if(e.drums) return tr(`${lab} · base ${e.base} · contraste ${e.range} % · acento ${e.accent} · ${arc}${arcT} · humanizar velocity ±${e.human} · timing 0 (semilla ${e.seed}) · golpes: ${sc}`,
+    `${lab} · base ${e.base} · contrast ${e.range} % · accent ${e.accent} · ${arc}${arcT} · humanize velocity ±${e.human} · timing 0 (seed ${e.seed}) · hits: ${sc}`);
+  return tr(`${lab} · base ${e.base} · contraste ${e.range} % · voces ${e.voice} · acento ${e.accent} · ${arc}${arcT} · contorno ${e.contour} · tensión armónica ${e.tension} · apoyaturas ${e.apoy} · cadencia ${e.cad} · humanizar velocity ±${e.human} · timing 0 (semilla ${e.seed})${e.artOn?` · articulación ${e.art} %`:''} · notas: ${sc}`,
+    `${lab} · base ${e.base} · contrast ${e.range} % · voices ${e.voice} · accent ${e.accent} · ${arc}${arcT} · contour ${e.contour} · harmonic tension ${e.tension} · appoggiaturas ${e.apoy} · cadence ${e.cad} · humanize velocity ±${e.human} · timing 0 (seed ${e.seed})${e.artOn?` · articulation ${e.art} %`:''} · notes: ${sc}`);
 }
 // Sets velocity (and articulation) on the notes ns of pattern p; returns how many were shaped as appoggiatura or passing tone
 function expressPattern(p,ns,E,seed,flat,prefs){
