@@ -48,25 +48,31 @@ function playProg(){
   P.end=Math.max(4*T,Math.ceil(progEnd(st.prog)/(4*T))*4*T);
   P.from=R.start<P.end?R.start:0; P.t0=c.currentTime+.06; P.next=null; P.playing=true;
   scheduleFrom(P.from,P.t0);
-  P.raf=requestAnimationFrame(tick);
+  P.raf=requestAnimationFrame(tick); P.timer=setInterval(pump,250);
   setPlayBtn(true);
 }
 function setPlayBtn(on){ const b=$('bProgPlay'); b.querySelector('.ico').className='ico i-'+(on?'stop':'play'); b.querySelector('span').textContent=on?tr('Detener','Stop'):tr('Tocar','Play'); }
 function stopProg(){
-  cancelAnimationFrame(P.raf); P.ask=null;
+  cancelAnimationFrame(P.raf); clearInterval(P.timer); P.ask=null;
   if(P.bus){ const c=audio(); P.bus.gain.setTargetAtTime(0,c.currentTime,.03); P.bus=null; }
   P.playing=false; R.pos=null; setPlayBtn(false);
   showPos(R.start); drawRoll();
 }
-function tick(){
+// scheduling runs on a timer, not in tick(): requestAnimationFrame stops in a hidden tab, and the loop would go silent after the first pass
+// a timer still fires there (throttled to about 1 s), so the next pass is queued 2 s ahead
+function pump(){
   if(!P.playing) return;
-  const c=audio();
-  let pos=P.from+(c.currentTime-P.t0)/P.spt;
-  if(st.loop&&!P.next&&pos>=P.end-T){ const t0n=P.t0+(P.end-P.from)*P.spt; scheduleFrom(0,t0n); P.next={t0:t0n}; }
+  const c=audio(), pos=P.from+(c.currentTime-P.t0)/P.spt;
+  if(st.loop&&!P.next&&(P.end-pos)*P.spt<=2){ const t0n=P.t0+(P.end-P.from)*P.spt; scheduleFrom(0,t0n); P.next={t0:t0n}; }
   if(pos>=P.end){
-    if(P.next){ P.from=0; P.t0=P.next.t0; P.next=null; pos=P.from+(c.currentTime-P.t0)/P.spt; R.el.scrollLeft=0; }
-    else { stopProg(); return; }
+    if(P.next){ P.from=0; P.t0=P.next.t0; P.next=null; R.el.scrollLeft=0; }
+    else stopProg();
   }
+}
+function tick(){
+  pump();
+  if(!P.playing) return;
+  const pos=P.from+(audio().currentTime-P.t0)/P.spt;
   R.pos=pos; showPos(pos); followChord(pos);
   const x=pos/T*st.beatW, vw=R.el.clientWidth-R.K;
   if(x<R.el.scrollLeft||x>R.el.scrollLeft+vw*.9) R.el.scrollLeft=Math.max(0,x-vw*.1);
