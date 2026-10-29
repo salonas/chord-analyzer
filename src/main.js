@@ -650,7 +650,7 @@ function analysisSheet(A,p){
     <div><span class="lab">${tr('Final','Ending')}</span><span class="stamp"><span>${A.cad?degText(A.cad):tr('sin cadencia final','no final cadence')}</span></span></div>
     ${p.expr?`<div><span class="lab">${tr('Expresión aplicada','Applied expression')}</span><span class="expr">${esc(exprSummary(p.expr))}</span></div>`:''}<div class="an-pats"><span class="lab">${tr('Patrones reconocidos','Recognized patterns')}</span><div>${pats.length?pats.map(f=>`<span class="tag"><b>${f.k}</b>${degText(f.name)}${f.wrap?tr(' (en bucle)',' (looping)'):''}</span>`).join(''):`<span class="none">${tr('Ninguno de los '+PATTERNS.length+' patrones conocidos.','None of the '+PATTERNS.length+' known patterns.')}</span>`}</div></div></div>`;
   const row=i=>{ const r=A.romans[i], lab=esc(A.rs[i].label), fn=FN_NAME[A.fn[i]];
-    return `<div class="an-row"><span class="n">${i+1}</span><span class="main">${r?esc(r.text):lab}</span><span class="sub">${r?`<span class="sym">${lab}</span> · `:''}${fn} ${ten(A.ten[i])}</span></div>`; };
+    return `<div class="an-row"><span class="n">${i+1}</span><span class="main">${r?esc(r.text):lab}</span><span class="sub" title="${r?`${lab} · `:''}${fn} ${ten(A.ten[i])}"><span class="fn">${r?`<span class="sym">${lab}</span> · `:''}${fn}</span> <span class="ten">${ten(A.ten[i])}</span></span></div>`; };
   // a looping pattern gets two open brackets, one at each end of the sheet
   const N=A.rs.length, B=pats.filter(f=>!f.cycle).flatMap(f=>f.wrap?[{k:f.k,a:f.from,b:N-1,open:'b'},{k:f.k,a:0,b:f.to,open:'t'}]:[{k:f.k,a:f.from,b:f.to}]).sort((x,y)=>x.a-y.a||x.k-y.k);
   let rows='';
