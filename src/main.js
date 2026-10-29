@@ -797,7 +797,7 @@ $('segAcc').onclick=e=>{const b=e.target.closest('button'); if(!b)return; st.acc
 $('segSound').onclick=e=>{const b=e.target.closest('button'); if(!b)return; st.sound=b.dataset.v==='on'; savePrefs(); segSync();};
 $('segOct').onclick=e=>{const b=e.target.closest('button'); if(!b)return; st.octConv=b.dataset.v; savePrefs(); render();};
 $('segShift').onclick=e=>{const b=e.target.closest('button'); if(!b)return; st.midiShift=+b.dataset.v; savePrefs(); segSync(); toast(st.midiShift?tr(`El MIDI exportado sube o baja ${st.midiShift/12} octava${Math.abs(st.midiShift)>12?'s':''}; la página no cambia.`,`The exported MIDI moves ${st.midiShift/12} octave${Math.abs(st.midiShift)>12?'s':''}; the page does not change.`):tr('El MIDI se exporta sin transponer.','The MIDI is exported without transposing.'));};
-$('segKeyNames').onclick=e=>{const b=e.target.closest('button'); if(!b)return; st.showNames=b.dataset.v==='on'; savePrefs(); renderActive();};
+$('segKeyNames').onclick=e=>{const b=e.target.closest('button'); if(!b)return; st.showNames=b.dataset.v==='on'; savePrefs(); renderActive(); drawRoll();};
 $('segLang').onclick=e=>{const b=e.target.closest('button'); if(!b||b.dataset.v===st.lang)return; st.lang=b.dataset.v; setLang(st.lang); shareLang(st.lang); savePrefs(); applyLanguage();};
 // another tab, or the site before coming back with the browser's back button, may have changed it
 function followSharedLang(){ const l=sharedLang(); if(!l||l===st.lang) return; st.lang=l; setLang(l); savePrefs(); applyLanguage(); }
