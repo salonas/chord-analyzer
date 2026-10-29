@@ -364,12 +364,23 @@ R.cv.addEventListener('pointercancel',()=>{ tap=null; if(R.drag) endDrag(); });
 // note previews (roll, keys, transposing) stop when the button or key that started them is let go
 ['pointerup','pointercancel','keyup','blur'].forEach(ev=>addEventListener(ev,releasePreview));
 R.el.addEventListener('scroll',requestDraw,{passive:true});
+// The canvas is sticky inside the scroller and drawn from scrollLeft/scrollTop. A native wheel scroll moves the content
+// first and the scroll event redraws a frame later, so the drawing lags behind (thin slide lines show it most):
+// the wheel scrolls by hand and draws in the same event instead, and the zoom draws once the scroll is set.
 R.el.addEventListener('wheel',e=>{
-  if(!(e.ctrlKey||e.metaKey)) return;
   e.preventDefault();
-  const r=R.el.getBoundingClientRect(), x=e.clientX-r.left-R.K, t=(x+R.el.scrollLeft)/st.beatW;
-  setZoom(st.beatW*(e.deltaY<0?1.15:1/1.15));
-  R.el.scrollLeft=t*st.beatW-x;
+  if(e.ctrlKey||e.metaKey){
+    const r=R.el.getBoundingClientRect(), x=e.clientX-r.left-R.K, t=(x+R.el.scrollLeft)/st.beatW;
+    setZoom(st.beatW*(e.deltaY<0?1.15:1/1.15));
+    R.el.scrollLeft=t*st.beatW-x;
+    drawRoll();
+    return;
+  }
+  const unit=e.deltaMode===1?R.rh*3:e.deltaMode===2?R.el.clientHeight:1;
+  let dx=e.deltaX*unit, dy=e.deltaY*unit;
+  if(e.shiftKey&&!dx){ dx=dy; dy=0; }
+  R.el.scrollLeft+=dx; R.el.scrollTop+=dy;
+  drawRoll();
 },{passive:false});
 function setZoom(v){ st.beatW=Math.min(200,Math.max(12,v)); $('rollZoom').value=Math.round(st.beatW); fillRange($('rollZoom')); rollSize(); drawRoll(); savePrefs(); }
 new ResizeObserver(()=>{rollSize();drawRoll();}).observe(R.el);
@@ -405,6 +416,14 @@ R.cv.addEventListener('keydown',e=>{
   if(k==='ArrowLeft'||k==='ArrowRight'){ handled(); moveSel((k==='ArrowRight'?1:-1)*(snapT()||T)); return; }
 });
 function selNotes(){return st.prog.notes.filter(n=>R.sel.has(n.id));}
+// the roll notes the chord panel's buttons edit: the roll selection, or the notes that sound in the picked lane chord
+// (moving a note never deletes anything, so loose or overlapping notes are fine); null when the panel is just
+// building a chord, and then the buttons change the armed copy, as before
+function liveNotes(){
+  if(st.src==='sel'&&R.sel.size) return selNotes();
+  const S=curSeg(); if(st.src==='seg'&&S) return [...S.ids].map(byId).filter(Boolean);
+  return null;
+}
 function selectAll(){ R.sel=new Set(st.prog.notes.map(n=>n.id)); selChanged(); }
 function deleteSel(){ if(!R.sel.size) return; commit(); st.prog.notes=st.prog.notes.filter(n=>!R.sel.has(n.id)); R.sel.clear(); st.segA=null; selChanged(true); }
 function duplicateSel(){
@@ -506,4 +525,4 @@ $('bSegLeft').onclick=()=>swapSeg(-1); $('bSegRight').onclick=()=>swapSeg(1); $(
 function centerRoll(){ const ns=st.prog.notes.length?st.prog.notes.map(n=>n.m):[...st.notes]; const m=ns.length?Math.round((Math.min(...ns)+Math.max(...ns))/2):60; R.el.scrollTop=R.TOP+(HIGH-m)*R.rh-R.el.clientHeight/2; }
 function velTargets(){ return R.sel.size?selNotes():st.prog.notes; }
 
-export { P, R, addAtEnd, centerRoll, commit, curSeg, drawRoll, playProg, pxDisc, readColors, redo, rollSize, selChanged, setPlayBtn, setZoom, stopProg, syncGlideBtns, toggleKey, undo, velTargets };
+export { P, R, addAtEnd, centerRoll, commit, curSeg, deleteSel, drawRoll, liveNotes, playProg, pxDisc, readColors, redo, rollSize, selChanged, setPlayBtn, setZoom, stopProg, syncGlideBtns, toggleKey, undo, velTargets };

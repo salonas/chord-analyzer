@@ -330,7 +330,10 @@ kbd{display:inline-block;font:inherit;font-size:13px;line-height:1.2;border:2px 
 .an-row>span{display:inline-block;height:var(--row);line-height:var(--row);overflow:hidden}
 .an-row .n{min-width:22px;font-size:13px;color:var(--brown);text-align:right}
 .an-row .main{font-family:var(--hand);font-size:32px;min-width:4.2em}
-.an-row .sub{font-size:13px;color:var(--brown);text-overflow:ellipsis}
+/* the tension (0,x) never gets cut: when the row is narrow the ellipsis falls on the chord symbol and function */
+.an-row .sub{display:flex;column-gap:.4em;min-width:0;font-size:13px;color:var(--brown)}
+.an-row .fn{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.an-row .ten{flex:none}
 .an-row .sym{font-family:var(--mono);font-size:16px;color:var(--ink)}
 .an-grp{position:relative;break-inside:avoid}
 .an .br{position:absolute;width:9px;border:3px solid var(--ink);border-right:0}
