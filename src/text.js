@@ -103,7 +103,7 @@ function progText(p,prefs){
   // plain block chords keep one line per chord (the text reads back from them); anything else splits harmony and melody
   const H=pure?null:harmonyLines(p,prefs,L);
   const A=pure?analyzeProgression(S.map(s=>segStep(p,s)),prefs):H.A;
-  if(pure?S.length:H.Hm.chords.length) L.push(tr(`# Tonalidad estimada: ${keyName(A.key,prefs)} · ${totalText(p)}`,`# Estimated key: ${keyName(A.key,prefs)} · ${totalText(p)}`));
+  if(pure?S.length:H.Hm.chords.length) L.push(tr(`# Tonalidad estimada: ${keyName(A.key,prefs)}${A.alt?` (o ${keyName(A.alt,prefs)})`:''} · ${totalText(p)}`,`# Estimated key: ${keyName(A.key,prefs)}${A.alt?` (or ${keyName(A.alt,prefs)})`:''} · ${totalText(p)}`));
   else if(p.notes.length) L.push(`# ${totalText(p)}`);
   if(A.found&&A.found.length) L.push(`${tr('# Patrones','# Patterns')}: ${A.found.map(f=>foundText(f,A.rs.length)).join('; ')}`);
   if(A.cad) L.push(`${tr('# Final','# Ending')}: ${A.cad}`);

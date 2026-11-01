@@ -243,10 +243,13 @@ function analyzeProgression(steps,prefs){
   let cad='';
   if(N>=2&&romans[N-1]&&romans[N-2]){
     const ad=romans[N-2].deg, bd=romans[N-1].deg;
-    if(bd===0&&ad===7) cad=tr('Cadencia auténtica (V → I)','Authentic cadence (V → I)');
-    else if(bd===0&&ad===5) cad=tr('Cadencia plagal (IV → I)','Plagal cadence (IV → I)');
+    // the degrees are written as the chords are: V → i in minor, vii° → I in major, v → i for the minor dominant
+    const pair=`(${romans[N-2].token} → ${romans[N-1].token})`, domQ=['maj','dom'].includes(rs[N-2].c.type.q);
+    if(bd===0&&ad===7&&domQ) cad=tr('Cadencia auténtica ','Authentic cadence ')+pair;
+    else if(bd===0&&ad===7) cad=tr('Cadencia modal (sin sensible) ','Modal cadence (no leading tone) ')+pair;
+    else if(bd===0&&ad===5) cad=tr('Cadencia plagal ','Plagal cadence ')+pair;
     else if(bd===0&&ad===10) cad=tr('Cadencia ♭VII → I (backdoor / mixolidia)','♭VII → I cadence (backdoor / Mixolydian)');
-    else if(bd===0&&ad===11) cad=tr('Cadencia con sensible (vii° → I)','Leading-tone cadence (vii° → I)');
+    else if(bd===0&&ad===11) cad=tr('Cadencia con sensible ','Leading-tone cadence ')+pair;
     else if(bd===0&&ad===1&&rs[N-2].c.type.q==='dom') cad=tr('Cadencia con sustituto tritonal (♭II7 → I)','Tritone substitution cadence (♭II7 → I)');
     else if(ad===7&&(bd===9||bd===8)) cad=tr('Cadencia rota (V → ','Deceptive cadence (V → ')+romans[N-1].base+')';
     else if(bd===7) cad=tr('Semicadencia (termina en V)','Half cadence (ends on V)');

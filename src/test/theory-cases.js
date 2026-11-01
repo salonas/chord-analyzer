@@ -311,7 +311,7 @@ for (const c of melCases) {
       labels.length === ch.chords.length && ch.chords.every((e, i) => acc(e, labels[i])), c.ref);
   }
   if (ch.romans) add('melodía+acordes', c.id + '-grados', c.level, head + ' · grados', ch.romans.join(' – '), romans.join(' – '), romans.length === ch.romans.length && ch.romans.every((e, i) => acc(e, romans[i])), c.ref);
-  if (ch.key) { const m = txt.match(/Tonalidad estimada: ([^·]+)/); const k = m ? m[1].trim() : '(sin línea)'; add('melodía+acordes', c.id + '-tonalidad', c.level, head + ' · tonalidad', ch.key, k, acc(ch.key, k), c.ref); }
+  if (ch.key) { const m = txt.match(/Tonalidad estimada: ([^·(]+)/); const k = m ? m[1].trim() : '(sin línea)'; add('melodía+acordes', c.id + '-tonalidad', c.level, head + ' · tonalidad', ch.key, k, acc(ch.key, k), c.ref); }
   if (ch.textHas) ch.textHas.forEach(s => add('melodía+acordes', c.id + '-texto', c.level, head + ` · el texto contiene "${s}"`, s, txt.includes(s) || norm(txt).includes(norm(s)) ? 'sí' : 'no', txt.includes(s) || norm(txt).includes(norm(s)), c.ref));
   if (ch.textNot) ch.textNot.forEach(s => add('melodía+acordes', c.id + '-texto-no', c.level, head + ` · el texto no contiene "${s}"`, 'ausente', txt.includes(s) ? 'presente' : 'ausente', !txt.includes(s), c.ref));
   if (ch.melody) {
@@ -337,7 +337,7 @@ mc('K03', 2, 'Blues I7 con melodía de blue note (E♭ sobre C7)', [['C3 E3 G3 B
 for (const c of melCases.slice(-2)) {
   const p = pat(c.id, c.chords, c.mel); const txt = progText(p, P); texts[c.id] = { desc: c.desc, text: txt }; const ch = c.checks;
   const hl = txt.split('\n').filter(l => /^\d+\. [^|]+\| [^|]+\([^)]*·/.test(l)); const romans = hl.map(l => l.split('|')[1].trim().split(' (')[0]);
-  if (ch.key) { const m = txt.match(/Tonalidad estimada: ([^·]+)/); const k = m ? m[1].trim() : '(sin línea)'; add('melodía+acordes', c.id + '-tonalidad', c.level, c.desc + ' · tonalidad', ch.key, k, acc(ch.key, k)); }
+  if (ch.key) { const m = txt.match(/Tonalidad estimada: ([^·(]+)/); const k = m ? m[1].trim() : '(sin línea)'; add('melodía+acordes', c.id + '-tonalidad', c.level, c.desc + ' · tonalidad', ch.key, k, acc(ch.key, k)); }
   if (ch.romans) add('melodía+acordes', c.id + '-grados', c.level, c.desc + ' · grados', ch.romans.join(' – '), romans.join(' – '), romans.length === ch.romans.length && ch.romans.every((e, i) => acc(e, romans[i])));
   if (ch.textHas) { const ok = ch.textHas.every(s => norm(txt).includes(norm(s))); add('melodía+acordes', c.id + '-texto', c.level, c.desc + ' · el texto contiene ' + ch.textHas.join(' y '), ch.textHas.join(' y '), ok ? 'sí' : 'no: solo ' + (txt.match(/Tonalidad estimada: ([^·]+)/) || [, '?'])[1].trim(), ok); }
   if (ch.role) ch.role.forEach(([note, start, exp]) => { const line = txt.split('\n').find(l => norm(l).startsWith(norm(note) + ' (') && l.split('|')[1] && l.split('|')[1].trim() === start); const role = line ? line.split('|').pop().trim() : '(nota no listada como melodía)'; add('melodía+acordes', `${c.id}-${note}@${start}`, c.level, `${c.desc} · rol de ${note} en el tiempo ${start}`, exp, role, exp.some(e => role.startsWith(e))); });

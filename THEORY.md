@@ -31,4 +31,6 @@ Rama `fix/theory-spelling-and-keys` (C1 deletreo por letras, C2 nombre de tonali
 
 Rama `fix/theory-chromatic-and-functions`, sobre la anterior (C4 y C8: dominantes y sensibles secundarias con destino diatónico, sextas aumentadas, dim7 de nota común, I7 del blues, 6/4 cadencial, sustituto tritonal): 406 de 424 (96 %). Pendiente: C7 y C11, C6 y C5, modos, C9, C12 y modulación (F11).
 
+Rama `fix/theory-cadences-and-alt`, sobre la anterior (C7 y C11: la cadencia escribe los grados como son los acordes, V → i en menor; v → i es modal y no auténtica; el texto exportado da la tonalidad alternativa, «Sol mayor (o Do mayor)»): 409 de 424 (96 %). Pendiente: C6 y C5, modos, C9, C12 y modulación (F11).
+
 Regenerar la línea base a propósito, tras revisar cada diferencia: `UPDATE_THEORY=1 npx vitest run src/theory.test.js`.
