@@ -65,8 +65,9 @@ function synthVoice(kind,m,t,v,dest,hold,mix=1,bend){
   }
 }
 function playNotes(list,spread){
+  if(isDrum(st.prog)) list=list.filter(m=>DRUMS[m]); // a drum pattern sounds only its kit, never the oscillators
   if(!list.length) return;
-  const c=audio(), t0=c.currentTime+.02, vel=.32/Math.sqrt(list.length), p=isDrum(st.prog)?null:st.prog;
+  const c=audio(), t0=c.currentTime+.02, vel=.32/Math.sqrt(list.length), p=st.prog;
   list.forEach((m,i)=>patVoice(p,m,t0+i*spread,Math.round(90/Math.sqrt(list.length)),null,vel));
 }
 

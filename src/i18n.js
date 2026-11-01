@@ -87,6 +87,8 @@ const HTML_EN={
   'Borrar selección':'Delete selection',
   'Saca la melodía, el bajo y los acordes de este pattern en patterns separados':'Pulls the melody, the bass and the chords of this pattern into separate patterns',
   'Separar voces…':'Separate voices…',
+  'Pantalla completa':'Fullscreen',
+  'F: el piano roll ocupa toda la pantalla; Esc para salir':'F: the piano roll fills the screen; Esc to leave',
   'Separar voces':'Separate voices',
   'Cómo elegir la melodía':'How to pick the melody',
   'Seguir la línea (continuidad y altura)':'Follow the line (continuity and pitch)',

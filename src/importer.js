@@ -8,7 +8,7 @@ import { tr } from './i18n.js';
 function parseMidi(buf){
   const d=new Uint8Array(buf), dv=new DataView(buf), str=(o,n)=>String.fromCharCode(...d.slice(o,o+n));
   if(d.length<14||str(0,4)!=='MThd') throw new Error(tr('no es un archivo MIDI (falta la cabecera MThd)','not a MIDI file (the MThd header is missing)'));
-  const hl=dv.getUint32(4), ntr=dv.getUint16(10), div=dv.getUint16(12);
+  const hl=dv.getUint32(4), fmt=dv.getUint16(8), ntr=dv.getUint16(10), div=dv.getUint16(12);
   if(div&0x8000) throw new Error(tr('usa tiempo SMPTE, que no está soportado','uses SMPTE time, which is not supported'));
   let p=8+hl, tempo=null; const tracks=[];
   for(let k=0;k<ntr&&p+8<=d.length;k++){
@@ -31,7 +31,10 @@ function parseMidi(buf){
     }
     // notes still held when the track ends last until its final event
     on.forEach((q,key)=>q.forEach(o=>notes.push({m:key%128,s:o.t,l:Math.max(1,t-o.t),v:o.v,ch:Math.floor(key/128)})));
-    if(notes.length) tracks.push({name,notes});
+    // format 0 keeps every channel in its one track: each channel becomes its own track (format 1 tracks stay as written)
+    const chs=[...new Set(notes.map(n=>n.ch))].sort((x,y)=>x-y);
+    if(fmt===0&&chs.length>1) chs.forEach(c=>tracks.push({name:name?`${name} · ch ${c+1}`:`ch ${c+1}`,notes:notes.filter(n=>n.ch===c)}));
+    else if(notes.length) tracks.push({name,notes});
   }
   const sc=T/div;
   tracks.forEach(tr=>tr.notes=tr.notes.map(n=>({id:uid(),m:n.m,s:Math.round(n.s*sc),l:Math.max(1,Math.round(n.l*sc)),v:n.v||100,ch:n.ch})));

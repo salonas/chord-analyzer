@@ -410,6 +410,7 @@ function selChanged(edited){
   if(edited) render(); else { renderActive(); drawRoll(); drawMini(); syncGlideBtns(); }
 }
 function toggleKey(m){
+  if(isDrum(st.prog)&&!DRUMS[m]) return; // only the keys the kit has samples for
   commit();
   if(st.rootMode){ st.notes.add(m); st.lockedRoot=st.lockedRoot===m%12?null:m%12; st.rootMode=false; }
   else if(st.notes.has(m)){ st.notes.delete(m); if(st.lockedRoot!==null&&![...st.notes].some(n=>n%12===st.lockedRoot)) st.lockedRoot=null; }

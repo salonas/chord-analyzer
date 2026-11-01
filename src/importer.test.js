@@ -35,3 +35,22 @@ describe('separatePatterns', () => {
     expect(clone(made.map(q => ({ name: q.name, beats: q.beats, inst: q.inst, names: q.names, notes: noId(q.notes) })))).toEqual(fx.separate.forms[pn].slice(1));
   });
 });
+
+describe('parseMidi channels', () => {
+  const bytes = a => new Uint8Array(a).buffer;
+  const trk = d => [0x4D, 0x54, 0x72, 0x6B, 0, 0, 0, d.length + 4, ...d, 0, 0xFF, 0x2F, 0];
+  const hdr = (n, fmt = n === 1 ? 0 : 1) => [0x4D, 0x54, 0x68, 0x64, 0, 0, 0, 6, 0, fmt, 0, n, 0, 96];
+  const on = (ch, m) => [0, 0x90 | ch, m, 100, 96, 0x80 | ch, m, 0];
+  it('splits the single track of a format 0 file into one track per channel', () => {
+    const r = parseMidi(bytes([...hdr(1), ...trk([...on(0, 60), ...on(1, 64)])]));
+    expect(r.tracks.map(t => [t.name, t.notes.map(n => [n.m, n.ch])])).toEqual([['ch 1', [[60, 0]]], ['ch 2', [[64, 1]]]]);
+  });
+  it('leaves a format 1 track that mixes channels as one', () => {
+    const r = parseMidi(bytes([...hdr(1, 1), ...trk([...on(0, 60), ...on(1, 64)])]));
+    expect(r.tracks.length).toBe(1);
+  });
+  it('keeps a track of one channel as it is', () => {
+    const r = parseMidi(bytes([...hdr(2), ...trk(on(0, 60)), ...trk(on(1, 64))]));
+    expect(r.tracks.length).toBe(2);
+  });
+});

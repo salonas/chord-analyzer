@@ -130,9 +130,10 @@ let lastCur=null, spelledNow=[];
 // the keys show the active chord; with "Real time: All" a playing pattern shows what sounds at the playhead instead (R.live)
 function shownNotes(){ return R.live||st.notes; }
 function paintKeys(){
-  const shown=shownNotes(), rootPc=R.rootPc;
+  const shown=shownNotes(), rootPc=R.rootPc, drum=isDrum(st.prog);
   for(let m=LOW;m<=HIGH;m++){
     const k=keyEl[m], on=shown.has(m), pc=m%12, inChord=st.notes.has(m);
+    const dead=drum&&!DRUMS[m]; k.disabled=dead; k.classList.toggle('nokit',dead);
     const s=(inChord&&spelledNow.find(n=>n.midi===m))||plainSpell(m,st);
     const root=on&&inChord&&rootPc===pc;
     k.classList.toggle('on',on); k.classList.toggle('root',root);
@@ -721,6 +722,11 @@ async function importMidiFiles(files){
   toast(tr(`Importado: ${added.length} pattern${added.length===1?'':'s'}, ${nn} notas${tempo?` · tempo del archivo ${Math.round(tempo)} BPM${onlyNew?'':' (el del proyecto no cambió)'}`:''}${dropped?` · ${dropped} notas fuera de MIDI 12–132 omitidas`:''}`,
     `Imported: ${added.length} pattern${added.length===1?'':'s'}, ${nn} notes${tempo?` · file tempo ${Math.round(tempo)} BPM${onlyNew?'':' (the project’s did not change)'}`:''}${dropped?` · ${dropped} notes outside MIDI 12–132 skipped`:''}`));
 }
+// piano roll fullscreen: the browser's own, on the stage so the tools come along; the roll redraws through its ResizeObserver
+const stage=document.querySelector('.stage');
+function toggleFull(){ if(!stage.requestFullscreen) return; if(document.fullscreenElement) document.exitFullscreen(); else stage.requestFullscreen().catch(()=>{}); }
+$('bFull').onclick=toggleFull;
+document.addEventListener('fullscreenchange',()=>{ $('bFull').setAttribute('aria-pressed',!!document.fullscreenElement); requestAnimationFrame(()=>{ rollSize(); drawRoll(); }); });
 $('bMidiIn').onclick=()=>$('midiFile').click();
 $('midiFile').onchange=e=>{ importMidiFiles([...e.target.files]); e.target.value=''; };
 R.el.addEventListener('dragover',e=>{ if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')){ e.preventDefault(); R.el.classList.add('drop'); } });
@@ -843,6 +849,7 @@ document.addEventListener('keydown',e=>{
   if(k===' '&&!onBtn){ e.preventDefault(); P.playing?stopProg():playProg(); }
   else if(k==='Enter'&&!onBtn){ e.preventDefault(); addAtEnd(); }
   else if(k==='p'||k==='P'){ $('bPlay').click(); }
+  else if(k==='f'||k==='F'){ toggleFull(); }
   else if(k==='ArrowLeft'){ e.preventDefault(); shift(e.shiftKey?-12:-1); }
   else if(k==='ArrowRight'){ e.preventDefault(); shift(e.shiftKey?12:1); }
   else if(k==='ArrowUp'){ e.preventDefault(); invert(true); }
