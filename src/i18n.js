@@ -316,7 +316,7 @@ const HTML_EN={
   'octava ·':'octave ·',
   'inversión ·':'inversion ·',
   'deshacer/rehacer':'undo/redo',
-  'Compás de 4/4, 96 ticks por tiempo. Afinación igual: MIDI 69 = 440 Hz. El nombre de cada octava depende de la convención elegida en Ajustes; el número MIDI y la frecuencia no cambian. Los acordes se calculan cortando la línea de tiempo cada vez que cambia el conjunto de notas que suenan; la tonalidad y los patrones son una estimación.':'4/4 time, 96 ticks per beat. Equal temperament: MIDI 69 = 440 Hz. Each octave’s name depends on the convention chosen in Settings; the MIDI number and the frequency do not change. Chords are found by cutting the timeline every time the set of sounding notes changes; the key and the patterns are an estimate.',
+  'Compás de 4/4, 96 ticks por tiempo. Afinación igual: MIDI 69 = 440 Hz. El nombre de cada octava depende de la convención elegida en Ajustes; el número MIDI y la frecuencia no cambian. Los acordes se calculan cortando la línea de tiempo cada vez que cambia el conjunto de notas que suenan; la tonalidad, los patrones y la tensión son una estimación.':'4/4 time, 96 ticks per beat. Equal temperament: MIDI 69 = 440 Hz. Each octave’s name depends on the convention chosen in Settings; the MIDI number and the frequency do not change. Chords are found by cutting the timeline every time the set of sounding notes changes; the key, the patterns and the tension are an estimate.',
 };
 // Static texts that read the same in English
 const HTML_SAME=new Set(['Salonas Chord Analyzer','+ Pattern','Slide','Porta','Portamento','BPM','Zoom','zoom','Piano roll','Ctrl+A','Ctrl','Alt','Shift','Esc','Enter','A','B','Q','P','Z','Y',

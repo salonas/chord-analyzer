@@ -6,6 +6,8 @@ import { melodyKinds } from './roles.js';
 import { tr } from './i18n.js';
 
 // ---------- expression ----------
+// The fixed weights of the formula; the help of the tab quotes them and a test keeps both in step (audit.test.js)
+const RULES={voiceTop:1,voiceBass:.35,voiceInner:-.5,beat1:1,beat3:.5,offbeat:-.6,apoyResolve:-.5,passing:-.3};
 // Starting points per feeling; heuristics, not measurements. Fields: base, range %, voice, accent, arc, phrase (bars, 0 = whole pattern), arcAmt, contour, tension, apoy, cad, human, art %
 const FEELINGS={
   neutro:  {get label(){return tr('Neutro','Neutral');},                        p:{base:90, range:100,voice:14,accent:10,arc:'flat', phrase:4,arcAmt:0, contour:0,tension:0,  apoy:0, cad:0,  human:4,art:100}},
@@ -55,8 +57,8 @@ function expressPattern(p,ns,E,seed,flat,prefs){
   // neighbors, escape tones and anticipations drop 30 %
   const nct=new Map(), UNSTRESSED=new Set(['passing','neighbor','double','escape','anticipation']);
   melodyKinds(p,prefs).forEach(({kind,to},id)=>{
-    if(kind==='appoggiatura'){ nct.set(id,(nct.get(id)||0)+1); to.forEach(t=>nct.set(t,(nct.get(t)||0)-.5)); }
-    else if(UNSTRESSED.has(kind)) nct.set(id,(nct.get(id)||0)-.3);
+    if(kind==='appoggiatura'){ nct.set(id,(nct.get(id)||0)+1); to.forEach(t=>nct.set(t,(nct.get(t)||0)+RULES.apoyResolve)); }
+    else if(UNSTRESSED.has(kind)) nct.set(id,(nct.get(id)||0)+RULES.passing);
   });
   const phraseLen=E.phrase?E.phrase*4*T:Math.max(1,progEnd(p));
   const lastSeg=S.length-1, cadOK=!!(A&&A.cad)&&S.length>=2;
@@ -67,8 +69,8 @@ function expressPattern(p,ns,E,seed,flat,prefs){
     if(!flat){
       let dev=0;
       const g=onset.get(n.s), i=g.indexOf(n);
-      if(g.length>=2){ if(i===g.length-1) dev+=E.voice; else if(i===0) dev+=E.voice*.35; else dev-=E.voice*.5; }
-      const pos=n.s%(4*T), ia=I.accent/100; if(pos===0) dev+=E.accent*ia; else if(pos===2*T) dev+=E.accent*.5*ia; else if(pos%T!==0) dev-=E.accent*.6*ia;
+      if(g.length>=2){ if(i===g.length-1) dev+=E.voice*RULES.voiceTop; else if(i===0) dev+=E.voice*RULES.voiceBass; else dev+=E.voice*RULES.voiceInner; }
+      const pos=n.s%(4*T), ia=I.accent/100; if(pos===0) dev+=E.accent*RULES.beat1*ia; else if(pos===2*T) dev+=E.accent*RULES.beat3*ia; else if(pos%T!==0) dev+=E.accent*RULES.offbeat*ia;
       const x=(n.s%phraseLen)/phraseLen;
       if(E.arc==='cresc') dev+=E.arcAmt*(x-.5); else if(E.arc==='dim') dev+=E.arcAmt*(.5-x); else if(E.arc==='arch') dev+=E.arcAmt*(Math.sin(Math.PI*x)-.5);
       if(melSet.has(n.id)) dev+=E.contour*(n.m-med)/12;
@@ -90,4 +92,4 @@ function expressPattern(p,ns,E,seed,flat,prefs){
   return napp;
 }
 
-export { EX_KEYS, FEELINGS, exDefaults, exprSummary, expressPattern, instLabel, instText };
+export { EX_KEYS, FEELINGS, RULES, exDefaults, exprSummary, expressPattern, instLabel, instText };
