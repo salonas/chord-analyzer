@@ -4,6 +4,7 @@ import { isDrum, isMulti, isPure, normProg, progEnd, segStep, segs } from './mod
 import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, keyName, keyText, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
 import { exprSummary, instLabel, instText } from './expression.js';
 import { arpeggioChords, blockMelody, splitHarmony } from './harmony.js';
+import { TOL, against, melodyKind, step } from './roles.js';
 import { drumText } from './drums.js';
 import { tr } from './i18n.js';
 import { hasGlide, rangeOf } from './glide.js';
@@ -34,36 +35,10 @@ function foundText(f,N){
   return `${seq.slice(0,inside).join('–')} (${tr('continúa en','continues to')} ${seq.slice(inside).join('–')} ${tr('al repetir','when it repeats')})`;
 }
 const octTail=prefs=>tr(` — octavas: ${OCT_CONV[prefs.octConv].name}`,` — octaves: ${OCT_CONV[prefs.octConv].name}`);
-// a melody note against the chord under it: interval from the root, tension and role
-const OUT_DEG={0:'1',1:'♭9',2:'9',3:'♯9',4:'3',5:'4',6:'♯11',7:'5',8:'♭6',9:'13',10:'♭7',11:'7'};
-function against(m,r){
-  if(!r||!r.c) return null;
-  // a degree the voicing leaves out (the 5 of C(no5)) still counts as a chord tone
-  const degs=r.c.type.degs, rel=((m-r.c.root)%12+12)%12, d=degs.find(x=>x.pc===rel);
-  if(d) return {iv:d.label,ten:d.n<=7?'low':'mid',tone:d.n<=7};
-  // half a step above a chord tone clashes (♭9 over the root, 4 over a major 3rd)
-  return {iv:OUT_DEG[rel],ten:degs.some(x=>x.pc===(rel+11)%12)?'high':'mid',tone:false};
-}
 const TEN_WORD={get low(){return tr('baja','low');},get mid(){return tr('media','mid');},get high(){return tr('alta','high');}};
 // the melody tension in the same 0–1 scale as the chords, with its word: "alta (0,85)"
 const TEN_VAL={low:.15,mid:.5,high:.85};
 const melTen=f=>f?`${TEN_WORD[f.ten]} (${numText(TEN_VAL[f.ten])})`:'—';
-// a note that is not in its chord but is in the next one, within two beats of the change, and is the last
-// melody note before the change, announces it; an earlier one in that window is just a tension
-const ANTICIPATION=2*T;
-const TOL=Math.round(.05*T); // notes that start within ±0.05 beats start together, as in harmony.js
-const step=x=>x!==null&&x!==0&&Math.abs(x)<=2;
-// a chord tone, a step to one side, a third leap to the other side and a step back to the same tone:
-// the two notes in the middle are one ornament (double neighbor, cambiata)
-function doubleNeighbor(mel,i,toneAt){
-  const at=j=>mel[j]&&mel[j].notes[0];
-  for(const a of [i-1,i-2]){
-    if(a<0||!mel[a+3]||!toneAt(a)||!toneAt(a+3)||toneAt(a+1)||toneAt(a+2)||at(a)!==at(a+3)) continue;
-    const u=at(a+1)-at(a), w=at(a+2)-at(a);
-    if(step(u)&&step(w)&&Math.sign(u)!==Math.sign(w)) return true;
-  }
-  return false;
-}
 // a note held over a chord change that clashes with the new chord and then falls a step to one of its tones:
 // "retardo 4–3 → E4". It is an addition to the role, inside the same column
 function suspension(mel,i,prefs,next,key){
@@ -74,19 +49,19 @@ function suspension(mel,i,prefs,next,key){
   return ` · ${tr('retardo','suspension')} ${held.iv}–${to.iv} → ${noteText(plainSpell(nx.notes[0],prefs,key),prefs)}`;
 }
 function melodyRole(mel,i,info,toneAt,prefs,next,key){
-  const k=info[i]; if(!k) return '—';
-  const sus=suspension(mel,i,prefs,next,key);
-  if(k.tone) return tr('nota del acorde','chord tone')+sus;
-  const m=mel[i].notes[0], pv=mel[i-1], nx=mel[i+1], d1=pv?m-pv.notes[0]:null, d2=nx?nx.notes[0]-m:null;
-  const toward=next&&next.r&&next.r.c&&mel[i].s<next.a&&mel[i].s>=next.a-ANTICIPATION&&against(m,next.r).tone;
-  const ahead=toward&&(!nx||nx.s>=next.a);
-  if(doubleNeighbor(mel,i,toneAt)) return tr('bordadura doble','double neighbor')+sus;
-  if(step(d1)&&step(d2)) return (Math.sign(d1)===Math.sign(d2)?tr('paso','passing'):tr('bordadura','neighbor'))+sus;
-  if(step(d2)&&toneAt(i+1)) return `${tr('apoyatura','appoggiatura')} → ${noteText(plainSpell(nx.notes[0],prefs,key),prefs)}`+sus;
-  // the last note before the change that belongs to the next chord announces it, even when it came by step
-  if(ahead) return `${tr('anticipación','anticipation')} → ${next.label}`;
-  if(step(d1)) return tr('escapada','escape tone')+sus;
-  return (k.ten==='mid'||toward?tr('tensión','tension'):tr('libre','free'))+sus;
+  const kind=melodyKind(mel,i,info,toneAt,next); if(kind==='none') return '—';
+  const sus=suspension(mel,i,prefs,next,key), nx=mel[i+1];
+  switch(kind){
+    case 'tone': return tr('nota del acorde','chord tone')+sus;
+    case 'double': return tr('bordadura doble','double neighbor')+sus;
+    case 'passing': return tr('paso','passing')+sus;
+    case 'neighbor': return tr('bordadura','neighbor')+sus;
+    case 'appoggiatura': return `${tr('apoyatura','appoggiatura')} → ${noteText(plainSpell(nx.notes[0],prefs,key),prefs)}`+sus;
+    case 'anticipation': return `${tr('anticipación','anticipation')} → ${next.label}`;
+    case 'escape': return tr('escapada','escape tone')+sus;
+    case 'tension': return tr('tensión','tension')+sus;
+    default: return tr('libre','free')+sus;
+  }
 }
 function harmonyLines(p,prefs,L){
   const Hm=splitHarmony(p);

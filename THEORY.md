@@ -59,9 +59,16 @@ Rama `feat/inversion-notation`, desde `main` con #17 fusionado (decisión 6, pas
 - Chequeo `V-barra`: ningún grado de la sonda ni de los textos lleva «/» salvo una función secundaria. `analysis.test.js` cambia `V7♭9/3` por `V7♭9 en 1ª inversión`; J17 cambia `V11/11` por «V11 con bajo en la 11» (el texto de la sonda).
 - La franja usa `short` (`main.js`); el marcador de grado del `.mid` (`midi.js`) sigue usando `text`.
 
+Rama `feat/appoggiatura-roles`, sobre la anterior (fila 23 de la auditoría): la pestaña Expresión deja su detección propia de apoyaturas (`nct`) y usa los roles del texto exportado. La clasificación vive ahora en `src/roles.js` (`melodyKind`, `melodyKinds`, `against`); `text.js` la escribe con palabras y `expression.js` la convierte en velocity:
+
+- apoyatura: +1 × el control «Apoyaturas», y su resolución −0,5; paso, bordadura (simple o doble), escapada y anticipación: −0,3. Antes bastaba cualquier nota fuera del acorde que cayera en un tiempo (`n.s%T===0`); la ayuda decía «en tiempo fuerte» y no era cierto.
+- Efecto visible: J01 (E4 F4 G4 sobre C). El texto dice «paso» para F4; Expresión lo contaba como apoyatura (+1 en F4, −0,5 en G4, 2 notas). Ahora F4 baja 30 % y G4 no cambia (1 nota). Los fixtures de `expression.json` no se mueven (ninguno tiene notas fuera del acorde en la melodía); los casos nuevos están en `expression.test.js`.
+- Solo las notas que `splitHarmony` lee como melodía reciben rol; antes lo recibía la voz más aguda de cada ataque.
+- La ayuda de Apoyaturas (`index.html`, `src/i18n.js`) describe la regla nueva. Sin cambios en la sonda: 502 de 510.
+
 ### Retomar desde main
 
-Punto de partida: `feat/inversion-notation` fusionado en `main` (paso 1 de `inversiones-tension-ui.md`); la sonda da 502 de 510 y quedan 8 fallos, los mismos de antes. Siguen, en ese orden: paso 2 (fila 23, apoyaturas con `melodyRole`), paso 3 (tensión con contexto), paso 4 (filas ✗ y ⚠ de la sección 3) y paso 5 (filas 5 y 10, con textos aprobados antes).
+Punto de partida: `feat/inversion-notation` fusionado en `main` (paso 1 de `inversiones-tension-ui.md`); la sonda da 502 de 510 y quedan 8 fallos, los mismos de antes. Paso 2 (fila 23, apoyaturas con los roles de `roles.js`) va apilado sobre el 1. Siguen: paso 3 (tensión con contexto), paso 4 (filas ✗ y ⚠ de la sección 3) y paso 5 (filas 5 y 10, con textos aprobados antes).
 
 Fallos que quedan:
 

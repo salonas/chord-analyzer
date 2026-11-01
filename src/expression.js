@@ -2,6 +2,7 @@
 import { INSTRUMENTS, T } from './data.js';
 import { hash01, progEnd, segStep, segs } from './model.js';
 import { analyze, analyzeProgression, noteText, plainSpell } from './analysis.js';
+import { melodyKinds } from './roles.js';
 import { tr } from './i18n.js';
 
 // ---------- expression ----------
@@ -41,7 +42,7 @@ function exprSummary(e){
   return tr(`${lab} · base ${e.base} · contraste ${e.range} % · voces ${e.voice} · acento ${e.accent} · ${arc}${arcT} · contorno ${e.contour} · tensión armónica ${e.tension} · apoyaturas ${e.apoy} · cadencia ${e.cad} · humanizar velocity ±${e.human} · timing 0 (semilla ${e.seed})${e.artOn?` · articulación ${e.art} %`:''} · notas: ${sc}`,
     `${lab} · base ${e.base} · contrast ${e.range} % · voices ${e.voice} · accent ${e.accent} · ${arc}${arcT} · contour ${e.contour} · harmonic tension ${e.tension} · appoggiaturas ${e.apoy} · cadence ${e.cad} · humanize velocity ±${e.human} · timing 0 (seed ${e.seed})${e.artOn?` · articulation ${e.art} %`:''} · notes: ${sc}`);
 }
-// Sets velocity (and articulation) on the notes ns of pattern p; returns how many were shaped as appoggiatura or passing tone
+// Sets velocity (and articulation) on the notes ns of pattern p; returns how many were shaped as appoggiatura or passing tone (any role that is not a chord tone)
 function expressPattern(p,ns,E,seed,flat,prefs){
   const I=p.inst;
   const S=segs(p), A=analyzeProgression(S.map(x=>segStep(p,x)),prefs);
@@ -50,16 +51,12 @@ function expressPattern(p,ns,E,seed,flat,prefs){
   const melody=[...onset.keys()].sort((a,b)=>a-b).map(s=>{const g=onset.get(s); return g[g.length-1];});
   const melSet=new Set(melody.map(n=>n.id));
   const mels=melody.map(n=>n.m).sort((a,b)=>a-b), med=mels.length?mels[Math.floor(mels.length/2)]:60;
-  // Melody notes outside the chord sounding under them: appoggiatura (strong beat, resolves by step) or passing tone (off the beat)
-  const nct=new Map();
-  melody.forEach((n,i)=>{
-    const acc=[...new Set(p.notes.filter(k=>k!==n&&k.s<=n.s&&k.s+k.l>n.s).map(k=>k.m))].sort((a,b)=>a-b);
-    if(new Set(acc.map(m=>m%12)).size<2) return;
-    const c=analyze(acc,null)[0]; if(!c) return;
-    if(new Set(c.type.degs.map(d=>(d.pc+c.root)%12)).has(n.m%12)) return;
-    const nx=melody[i+1], strong=n.s%T===0;
-    if(strong&&nx&&nx.m!==n.m&&Math.abs(nx.m-n.m)<=2){ nct.set(n.id,(nct.get(n.id)||0)+1); nct.set(nx.id,(nct.get(nx.id)||0)-.5); }
-    else if(!strong) nct.set(n.id,(nct.get(n.id)||0)-.3);
+  // The roles of the exported text (roles.js): an appoggiatura is accented and its resolution lightened by half; passing tones,
+  // neighbors, escape tones and anticipations drop 30 %
+  const nct=new Map(), UNSTRESSED=new Set(['passing','neighbor','double','escape','anticipation']);
+  melodyKinds(p,prefs).forEach(({kind,to},id)=>{
+    if(kind==='appoggiatura'){ nct.set(id,(nct.get(id)||0)+1); to.forEach(t=>nct.set(t,(nct.get(t)||0)-.5)); }
+    else if(UNSTRESSED.has(kind)) nct.set(id,(nct.get(id)||0)-.3);
   });
   const phraseLen=E.phrase?E.phrase*4*T:Math.max(1,progEnd(p));
   const lastSeg=S.length-1, cadOK=!!(A&&A.cad)&&S.length>=2;
