@@ -68,7 +68,7 @@ function harmonyLines(p,prefs,L){
   const A=analyzeProgression(Hm.chords.map(c=>({notes:c.notes,dur:c.b-c.a,...(p.names[sigOf(c.notes)]||{})})),prefs);
   return {Hm,A,write(){
     const nt=m=>noteText(plainSpell(m,prefs,A.key),prefs);
-    L.push(tr('# Armonía: n. acorde | grado (función · tensión 0–1) | inicio–fin (tiempos) | voces | bajo','# Harmony: n. chord | degree (function · tension 0–1) | start–end (beats) | voices | bass')+octTail(prefs));
+    L.push(tr('# Armonía: n. acorde | grado (función · tensión estimada 0–1: base (función y disonancia) + contexto (llegada, sorpresa, espera)) | inicio–fin (tiempos) | voces | bajo','# Harmony: n. chord | degree (function · estimated tension 0–1: base (function and dissonance) + context (arrival, surprise, wait)) | start–end (beats) | voices | bass')+octTail(prefs));
     if(!Hm.chords.length) L.push(tr('— sin acordes','— no chords'));
     Hm.chords.forEach((c,i)=>{
       const r=A.rs[i], adds=c.adds.map(x=>`+${nt(x.m)} ${tr('en','at')} ${fmtB(x.s)}`).join(' · ');
@@ -110,7 +110,7 @@ function progText(p,prefs){
   if(p.expr) L.push(`${tr('# Expresión','# Expression')}: ${exprSummary(p.expr)}`);
   if(hasGlide(p)) L.push(tr(`# Deslizamiento: bend ±${rangeOf(p)} st · ${p.glideNative?'nativo (CC65 y CC84)':'automatización de pitch'}`,`# Glide: bend ±${rangeOf(p)} st · ${p.glideNative?'native (CC65 and CC84)':'pitch automation'}`));
   if(pure){
-    L.push(tr('# Formato: n. acorde | grado (función · tensión 0–1) | notas | MIDI | duración','# Format: n. chord | degree (function · tension 0–1) | notes | MIDI | length')+octTail(prefs));
+    L.push(tr('# Formato: n. acorde | grado (función · tensión estimada 0–1: base (función y disonancia) + contexto (llegada, sorpresa, espera)) | notas | MIDI | duración','# Format: n. chord | degree (function · estimated tension 0–1: base (function and dissonance) + context (arrival, surprise, wait)) | notes | MIDI | length')+octTail(prefs));
     const beats=t=>`${fmtB(t)} ${t===T?tr('tiempo','beat'):tr('tiempos','beats')}`;
     A.rs.forEach((r,i)=>L.push(`${i+1}. ${chordLabel(r,prefs)} | ${A.romans[i]?A.romans[i].text:'?'} (${FN_NAME[A.fn[i]]} · ${tenText(r,A.ten[i])}) | ${r.spelled.map(n=>noteText(n,prefs)).join(' ')} | ${r.notes.join(' ')} | ${beats(S[i].b-S[i].a)}`));
     return L.join('\n');

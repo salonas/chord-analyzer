@@ -237,7 +237,6 @@ const HTML_EN={
   'Contorno melódico:':'Melodic contour:',
   'la melodía suena más fuerte cuanto más sube sobre su altura media (valor por octava).':'the melody sounds louder the higher it rises above its average pitch (value per octave).',
   'Tensión armónica:':'Harmonic tension:',
-  'cada acorde recibe una tensión de 0 a 1 según su función en la tonalidad (tónica 0,1 · subdominante 0,4 · dominante 0,8 · color 0,5) y su disonancia (tríada mayor 0,1 … disminuido 0,75, más extensiones alteradas). Positivo: lo tenso suena más fuerte. Negativo: lo tenso se suaviza.':'each chord gets a tension from 0 to 1 from its function in the key (tonic 0.1 · subdominant 0.4 · dominant 0.8 · color 0.5) and its dissonance (major triad 0.1 … diminished 0.75, plus altered extensions). Positive: tense chords sound louder. Negative: tense chords get softer.',
   'Apoyaturas:':'Appoggiaturas:',
   'una nota de la melodía fuera del acorde que resuelve por grado conjunto, la que el texto exportado llama apoyatura, se acentúa y su resolución se aliviana a la mitad. Las notas de paso, bordaduras, escapadas y anticipaciones bajan un 30 %.':'a melody note outside the chord that resolves by step, the one the exported text calls an appoggiatura, gets an accent and its resolution is lightened by half. Passing notes, neighbor notes, escape tones and anticipations drop 30 %.',
   'Llegada de cadencia:':'Cadence arrival:',

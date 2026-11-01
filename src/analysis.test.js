@@ -1,4 +1,5 @@
-import { analyze, analyzeProgression, detectKey, resolveStep } from './analysis.js';
+import { CTX, DISS, FN_TENSION, analyze, analyzeProgression, detectKey, resolveStep, tenDetail, tensionHelp } from './analysis.js';
+import { setLang } from './i18n.js';
 import { EXAMPLE, segs, segStep } from './model.js';
 import fx from './test/fixtures/analysis.json';
 import turnaround from './test/fixtures/turnaround.json';
@@ -108,5 +109,31 @@ describe('D minor with a Phrygian ♭II (brimstone-03-pattern-3)', () => {
     expect([B.key.tonic, B.key.mode]).toEqual([2, 'minor']);
     expect(B.rs[3].label).toBe('D♯7');
     expect(B.rs.flatMap(r => r.spelled).some(s => Math.abs(s.a) > 1)).toBe(false);
+  });
+});
+
+describe('tension with context', () => {
+  const N = { C: [48, 52, 55], F: [53, 57, 60], G7: [43, 47, 50, 53], Am: [45, 48, 52], E7: [40, 44, 47, 50], A7: [45, 49, 52, 55], D7: [50, 54, 57, 60] };
+  const run = names => analyzeProgression(names.map(n => ({ notes: N[n] })), PREFS_BY.default);
+  it('writes the breakdown for the tooltip', () => {
+    const A = run(['C', 'F', 'G7', 'Am']);
+    expect([0, 3].map(i => tenDetail(A, i))).toEqual(['base 0,1', 'base 0,13 + sorpresa 0,15 = 0,28']);
+    expect(tenDetail(run(['C', 'F', 'G7', 'C']), 3)).toBe('base 0,1 − llegada 0,15 = 0');
+    setLang('en');
+    try { expect(tenDetail(A, 3)).toBe('base 0.13 + surprise 0.15 = 0.28'); } finally { setLang('es'); }
+  });
+  it('adds no more than the maximum for a chain of dominants (T07)', () => {
+    const A = run(['C', 'E7', 'A7', 'D7', 'G7', 'C']);
+    expect(A.tenCtx.map(c => c && c.val)).toEqual([null, null, 0.05, 0.1, 0.1, -0.15]);
+    A.tenCtx.forEach(c => { if (c && c.rule === 'wait') expect(c.val).toBeLessThanOrEqual(CTX.waitMax); });
+  });
+  it('keeps the total as the base plus the context', () => {
+    const A = run(['C', 'F', 'G7', 'Am']);
+    expect(A.ten[3]).toBeCloseTo(A.tenBase[3] + A.tenCtx[3].val, 2);
+  });
+  it('writes the help of the Expression tab from the constants', () => {
+    const n = x => String(x).replace('.', ',');
+    const h = tensionHelp();
+    for (const x of [FN_TENSION.T, FN_TENSION.S, FN_TENSION.D, FN_TENSION.C, DISS.maj, DISS.dim, CTX.surprise, CTX.wait, CTX.waitMax, Math.abs(CTX.arrival)]) expect(h).toContain(n(x));
   });
 });

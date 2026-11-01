@@ -101,13 +101,13 @@ const runProg = chs => {
   return {
     A,
     key: keyName(A.key, P), alt: A.alt ? keyName(A.alt, P) : '', mode: modeName(A.key), keyText: keyText(A.key, A.alt, P),
-    labels: A.rs.map(r => r.label), romans: A.romans.map(r => r ? r.text : '?'), shorts: A.romans.map(r => r ? r.short : '?'), fn: A.fn,
+    labels: A.rs.map(r => r.label), romans: A.romans.map(r => r ? r.text : '?'), shorts: A.romans.map(r => r ? r.short : '?'), fn: A.fn, ten: A.ten, ctx: A.tenCtx,
     spelled: A.rs.map(r => r.spelled.map(spellName)), cad: A.cad || '', found: A.found.map(f => f.name),
   };
 };
 const progCases = [];
 const prog = (id, level, desc, chords, checks, ref) => progCases.push({ id, level, desc, chords, checks, ref });
-const ALL_ROMANS = [];
+const ALL_ROMANS = [], ALL_TEN = [];
 
 // C. enharmonic spelling in context (spell: index -> expected set of note names)
 prog('C01', 1, 'Do mayor I–IV–V7–I', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3 F3', 'C3 E3 G3'], { key: 'C mayor', spell: { 2: 'G B D F' } });
@@ -183,6 +183,16 @@ prog('V12', 2, 'V9 con la 9ª en el bajo (no es 1ª inversión)', [VC, 'A2 G3 B3
 
 prog('V13', 3, 'Franja: la sexta aumentada conserva su cifra', ['C3 E3 G3', 'Ab2 C3 D3 F#3', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', short: [null, 'Fr⁴₃'] });
 
+// T. tension with context (Meyer): the base plus arrival, surprise or wait after a dominant; ten is the total ±0.01
+prog('T01', 2, 'Llegada: C final tras G7', [VC, 'F3 A3 C4', 'G2 B2 D3 F3', VC], { key: 'C mayor', ten: [null, null, null, 0] });
+prog('T02', 2, 'Sorpresa: Am tras G7 (cadencia rota)', [VC, 'F3 A3 C4', 'G2 B2 D3 F3', 'A2 C3 E3'], { key: 'C mayor', ten: [null, null, null, 0.28] });
+prog('T03', 3, 'Espera: G7 tras el 6/4 cadencial', [VC, 'F3 A3 C4', 'G2 C4 E4', 'G2 B2 D3 F3', VC], { key: 'C mayor', ten: [null, null, null, 0.73, 0] });
+prog('T04', 3, 'Espera: G7 tras D7 (V7/V)', [VC, 'D3 F#3 A3 C4', 'G2 B2 D3 F3', VC], { key: 'C mayor', ten: [null, null, 0.73, 0] });
+prog('T05', 3, 'Sorpresa en menor: F tras E7 en La menor', ['A2 C3 E3', 'D3 F3 A3', 'E2 G#2 B2 D3', 'F2 A2 C3'], { key: 'A menor', ten: [null, null, null, 0.4] });
+prog('T10', 3, 'Andaluza: el ♭VII sigue siendo D pero el F no recibe sorpresa', ['A2 C3 E3', 'G2 B2 D3', 'F2 A2 C3', 'E2 G#2 B2'], { key: 'A menor', fn: ['T', 'D', 'S', 'D'], ten: [null, null, 0.25, null], ctx: [null, null, null, null] });
+prog('T11', 3, 'El v menor es D sin sensible: el i que sigue no recibe llegada', ['A2 C3 E3', 'E2 G2 B2', 'A2 C3 E3'], { key: 'A menor', ten: [null, null, 0.13], ctx: [null, null, null] });
+prog('T09', 3, 'Llegada tras un dim7 invertido: la raíz es C♯, no el bajo', [VC, 'G3 Bb3 C#4 E4', 'D3 F3 A3', 'G2 B2 D3 F3', VC], { key: 'C mayor', ten: [null, null, 0.13, null, 0] });
+
 prog('F01', 1, 'Tonalidad trivial Do', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor' });
 prog('F02', 1, 'Tonalidad trivial La menor', ['A2 C3 E3', 'D3 F3 A3', 'E2 G#2 B2', 'A2 C3 E3'], { key: 'A menor' });
 prog('F03', 1, 'Un solo acorde mayor', ['C3 E3 G3'], { key: 'C mayor' });
@@ -239,7 +249,7 @@ prog('H07', 2, 'Sin patrón (acordes al azar)', ['C3 E3 G3', 'Eb3 G3 Bb3', 'F#3 
 for (const c of progCases) {
   const o = runProg(c.chords);
   const ch = c.checks;
-  ALL_ROMANS.push(...o.romans);
+  ALL_ROMANS.push(...o.romans); ALL_TEN.push({ id: c.id, ten: o.ten, ctx: o.ctx });
   const head = `${c.desc}: ${o.labels.join(' – ')}`;
   if (ch.key) add('tonalidad', c.id, c.level, head, ch.key, o.key + (o.alt ? ` (alt ${o.alt})` : ''), acc(ch.key, o.key) && !ch.regions, c.ref, ch.regions ? 'la app da una sola tonalidad para todo el pattern' : '');
   if (ch.mode != null) add('modo', c.id + '-modo', c.level, head, ch.mode || '(sin etiqueta)', o.mode || '(sin etiqueta)', o.mode === ch.mode, c.ref);
@@ -247,6 +257,8 @@ for (const c of progCases) {
   if (ch.alt) add('tonalidad', c.id + '-alt', c.level, head + ' (alternativa visible)', ch.alt, o.alt || '(sin alternativa)', !!o.alt, c.ref);
   if (ch.romans) ch.romans.forEach((e, i) => { if (e == null) return; add('grado', `${c.id}.${i + 1}`, c.level, `${head} · acorde ${i + 1} (${o.labels[i]})`, e, o.romans[i], acc(e, o.romans[i]), c.ref); });
   if (ch.short) ch.short.forEach((e, i) => { if (e == null) return; add('grado', `${c.id}.${i + 1}-franja`, c.level, `${head} · franja, acorde ${i + 1} (${o.labels[i]})`, e, o.shorts[i], acc(e, o.shorts[i]), c.ref); });
+  if (ch.ten) ch.ten.forEach((e, i) => { if (e == null) return; add('tensión', `${c.id}.${i + 1}`, c.level, `${head} · tensión de ${o.labels[i]}`, e, o.ten[i], Math.abs(o.ten[i] - e) <= 0.01, c.ref); });
+  if (ch.ctx) ch.ctx.forEach((e, i) => add('tensión', `${c.id}.${i + 1}-contexto`, c.level, `${head} · contexto de ${o.labels[i]}`, e === null ? '(ninguno)' : e, o.ctx[i] ? o.ctx[i].rule : '(ninguno)', (o.ctx[i] ? o.ctx[i].rule : null) === e, c.ref));
   if (ch.fn) ch.fn.forEach((e, i) => add('función', `${c.id}.${i + 1}`, c.level, `${head} · ${o.romans[i]}`, e, o.fn[i], acc(e, o.fn[i]), c.ref));
   if (ch.spell) Object.entries(ch.spell).forEach(([i, e]) => {
     const got = o.spelled[i].join(' ');
@@ -407,6 +419,14 @@ for (const c of melCases.slice(-2)) {
   const grades = [...ALL_ROMANS, ...Object.values(texts).flatMap(t => t.text.split('\n').map(l => l.match(/^\d+\. [^|]+\| ([^|]+?) \([^)]*·/)).filter(Boolean).map(m => m[1]))];
   const bad = [...new Set(grades.filter(g => g.includes('/') && !SECONDARY.test(g)))];
   add('grado', 'V-barra', 2, `Ningún grado lleva "/" salvo una función secundaria (${grades.length} grados revisados)`, '(ninguno)', bad.join('; ') || '(ninguno)', !bad.length);
+}
+
+// T06 and T08: the first chord has no context, and the tension always lies between 0 and 1
+{
+  const first = ALL_TEN.filter(t => t.ctx[0] !== null).map(t => t.id);
+  add('tensión', 'T06', 2, `El primer acorde nunca lleva ajuste de contexto (${ALL_TEN.length} progresiones)`, '(ninguna)', first.join('; ') || '(ninguna)', !first.length);
+  const out = ALL_TEN.filter(t => t.ten.some(x => !(x >= 0 && x <= 1))).map(t => t.id);
+  add('tensión', 'T08', 2, `La tensión queda entre 0 y 1 (${ALL_TEN.length} progresiones)`, '(ninguna fuera)', out.join('; ') || '(ninguna fuera)', !out.length);
 }
 
 const caseKey = r => `${r.cat}:${r.id}:${r.expected}`;
