@@ -194,7 +194,8 @@ prog('G08', 2, 'Backdoor ♭VII–I', ['C3 E3 G3', 'F3 A3 C4', 'Bb2 D3 F3', 'C3 
 prog('G09', 2, 'Rota en menor V–♭VI', ['C3 Eb3 G3', 'F3 Ab3 C4', 'G2 B2 D3 F3', 'Ab2 C3 Eb3'], { key: 'C menor', cad: { has: 'rota' } });
 prog('G10', 2, 'I⁶₄–I no es cadencia', ['C3 E3 G3', 'G2 C3 E3', 'C3 E3 G3'], { cad: { none: true } });
 prog('G11', 2, 'Plagal menor iv–I en mayor', ['C3 E3 G3', 'F3 Ab3 C4', 'C3 E3 G3'], { key: 'C mayor', cad: { has: 'plagal' } });
-prog('G12', 2, 'V/V–V termina en semicadencia', ['C3 E3 G3', 'D3 F#3 A3 C4', 'G2 B2 D3'], { key: 'C mayor', cad: { has: 'Semicadencia' } });
+// ambiguous: Sol mayor with an authentic cadence (IV–V7–I) or Do mayor with a half cadence (I–V/V–V); the app shows the other as the alternative
+prog('G12', 2, 'V/V–V: Sol mayor auténtica o Do mayor semicadencia', ['C3 E3 G3', 'D3 F#3 A3 C4', 'G2 B2 D3'], { key: ['C mayor', 'G mayor'], cad: { has: ['Semicadencia', 'auténtica'] } });
 prog('G13', 3, 'Cadencia en menor: el texto usa mayúsculas (V → I)', ['A2 C3 E3', 'E2 G#2 B2 D3', 'A2 C3 E3'], { key: 'A menor', cad: { has: ['V → i', '(V → i)'] } });
 
 prog('H01', 1, 'Pop I–V–vi–IV', ['C3 E3 G3', 'G2 B2 D3', 'A2 C3 E3', 'F2 A2 C3'], { found: ['I–V–vi–IV'] });
