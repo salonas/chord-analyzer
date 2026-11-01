@@ -127,6 +127,8 @@ function detectKey(items){
     // V7–vi of the relative major is a deceptive cadence: it ends off the tonic on purpose, so it is no evidence for the minor
     const pv=items[items.length-2], deceptive=mode==='minor'&&pv&&pv.q==='dom'&&pv.root===(t+10)%12;
     if(l.root===t&&tq.includes(l.q)&&!deceptive) s+=3;
+    // a progression that starts and ends on the same tonic chord is closed on it, even when the chords between borrow
+    if(items.length>2&&f.root===t&&l.root===t&&f.q===l.q&&tq.includes(f.q)) s+=1.5;
     items.forEach((it,i)=>{
       if(it.root===t&&tq.includes(it.q)) s+=.5;
       const nx=items[i+1];
