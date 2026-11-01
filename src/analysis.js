@@ -170,6 +170,55 @@ const PATTERNS=[
  ['Menor i–♭VI–♭VII','Minor i–♭VI–♭VII','i ♭VI ♭VII'],['Menor i–iv–v','Minor i–iv–v','i iv v'],['Menor i–iv–V','Minor i–iv–V','i iv V'],['Mixolidia I–♭VII–IV','Mixolydian I–♭VII–IV','I ♭VII IV'],
  ['Blues de 12 compases','12-bar blues','I I I I IV IV I I V IV I I'],['Blues de 12 (quick change)','12-bar blues (quick change)','I IV I I IV IV I I V IV I V'],
 ].map(([es,en,p])=>({get name(){return tr(es,en);},seq:p.split(' ')}));
+// A chord's target in a secondary function is written as the diatonic degree it points at: E7 → A7 in C is V7/vi, though A7 is major
+function targetBase(nx,key){
+  const e=EXP[key.mode][nx.deg];
+  if(nx.diatonic||!e) return nx.base;
+  const b=ROMAN[nx.deg]; return ['min','dim','hdim'].includes(e[0])?b.toLowerCase():b;
+}
+// Spells the notes at the given scale steps from the tonic by letter: rel pitch class -> steps above the tonic's letter
+function respell(r,key,prefs,steps){
+  const [tl]=keyTonicSpell(key,prefs)||rootSpell(key.tonic,key.mode==='minor'?'min':'maj',prefs);
+  r.spelled=r.spelled.map(n=>{
+    const k=steps[((n.midi-key.tonic)%12+12)%12]; if(k==null) return n;
+    const l=(tl+k)%7; let a=((n.midi-NAT[l])%12+12)%12; if(a>6) a-=12;
+    return {...spellMidi(n.midi,l,a),deg:n.deg};
+  });
+}
+// Chords the scale does not explain, read by what they do (in this order): the cadential 6/4, the tonic seventh of the blues,
+// secondary dominants and leading-tone chords, augmented sixths and the dim7 that embellishes the tonic
+function chromaticReading(rs,romans,key,prefs){
+  const tonicTriad=rs.some(r=>r.c&&r.c.root===key.tonic&&r.c.type.q==='maj');
+  romans.forEach((ro,i)=>{
+    const c=rs[i].c, nx=romans[i+1], nc=rs[i+1]&&rs[i+1].c;
+    if(!ro||!c) return;
+    if(ro.deg===0&&c.slash&&bassDeg(c).n===5&&nx&&nx.deg===7) ro.cad64=true;
+    if(!nc||!nx||ro.diatonic) return;
+    const up=(nc.root-c.root+12)%12, q=c.type.q;
+    // I7 is the tonic when no tonic triad shows up or the IV that follows is a seventh too (blues), else it points at IV
+    if(ro.deg===0&&q==='dom'&&(!tonicTriad||(nx.deg===5&&nc.type.q==='dom'))) return;
+    if((q==='dom'||q==='maj')&&up===5&&nx.deg!==0){
+      ro.text='V'+(q==='dom'?(c.type.sym.match(/^\d+/)||[''])[0]:'')+'/'+targetBase(nx,key); ro.secondary=true;
+    } else if((q==='dim'||q==='hdim')&&up===1&&nx.deg!==0){
+      ro.text='vii'+(q==='hdim'?'ø':'°')+(q==='hdim'||c.type.sym==='dim7'?'7':'')+'/'+targetBase(nx,key); ro.secondary=true;
+    }
+  });
+  romans.forEach((ro,i)=>{
+    const c=rs[i].c, nx=romans[i+1], nc=rs[i+1]&&rs[i+1].c, pv=rs[i-1]&&rs[i-1].c;
+    if(!ro||!c||ro.diatonic||ro.secondary) return;
+    const rel=new Set(rs[i].notes.map(m=>(m-key.tonic+12)%12)), has=x=>rel.has(x);
+    const toV=nc&&(nx.deg===7||(nx.deg===0&&nc.slash&&bassDeg(nc).n===5));
+    // ♭6̂ in the bass with ♯4̂ above it and 1̂, resolving to V: Italian, French (adds 2̂) or German (adds ♭3̂) sixth
+    if(toV&&(rs[i].notes[0]-key.tonic+12)%12===8&&has(8)&&has(0)&&has(6)&&[...rel].every(x=>[8,0,6,3,2].includes(x))&&!(has(3)&&has(2))){
+      const g=has(3)?'Ger':has(2)?'Fr':'It';
+      ro.text=g+{Ger:'⁶₅',Fr:'⁴₃',It:'⁶'}[g]; ro.aug6=g;
+      respell(rs[i],key,prefs,{8:5,0:0,6:3,3:2,2:1});
+    } else if(c.type.sym==='dim7'&&has(0)&&pv&&nc&&pv.root===key.tonic&&nc.root===key.tonic){
+      ro.text='♯ii°7'; ro.ct=true;
+      respell(rs[i],key,prefs,{0:0,3:1,6:3,9:5});
+    }
+  });
+}
 function analyzeProgression(steps,prefs){
   // the key comes from the chords' roots and notes, which do not depend on how they are spelled; the spelling then follows the key
   const first=steps.map(s=>resolveStep(s,prefs));
@@ -178,13 +227,7 @@ function analyzeProgression(steps,prefs){
   const keys=detectKey(items), key=keys[0], alt=keys.find(k=>k!==key&&key.score-k.score<2);
   const rs=steps.map(s=>resolveStep(s,prefs,key));
   const romans=rs.map(r=>r.c?romanFor(r.c,key):null);
-  romans.forEach((ro,i)=>{
-    const c=rs[i].c, nx=romans[i+1], nc=rs[i+1]&&rs[i+1].c;
-    if(!ro||!nc||!nx||ro.diatonic) return;
-    if((c.type.q==='dom'||c.type.q==='maj')&&(nc.root-c.root+12)%12===5&&nx.deg!==0){
-      ro.text='V'+(c.type.q==='dom'?(c.type.sym.match(/^\d+/)||[''])[0]:'')+'/'+nx.base; ro.secondary=true;
-    }
-  });
+  chromaticReading(rs,romans,key,prefs);
   const toks=romans.map(r=>r?r.token:'?'), N=toks.length, found=[];
   for(const p of PATTERNS){
     const L=p.seq.length; if(L>N) continue;
@@ -204,6 +247,7 @@ function analyzeProgression(steps,prefs){
     else if(bd===0&&ad===5) cad=tr('Cadencia plagal (IV → I)','Plagal cadence (IV → I)');
     else if(bd===0&&ad===10) cad=tr('Cadencia ♭VII → I (backdoor / mixolidia)','♭VII → I cadence (backdoor / Mixolydian)');
     else if(bd===0&&ad===11) cad=tr('Cadencia con sensible (vii° → I)','Leading-tone cadence (vii° → I)');
+    else if(bd===0&&ad===1&&rs[N-2].c.type.q==='dom') cad=tr('Cadencia con sustituto tritonal (♭II7 → I)','Tritone substitution cadence (♭II7 → I)');
     else if(ad===7&&(bd===9||bd===8)) cad=tr('Cadencia rota (V → ','Deceptive cadence (V → ')+romans[N-1].base+')';
     else if(bd===7) cad=tr('Semicadencia (termina en V)','Half cadence (ends on V)');
   }
@@ -216,8 +260,10 @@ const FN_TENSION={T:.1,S:.4,D:.8,C:.5,'?':.5};
 const FN_NAME={get T(){return tr('tónica','tonic');},get S(){return tr('subdominante','subdominant');},get D(){return tr('dominante','dominant');},C:'color',get '?'(){return tr('sin función','no function');}};
 function harmonicFunction(ro,c,key){
   if(!ro||!c) return '?';
-  if(ro.secondary) return 'D';
+  if(ro.secondary||ro.cad64) return 'D';
+  if(ro.aug6) return 'S';
   const d=ro.deg, minor=key.mode==='minor';
+  if(d===1&&c.type.q==='dom') return 'D';
   if(d===0||(!minor&&(d===9||d===4))||(minor&&d===3)) return 'T';
   if(d===5||d===2||d===1||(minor&&d===8)) return 'S';
   if(d===7||d===11||(minor&&d===10)) return 'D';

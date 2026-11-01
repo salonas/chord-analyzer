@@ -29,4 +29,6 @@ Sin decidir y sin cambios: la notación de inversiones con extensiones y la tens
 
 Rama `fix/theory-spelling-and-keys` (C1 deletreo por letras, C2 nombre de tonalidad, C3 detección de tonalidad): 386 de 418 comprobaciones (92 %), contra 360 al inicio. Ninguna comprobación que pasaba dejó de pasar. Pendiente: C4 y C8, C7 y C11, C6 y C5, modos, C9, C12 y modulación (F11).
 
+Rama `fix/theory-chromatic-and-functions`, sobre la anterior (C4 y C8: dominantes y sensibles secundarias con destino diatónico, sextas aumentadas, dim7 de nota común, I7 del blues, 6/4 cadencial, sustituto tritonal): 400 de 418 (96 %). Pendiente: C7 y C11, C6 y C5, modos, C9, C12 y modulación (F11).
+
 Regenerar la línea base a propósito, tras revisar cada diferencia: `UPDATE_THEORY=1 npx vitest run src/theory.test.js`.
