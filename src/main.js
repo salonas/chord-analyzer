@@ -5,7 +5,7 @@ import { EXAMPLE_NAME, activePat, gmOn, isBlock, isDrum, isMulti, newPattern, ne
 import { gmName } from './gm.js';
 import { fut, hist, lib, persistLib, saveDraft, savePrefs, st } from './state.js';
 import { candTags, chordWarnings, emptySheetText, intervalText, spellActive, warningText } from './panel.js';
-import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, inversionText, keyName, keyText, letterName, noteText, octOff, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp } from './analysis.js';
+import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, inversionText, keyName, keyText, letterName, noteText, octOff, plainSpell, rankHelp, resolveStep, scoreDetail, spellCandidate, tenDetail, tensionHelp } from './analysis.js';
 import { EX_KEYS, FEELINGS, exDefaults, exprSummary, expressPattern, instLabel } from './expression.js';
 import { DRUMS, GROOVES, expressDrums, genGroove } from './drums.js';
 import { libText, parseText, pickInterp, projectText } from './text.js';
@@ -186,12 +186,13 @@ function renderActive(){
 
   spelledNow=spelled; paintKeys();
 
+  $('candRule').textContent=cands.length?rankHelp():'';
   $('candCount').textContent=cands.length?tr(`${cands.length} coincidencia${cands.length>1?'s':''}`,`${cands.length} match${cands.length>1?'es':''}`):'';
   $('cands').innerHTML=cands.length?cands.map((c,i)=>{
     const csp=spellCandidate(c,notes,st,key), sy=candSymbol(c,csp,st);
     const form=c.type.degs.map(d=>{ const s=csp.byPc[(d.pc+c.root)%12], nm=letterName(s.l,s.a,st); return c.missing.includes(d)?`<s>${esc(d.label)} ${esc(nm)}</s>`:`<span>${esc(d.label)} <i>${esc(nm)}</i></span>`; }).join('');
     const tags=candTags(c,csp,st.lockedRoot).map(t=>`<span class="tag${t.exact?' exact':''}">${esc(t.text)}</span>`);
-    return `<li><button class="cand" data-i="${i}" aria-pressed="${i===st.pick}"><span class="sym">${esc(sy.main+sy.slash)}</span><span class="desc">${esc(csp.rootName+' '+c.type.name)}${i===st.pick?`<span class="pick">${tr('en uso','in use')}</span>`:''}</span><span class="form">${form}</span><span class="tags">${tags.join('')}</span></button></li>`;
+    return `<li><button class="cand" data-i="${i}" aria-pressed="${i===st.pick}" title="${esc(scoreDetail(c))}"><span class="sym">${esc(sy.main+sy.slash)}</span><span class="desc">${esc(csp.rootName+' '+c.type.name)}${i===st.pick?`<span class="pick">${tr('en uso','in use')}</span>`:''}</span><span class="form">${form}</span><span class="tags">${tags.join('')}</span></button></li>`;
   }).join(''):`<li class="empty">${notes.length<2?tr('Elige al menos dos notas distintas para ver nombres de acorde.','Pick at least two different notes to see chord names.'):tr('Sin coincidencias en los '+TYPES.length+' tipos de acorde del diccionario.','No matches among the '+TYPES.length+' chord types in the dictionary.')}</li>`;
 
   const nm=a=>a.map(m=>noteText(spelled.find(n=>n.midi===m),st)).join(', '), ref=m=>noteText(plainSpell(m,st),st);
@@ -668,7 +669,7 @@ const degText=s=>esc(s).replace(DEG_RUN,(m,a,d)=>`${a}<span class="dg">${d}</spa
 function analysisSheet(A,p){
   const ten=t=>tr(String(t).replace('.',','),String(t));
   const pats=A.found.map((f,k)=>({...f,k:k+1}));
-  const head=`<div class="an-head"><div><p class="plaque">${esc(keyText(A.key,null,st))}</p>${A.alt?`<span class="lab">${tr('o','or')} ${esc(keyName(A.alt,st))}</span>`:''}</div>
+  const head=`<div class="an-head"><div><p class="plaque">${esc(keyText(A.key,null,st))}</p>${A.alt?`<span class="lab">${tr('o','or')} ${esc(keyName(A.alt,st))}</span>`:''}${A.why?`<span class="lab why" title="${esc(A.why.title)}">${esc(A.why.text)}</span>`:''}</div>
     <div><span class="lab">${tr('Final','Ending')}</span><span class="stamp"><span>${A.cad?degText(A.cad):tr('sin cadencia final','no final cadence')}</span></span></div>
     ${p.expr?`<div><span class="lab">${tr('Expresión aplicada','Applied expression')}</span><span class="expr">${esc(exprSummary(p.expr))}</span></div>`:''}<div class="an-pats"><span class="lab">${tr('Patrones reconocidos','Recognized patterns')}</span><div>${pats.length?pats.map(f=>`<span class="tag"><b>${f.k}</b>${degText(f.name)}${f.wrap?tr(' (en bucle)',' (looping)'):''}</span>`).join(''):`<span class="none">${tr('Ninguno de los '+PATTERNS.length+' patrones conocidos.','None of the '+PATTERNS.length+' known patterns.')}</span>`}</div></div></div>`;
   const row=i=>{ const r=A.romans[i], lab=esc(A.rs[i].label), fn=FN_NAME[A.fn[i]];

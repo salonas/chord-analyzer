@@ -101,7 +101,7 @@ const runProg = chs => {
   return {
     A,
     key: keyName(A.key, P), alt: A.alt ? keyName(A.alt, P) : '', mode: modeName(A.key), keyText: keyText(A.key, A.alt, P),
-    labels: A.rs.map(r => r.label), romans: A.romans.map(r => r ? r.text : '?'), shorts: A.romans.map(r => r ? r.short : '?'), fn: A.fn, ten: A.ten, ctx: A.tenCtx,
+    labels: A.rs.map(r => r.label), romans: A.romans.map(r => r ? r.text : '?'), shorts: A.romans.map(r => r ? r.short : '?'), fn: A.fn, ten: A.ten, ctx: A.tenCtx, why: A.why ? A.why.text : '',
     spelled: A.rs.map(r => r.spelled.map(spellName)), cad: A.cad || '', found: A.found.map(f => f.name),
   };
 };
@@ -162,7 +162,7 @@ prog('D17', 3, 'Préstamo ♭VI e iv (tonalidad debe seguir en Do)', ['C3 E3 G3'
 prog('D18', 2, 'Tercera de picardía', ['C3 Eb3 G3', 'F3 Ab3 C4', 'G2 B2 D3 F3', 'C3 E3 G3'], { key: ['C menor', 'C mayor'], romans: ['i', 'iv', 'V7', 'I'] });
 prog('D19', 2, 'V7sus4 → V7 → I', ['C3 E3 G3', 'G2 C3 D3 F3', 'G2 B2 D3 F3', 'C3 E3 G3'], { key: 'C mayor', romans: ['I', ['V7sus4', 'V7sus'], 'V7', 'I'] });
 prog('D20', 1, 'Blues I7–IV7–V7', ['C3 E3 G3 Bb3', 'F3 A3 C4 Eb4', 'G2 B2 D3 F3', 'C3 E3 G3 Bb3'], { key: 'C mayor', romans: ['I7', 'IV7', 'V7', 'I7'] });
-prog('D21', 2, 'Cadencia rota V7–vi', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3 F3', 'A2 C3 E3'], { key: 'C mayor', romans: ['I', 'IV', 'V7', 'vi'], cad: { has: 'rota' } });
+prog('D21', 2, 'Cadencia rota V7–vi', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3 F3', 'A2 C3 E3'], { key: 'C mayor', romans: ['I', 'IV', 'V7', 'vi'], cad: { has: 'rota' }, why: ['empieza en la tónica'] });
 prog('D22', 3, 'Sustituto tritonal ♭II7 → I', ['D3 F3 A3 C4', 'Db3 F3 Ab3 B3', 'C3 E3 G3 B3'], { key: 'C mayor', romans: ['ii7', ['subV7', '♭II7'], 'Imaj7'], fn: ['S', 'D', 'T'], cad: { has: 'tritonal' } });
 prog('D23', 3, 'iii como dominante débil (iii → vi)', ['C3 E3 G3', 'E3 G3 B3', 'A2 C3 E3', 'F3 A3 C4', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', romans: ['I', 'iii', 'vi', 'IV', 'V', 'I'], fn: ['T', ['T', 'D'], ['T', 'S'], 'S', 'D', 'T'] });
 
@@ -200,10 +200,10 @@ prog('F04', 1, 'Un solo acorde menor', ['A2 C3 E3'], { key: 'A menor' });
 prog('F05', 1, 'Pop I–V–vi–IV en Sol', ['G2 B2 D3', 'D3 F#3 A3', 'E3 G3 B3', 'C3 E3 G3'], { key: 'G mayor', found: ['I–V–vi–IV'] });
 prog('F06', 2, 'vi–IV–I–V (relativas ambiguas)', ['A2 C3 E3', 'F2 A2 C3', 'C3 E3 G3', 'G2 B2 D3'], { key: ['A menor', 'C mayor'], alt: ['A menor', 'C mayor'], found: [['vi–IV–I–V', 'i–♭VI–♭III–♭VII']] });
 prog('F07', 2, 'Cadencia andaluza', ['A2 C3 E3', 'G2 B2 D3', 'F2 A2 C3', 'E2 G#2 B2'], { key: 'A menor', found: ['andaluza'], cad: { has: 'Semicadencia' } });
-prog('F08', 2, 'Mixolidio I–♭VII–IV–I en Sol', ['G2 B2 D3', 'F2 A2 C3', 'C3 E3 G3', 'G2 B2 D3'], { key: ['G mayor', 'G mixolidio'], mode: 'mixolidio', text: 'G mayor (mixolidio)', found: ['Mixolidia'] });
-prog('F09', 3, 'Dórico i–IV en Re', ['D3 F3 A3', 'G2 B2 D3', 'D3 F3 A3', 'G2 B2 D3', 'D3 F3 A3'], { key: ['D menor', 'D dórico'], mode: 'dórico', text: 'D menor (dórico; o C mayor)' });
-prog('F10', 3, 'Frigio i–♭II en Mi', ['E3 G3 B3', 'F3 A3 C4', 'E3 G3 B3', 'F3 A3 C4', 'E3 G3 B3'], { key: ['E menor', 'E frigio'], mode: 'frigio' });
-prog('F19', 2, 'Lidio D–E–D (4ª aumentada, sin 4ª justa)', ['D3 F#3 A3', 'E3 G#3 B3', 'D3 F#3 A3'], { key: 'D mayor', mode: 'lidio' });
+prog('F08', 2, 'Mixolidio I–♭VII–IV–I en Sol', ['G2 B2 D3', 'F2 A2 C3', 'C3 E3 G3', 'G2 B2 D3'], { key: ['G mayor', 'G mixolidio'], mode: 'mixolidio', text: 'G mayor (mixolidio)', found: ['Mixolidia'], why: ['mixolidio: aparece F natural (7ª menor)'] });
+prog('F09', 3, 'Dórico i–IV en Re', ['D3 F3 A3', 'G2 B2 D3', 'D3 F3 A3', 'G2 B2 D3', 'D3 F3 A3'], { key: ['D menor', 'D dórico'], mode: 'dórico', text: 'D menor (dórico; o C mayor)', why: ['casi empatada con C mayor', 'empieza y termina en la tónica', 'dórico: aparece B natural (6ª mayor) y todas las notas están en la escala'] });
+prog('F10', 3, 'Frigio i–♭II en Mi', ['E3 G3 B3', 'F3 A3 C4', 'E3 G3 B3', 'F3 A3 C4', 'E3 G3 B3'], { key: ['E menor', 'E frigio'], mode: 'frigio', why: ['frigio: aparece F natural (2ª menor)'] });
+prog('F19', 2, 'Lidio D–E–D (4ª aumentada, sin 4ª justa)', ['D3 F#3 A3', 'E3 G#3 B3', 'D3 F#3 A3'], { key: 'D mayor', mode: 'lidio', why: ['lidio: aparece G♯ (4ª aumentada)'] });
 prog('F20', 2, 'Dm – G – C – Dm es dórico: i – IV – ♭VII – i, no V/♭VII', ['D3 F3 A3', 'G2 B2 D3', 'C3 E3 G3', 'D3 F3 A3'], { key: 'D menor', mode: 'dórico', romans: ['i', 'IV', '♭VII', 'i'] });
 prog('F21', 2, 'En contra: ii–V–I en Do sigue siendo Do mayor, sin etiqueta', ['D3 F3 A3', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', mode: '' });
 prog('F22', 1, 'En contra: progresión diatónica en mayor, sin etiqueta', ['C3 E3 G3', 'A2 C3 E3', 'F2 A2 C3', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', mode: '' });
@@ -212,7 +212,7 @@ prog('F24', 2, 'En contra: Sol mayor con F prestado y D7 → G, sin etiqueta mix
 prog('F25', 2, 'En contra: V/V (el F♯ es de la dominante secundaria), Do mayor sin etiqueta lidia', ['C3 E3 G3', 'D3 F#3 A3', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', mode: '' });
 prog('F26', 2, 'Sin dominante que resuelva, empatan: la tónica es el primero (Mi menor frigio, no Do mayor)', ['E3 G3 B3', 'F3 A3 C4', 'E3 G3 B3', 'F3 A3 C4'], { key: 'E menor', mode: 'frigio' });
 prog('F27', 2, 'Sin dominante, el primero cuando empatan: Sol menor y no Si♭ mayor', ['G2 Bb2 D3', 'Ab2 C3 Eb3', 'Bb2 D3 F3'], { key: 'G menor' });
-prog('F28', 2, 'Sin dominante, ni abre y cierra: el que más dura (La menor dura 3 de 6)', ['F2 A2 C3', 'G2 B2 D3', 'A2 C3 E3*3', 'G2 B2 D3'], { key: 'A menor' });
+prog('F28', 2, 'Sin dominante, ni abre y cierra: el que más dura (La menor dura 3 de 6)', ['F2 A2 C3', 'G2 B2 D3', 'A2 C3 E3*3', 'G2 B2 D3'], { key: 'A menor', why: ['el acorde que más dura es la tónica'] });
 prog('F29', 2, 'En contra: ♭VI–♭VII–I prestado (el A♭ no es mixolidio), Do mayor sin etiqueta', ['C3 E3 G3', 'Ab2 C3 Eb3', 'Bb2 D3 F3', 'C3 E3 G3'], { key: 'C mayor', mode: '' });
 prog('F11', 3, 'Modulación Do → Sol (dos regiones)', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3 F3', 'C3 E3 G3', 'A2 C3 E3', 'D3 F#3 A3 C4', 'G2 B2 D3', 'D3 F#3 A3 C4', 'G2 B2 D3'], { key: ['G mayor', 'C mayor → G mayor'], regions: true });
 prog('F12', 2, 'Re♭ mayor (nombre de tonalidad)', ['Db3 F3 Ab3', 'Gb2 Bb2 Db3', 'Ab2 C3 Eb3 Gb3', 'Db3 F3 Ab3'], { key: 'Db mayor' });
@@ -257,6 +257,7 @@ for (const c of progCases) {
   if (ch.alt) add('tonalidad', c.id + '-alt', c.level, head + ' (alternativa visible)', ch.alt, o.alt || '(sin alternativa)', !!o.alt, c.ref);
   if (ch.romans) ch.romans.forEach((e, i) => { if (e == null) return; add('grado', `${c.id}.${i + 1}`, c.level, `${head} · acorde ${i + 1} (${o.labels[i]})`, e, o.romans[i], acc(e, o.romans[i]), c.ref); });
   if (ch.short) ch.short.forEach((e, i) => { if (e == null) return; add('grado', `${c.id}.${i + 1}-franja`, c.level, `${head} · franja, acorde ${i + 1} (${o.labels[i]})`, e, o.shorts[i], acc(e, o.shorts[i]), c.ref); });
+  if (ch.why) ch.why.forEach(w => add('tonalidad', `${c.id}-por-qué`, c.level, `${head} · el porqué contiene "${w}"`, w, o.why || '(sin motivos)', o.why.includes(w), c.ref));
   if (ch.ten) ch.ten.forEach((e, i) => { if (e == null) return; add('tensión', `${c.id}.${i + 1}`, c.level, `${head} · tensión de ${o.labels[i]}`, e, o.ten[i], Math.abs(o.ten[i] - e) <= 0.01, c.ref); });
   if (ch.ctx) ch.ctx.forEach((e, i) => add('tensión', `${c.id}.${i + 1}-contexto`, c.level, `${head} · contexto de ${o.labels[i]}`, e === null ? '(ninguno)' : e, o.ctx[i] ? o.ctx[i].rule : '(ninguno)', (o.ctx[i] ? o.ctx[i].rule : null) === e, c.ref));
   if (ch.fn) ch.fn.forEach((e, i) => add('función', `${c.id}.${i + 1}`, c.level, `${head} · ${o.romans[i]}`, e, o.fn[i], acc(e, o.fn[i]), c.ref));
