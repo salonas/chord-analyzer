@@ -77,9 +77,24 @@ Rama `feat/tension-context`, desde `main` con los pasos 1 y 2 fusionados (decisi
 - Fixtures regenerados revisando cada diferencia. `analysis.json`: 8 tensiones, todas de acordes que siguen a una D con sensible (blues: F7 tras G7; iiVminor: Cm; popG: Em; secondary: Dm y C), en los dos juegos de preferencias. `expression.json`: 6 de 72 corridas (todas `melody`), solo notas de acordes que siguen a una D (C tras G7, o G7 tras G7). `text.json`, `midi.json` (solo el `.txt` de cada paquete; los `.mid` son idénticos) y `theory/texts.json`: solo cambia la cabecera.
 - La andaluza (Am G F E) no cambia: el ♭VII es D pero no lleva sensible, así que el F no recibe sorpresa (T10). T11: el v menor tampoco da llegada al i.
 
+Rama `feat/ui-audit`, sobre `feat/tension-context` (paso 4: filas ✗ y ⚠ de la sección 3 de `inversiones-tension-ui.md`, salvo las filas 5 y 10): 541 de 549 (98 %); las 7 comprobaciones nuevas (J30–J32) pasan y no cae ninguna. La lógica del inspector salió de `main.js` a `src/panel.js` (funciones puras), y cada fila tiene su prueba en `src/audit.test.js`:
+
+- **Fila 18 (hoja vacía).** El texto ahora menciona el arpegio. Al probarlo salió que la regla de dos notas ya era inexacta: exige que *las dos* duren un tiempo o más, no una. Texto y regla comprobados con patterns reales (`emptySheetText`).
+- **Fila 19 (intervalo de la melodía).** `against` nombra el intervalo por letras: E♭ sobre C7 es ♭3 (antes ♯9), D♯ es ♯9, F♯ es ♯11, G♭ es ♭5. Casos J31 y J32; el texto exportado del blues K03 cambia de ♯9 a ♭3.
+- **Fila 2.** Tabla de los 44 tipos con su nombre en español e inglés.
+- **Fila 3.** `intervalText` nombra el intervalo de dos notas por letras: C–D♯ 2ª aumentada, C–E♭ 3ª menor, F–B 4ª aumentada, B–F 5ª disminuida (ya no «tritono»).
+- **Fila 4.** `spellActive` es la función pura que deletrea el acorde activo; prueba: G♯7 en Do♯ menor lleva B♯.
+- **Fila 6.** `candTags` con casos para C, Am7/C, C9 sin 5 y C-7.
+- **Fila 7.** `chordWarnings` y `LIMITS`: umbrales del piano, MIDI, oído y dedos, en una tabla con prueba en cada borde.
+- **Fila 8.** No hay tabla por intervalo: no tengo una fuente verificada de los límites graves y no los invento. El aviso se rotula «Regla práctica» y dice que el límite exacto depende del intervalo (`MUDDY`).
+- **Fila 20.** La columna de la tensión de la melodía dice «estimada»; casos J30 (baja, media y alta).
+- **Fila 22.** Los pesos de la fórmula de Expresión viven en `RULES` (`expression.js`) y una prueba comprueba que la ayuda (español e inglés) cita las mismas cifras.
+- **Fila 24.** El pie de página nombra la tensión entre las estimaciones.
+- Filas 5 y 10 (el «por qué» de la elección de acorde y de tonalidad) quedan para el paso 5, con los textos aprobados antes.
+
 ### Retomar desde main
 
-Punto de partida: pasos 1 a 3 de `inversiones-tension-ui.md` fusionados en `main`; la sonda da 534 de 542 y quedan 8 fallos, los mismos de antes. Siguen: paso 4 (filas ✗ y ⚠ de la sección 3) y paso 5 (filas 5 y 10, con textos aprobados antes).
+Punto de partida: pasos 1 a 4 de `inversiones-tension-ui.md` fusionados en `main`; la sonda da 541 de 549 y quedan 8 fallos, los mismos de antes. Sigue el paso 5 (filas 5 y 10, con textos aprobados antes).
 
 Fallos que quedan:
 

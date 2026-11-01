@@ -11,13 +11,24 @@ const TOL=Math.round(.05*T); // notes that start within ±0.05 beats start toget
 const step=x=>x!==null&&x!==0&&Math.abs(x)<=2;
 // a melody note against the chord under it: interval from the root, tension and role
 const OUT_DEG={0:'1',1:'♭9',2:'9',3:'♯9',4:'3',5:'4',6:'♯11',7:'5',8:'♭6',9:'13',10:'♭7',11:'7'};
-function against(m,r){
+// The interval of a note outside the chord is named by letters, as the interval of two notes is: E♭ over C is a ♭3, D♯ a ♯9
+const BASE=[0,2,4,5,7,9,11], NUM=['1','9','3','4','5','13','7'], FLAT=['𝄫','♭','','♯','𝄪'];
+function byLetter(rel,n){
+  const d=((rel-BASE[n])+18)%12-6;
+  if(Math.abs(d)>2) return null;
+  if(n===3&&d===1) return '♯11';
+  if(n===5&&d===-1) return '♭6';
+  return FLAT[d+2]+NUM[n];
+}
+// sp is the spelled melody note ({l: letter}); without it the name goes by the pitch class alone
+function against(m,r,sp){
   if(!r||!r.c) return null;
   // a degree the voicing leaves out (the 5 of C(no5)) still counts as a chord tone
   const degs=r.c.type.degs, rel=((m-r.c.root)%12+12)%12, d=degs.find(x=>x.pc===rel);
   if(d) return {iv:d.label,ten:d.n<=7?'low':'mid',tone:d.n<=7};
   // half a step above a chord tone clashes (♭9 over the root, 4 over a major 3rd)
-  return {iv:OUT_DEG[rel],ten:degs.some(x=>x.pc===(rel+11)%12)?'high':'mid',tone:false};
+  const root=sp&&r.sp&&r.sp.byPc[r.c.root], iv=root?byLetter(rel,((sp.l-root.l)%7+7)%7):null;
+  return {iv:iv||OUT_DEG[rel],ten:degs.some(x=>x.pc===(rel+11)%12)?'high':'mid',tone:false};
 }
 // a chord tone, a step to one side, a third leap to the other side and a step back to the same tone:
 // the two notes in the middle are one ornament (double neighbor, cambiata)

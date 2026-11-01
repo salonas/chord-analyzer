@@ -1,9 +1,10 @@
 // Interface: inspector, keyboard, staff, library, panels and boot.
-import { BLACK, HIGH, INSTRUMENTS, IN_KEYS, LOW, T, TYPES, fmtB, freq, guessInst, instDefaults, intervalName, sigOf, uid } from './data.js';
+import { BLACK, HIGH, INSTRUMENTS, IN_KEYS, LOW, T, TYPES, fmtB, freq, guessInst, instDefaults, sigOf, uid } from './data.js';
 import { $, esc, fillRange, saveFile, toast } from './dom.js';
 import { EXAMPLE_NAME, activePat, gmOn, isBlock, isDrum, isMulti, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs, trackPat } from './model.js';
 import { gmName } from './gm.js';
 import { fut, hist, lib, persistLib, saveDraft, savePrefs, st } from './state.js';
+import { candTags, chordWarnings, emptySheetText, intervalText, spellActive, warningText } from './panel.js';
 import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, inversionText, keyName, keyText, letterName, noteText, octOff, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp } from './analysis.js';
 import { EX_KEYS, FEELINGS, exDefaults, exprSummary, expressPattern, instLabel } from './expression.js';
 import { DRUMS, GROOVES, expressDrums, genGroove } from './drums.js';
@@ -152,8 +153,7 @@ function renderActive(){
   const cur=cands[st.pick]; lastCur=cur;
   // a chord taken from the progression is spelled in the key the lane reads it in (G♯7, not A♭7, in C♯ minor)
   const key=st.src==='seg'&&R.A?R.A.key:undefined;
-  const sp=cur?spellCandidate(cur,notes,st,key):null;
-  const spelled=sp?sp.notes:notes.map(m=>plainSpell(m,st,key));
+  const {sp,spelled}=spellActive(notes,cur,st,key);
   const rootPc=cur?cur.root:(st.lockedRoot!==null?st.lockedRoot:null); R.rootPc=rootPc;
   const S=curSeg(), modified=sigOf(notes)!==st.srcSig;
   let src=tr('Acorde activo · armado a mano','Active chord · built by hand');
@@ -172,11 +172,9 @@ function renderActive(){
   } else if(notes.length===1){
     nameEl.textContent=noteText(spelled[0],st); descEl.textContent=tr('Una sola nota.','A single note.');
   } else if(notes.length===2){
-    const a=spelled[0], b=spelled[1], semi=notes[1]-notes[0];
+    const a=spelled[0], b=spelled[1];
     nameEl.textContent=letterName(a.l,a.a,st)+' – '+letterName(b.l,b.a,st);
-    const k=Math.floor(semi/12);
-    descEl.textContent=tr(`Intervalo de ${intervalName(semi%12)}${semi>12?` + ${k} octava${semi>=24?'s':''} (compuesto)`:semi===12?' (octava)':''} · ${semi} semitonos`,
-      `${intervalName(semi%12)} interval${semi>12?` + ${k} octave${semi>=24?'s':''} (compound)`:semi===12?' (octave)':''} · ${semi} semitones`);
+    descEl.textContent=intervalText(notes[0],notes[1],a,b);
   } else if(notes.length){
     nameEl.textContent='?'; descEl.textContent=tr('Ningún acorde del diccionario calza con estas notas.','No chord in the dictionary fits these notes.');
   } else { nameEl.textContent='—'; descEl.textContent=tr('Haz clic en las teclas del piano roll o del teclado, o elige un acorde en la franja.','Click the keys of the piano roll or the keyboard, or pick a chord in the lane.'); }
@@ -192,26 +190,12 @@ function renderActive(){
   $('cands').innerHTML=cands.length?cands.map((c,i)=>{
     const csp=spellCandidate(c,notes,st,key), sy=candSymbol(c,csp,st);
     const form=c.type.degs.map(d=>{ const s=csp.byPc[(d.pc+c.root)%12], nm=letterName(s.l,s.a,st); return c.missing.includes(d)?`<s>${esc(d.label)} ${esc(nm)}</s>`:`<span>${esc(d.label)} <i>${esc(nm)}</i></span>`; }).join('');
-    const tags=[];
-    if(!c.missing.length && !c.slash) tags.push(`<span class="tag exact">${tr('coincidencia exacta','exact match')}</span>`);
-    if(c.missing.length) tags.push(`<span class="tag">${tr('sin','no')} ${c.missing.map(d=>esc(d.label)).join(', ')}</span>`);
-    if(c.slash) tags.push(`<span class="tag">${esc(inversionText(c))}</span>`);
-    if(st.lockedRoot===c.root) tags.push(`<span class="tag exact">${tr('raíz elegida','chosen root')}</span>`);
-    if(c.type.alt) tags.push(`<span class="tag">${tr('también','also')} ${esc(csp.rootName+c.type.alt)}</span>`);
+    const tags=candTags(c,csp,st.lockedRoot).map(t=>`<span class="tag${t.exact?' exact':''}">${esc(t.text)}</span>`);
     return `<li><button class="cand" data-i="${i}" aria-pressed="${i===st.pick}"><span class="sym">${esc(sy.main+sy.slash)}</span><span class="desc">${esc(csp.rootName+' '+c.type.name)}${i===st.pick?`<span class="pick">${tr('en uso','in use')}</span>`:''}</span><span class="form">${form}</span><span class="tags">${tags.join('')}</span></button></li>`;
   }).join(''):`<li class="empty">${notes.length<2?tr('Elige al menos dos notas distintas para ver nombres de acorde.','Pick at least two different notes to see chord names.'):tr('Sin coincidencias en los '+TYPES.length+' tipos de acorde del diccionario.','No matches among the '+TYPES.length+' chord types in the dictionary.')}</li>`;
 
-  const w=[], nm=a=>a.map(m=>noteText(spelled.find(n=>n.midi===m),st)).join(', ');
-  const below=notes.filter(m=>m<21), above=notes.filter(m=>m>108), noMidi=notes.filter(m=>m>127);
-  const ref=m=>noteText(plainSpell(m,st),st);
-  if(below.length) w.push(tr(`${nm(below)}: por debajo de ${ref(21)} (MIDI 21), la tecla más grave de un piano de 88 teclas.`,`${nm(below)}: below ${ref(21)} (MIDI 21), the lowest key of an 88-key piano.`));
-  if(above.length) w.push(tr(`${nm(above)}: por encima de ${ref(108)} (MIDI 108), la tecla más aguda de un piano de 88 teclas.`,`${nm(above)}: above ${ref(108)} (MIDI 108), the highest key of an 88-key piano.`));
-  if(noMidi.length) w.push(tr(`${nm(noMidi)}: por encima de ${ref(127)} (MIDI 127). No existen como nota MIDI estándar.`,`${nm(noMidi)}: above ${ref(127)} (MIDI 127). They do not exist as standard MIDI notes.`));
-  const infra=notes.filter(m=>freq(m)<20); if(infra.length) w.push(tr(`${nm(infra)}: bajo 20 Hz, el límite inferior habitual del oído. En parlantes comunes casi no se escucha.`,`${nm(infra)}: below 20 Hz, the usual lower limit of hearing. Common speakers barely play it.`));
-  const ultra=notes.filter(m=>freq(m)>15000); if(ultra.length) w.push(tr(`${nm(ultra)}: sobre 15 kHz. Muchos adultos oyen poco o nada en esa zona; depende de la edad.`,`${nm(ultra)}: above 15 kHz. Many adults hear little or nothing there; it depends on age.`));
-  for(let i=1;i<notes.length;i++) if(notes[i]<48 && notes[i]-notes[i-1]<=4){ w.push(tr(`${nm([notes[i-1],notes[i]])}: intervalo de 3ª o menor bajo ${ref(48)}. En el registro grave suele sonar turbio.`,`${nm([notes[i-1],notes[i]])}: a 3rd or smaller below ${ref(48)}. In the low register it tends to sound muddy.`)); break; }
-  if(notes.length>=3 && !cands.length) w.push(tr('No se reconoce el acorde. Puede ser un cluster o un tipo fuera del diccionario.','The chord is not recognized. It may be a cluster or a type outside the dictionary.'));
-  if(notes.length>10) w.push(tr(`${notes.length} notas: más de las que caben en dos manos (10 dedos).`,`${notes.length} notes: more than two hands can hold (10 fingers).`));
+  const nm=a=>a.map(m=>noteText(spelled.find(n=>n.midi===m),st)).join(', '), ref=m=>noteText(plainSpell(m,st),st);
+  const w=chordWarnings(notes,cands.length).map(x=>warningText(x,nm,ref));
   $('warns').innerHTML=w.length?w.map(t=>`<li>${esc(t)}</li>`).join(''):`<li class="ok">${tr('Sin avisos para este acorde.','No warnings for this chord.')}</li>`;
 
   const has=notes.length>0;
@@ -283,7 +267,7 @@ function renderProgression(){
   let h='';
   if(R.segs.length) h=analysisSheet(A,p);
   else if(isMulti(p)) h=`<div class="empty">${tr('Un pattern con varias pistas no se analiza como progresión: usa «Separar pistas» para analizar una en su propio pattern.','A pattern with several tracks is not analysed as a progression: use “Split tracks” to analyse one in its own pattern.')}</div>`;
-  else if(!isDrum(p)&&p.notes.length) h=`<div class="empty">${tr('Solo melodía: ningún acorde. Un acorde empieza con tres notas a la vez, o con dos si una dura un tiempo o más.','Melody only: no chords. A chord starts with three notes at once, or two if one lasts a beat or more.')}</div>`;
+  else if(!isDrum(p)&&p.notes.length) h=`<div class="empty">${emptySheetText()}</div>`;
   else h=isDrum(p)?drumSummaryHtml(p):`<div class="empty">${tr('Dibuja notas en el piano roll o arma un acorde y pulsa «+ Al final» (Enter). La tonalidad, los grados y los patrones aparecen aquí.','Draw notes in the piano roll or build a chord and press “+ At the end” (Enter). The key, the degrees and the patterns show up here.')}</div>`;
   $('progAnalysis').innerHTML=h;
 }
