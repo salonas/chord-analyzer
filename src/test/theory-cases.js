@@ -288,7 +288,11 @@ mc('J10', 2, 'Progresión I–vi–IV–V con melodía: acordes no contaminados'
   [['E5', 0, 1], ['D5', 1, 1], ['C5', 2, 2], ['C5', 4, 2], ['B4', 6, 1], ['A4', 7, 1], ['A4', 8, 2], ['C5', 10, 2], ['B4', 12, 2], ['D5', 14, 2]],
   { chords: ['C', 'Am', 'F', 'G'], romans: ['I', 'vi', 'IV', 'V'], key: 'C mayor', textHas: ['Años 50', 'Semicadencia'], role: [['D5', '1', 'paso'], ['B4', '6', 'paso']] });
 mc('J11', 2, 'Melodía que empieza y dura igual que el acorde (redonda)', [['C3 E3 G3', 4], ['G2 B2 D3', 4]], [['E5', 0, 4], ['D5', 4, 4]], { chords: ['C', 'G'], melody: ['E5', 'D5'] });
-mc('J12', 2, 'Melodía redonda que no es nota del acorde (9ª)', [['C3 E3 G3', 4]], [['D5', 0, 4]], { chords: [['C', 'Cadd9']], melody: ['D5'] });
+// decision 2: one block is not a tune, so the high 9th stays in the chord
+mc('J12', 2, 'Un solo bloque con 9ª aguda: sigue siendo acorde (decisión 2)', [['C3 E3 G3', 4]], [['D5', 0, 4]], { chords: ['Cadd9'], melody: [] });
+mc('J22', 2, 'Pad abierto en dos bloques (C2 G2 E4): acorde, no melodía', [['C2 G2 E4', 4], ['F2 C3 A4', 4]], [], { chords: ['C', 'F'], melody: [] });
+mc('J23', 2, 'Disposición muy amplia en dos bloques (A24, C2 E5 G6): acorde, no melodía', [['C2 E5 G6', 4], ['G1 B4 D6', 4]], [], { chords: ['C', 'G'], melody: [] });
+mc('J24', 2, 'Pad de dos bloques con la voz aguda a una octava justa: acorde, no melodía', [['C3 E3 G3 G4', 4], ['G2 B2 D3 D4', 4]], [], { chords: ['C', 'G'], melody: [] });
 mc('J13', 3, 'Acorde arpegiado (Alberti) sin bloque', [], [['C4', 0, .5], ['G4', .5, .5], ['E4', 1, .5], ['G4', 1.5, .5], ['C4', 2, .5], ['G4', 2.5, .5], ['E4', 3, .5], ['G4', 3.5, .5], ['B3', 4, .5], ['G4', 4.5, .5], ['D4', 5, .5], ['G4', 5.5, .5], ['B3', 6, .5], ['G4', 6.5, .5], ['D4', 7, .5], ['G4', 7.5, .5]], { chords: ['C', 'G'] });
 mc('J14', 2, 'Bajo y melodía a dos voces', [], [['C3', 0, 4], ['E4', 0, 1], ['G4', 1, 1], ['C5', 2, 2], ['G2', 4, 4], ['D4', 4, 1], ['B3', 5, 1], ['G3', 6, 2]], { chords: [['C', 'C(no5)'], ['G', 'G(no3)', 'G5', 'G(5)']] });
 mc('J15', 3, 'Melodía con E♯ en Fa♯ mayor (deletreo en el texto)', [['F#3 A#3 C#4', 4], ['B2 D#3 F#3', 4], ['C#3 E#3 G#3 B3', 4], ['F#3 A#3 C#4', 4]], [['A#4', 0, 4], ['B4', 4, 4], ['E#5', 8, 2], ['G#5', 10, 2], ['F#5', 12, 4]], { key: 'F# mayor', textHas: ['E#5'], textNot: ['F5 (77)'] });
@@ -319,7 +323,8 @@ for (const c of melCases) {
   if (ch.melody) {
     const ml = txt.split('\n').filter(l => /^[A-G][#♯b♭]*\d+(\+[A-G][#♯b♭]*\d+)* \(\d/.test(l));
     const mm = [...new Set(ml.map(l => l.split(' (')[0]))];
-    add('melodía+acordes', c.id + '-melodía', c.level, head + ' · melodía detectada', ch.melody.join(' '), mm.join(' ') || '(ninguna)', ch.melody.every(x => mm.some(y => norm(y) === norm(x))), c.ref);
+    const none = !ch.melody.length;
+    add('melodía+acordes', c.id + '-melodía', c.level, head + ' · melodía detectada', none ? '(ninguna)' : ch.melody.join(' '), mm.join(' ') || '(ninguna)', none ? !mm.length : ch.melody.every(x => mm.some(y => norm(y) === norm(x))), c.ref);
   }
   if (ch.role) ch.role.forEach(([note, start, exp]) => {
     const line = txt.split('\n').find(l => norm(l).startsWith(norm(note) + ' (') && l.split('|')[1] && l.split('|')[1].trim() === start);
