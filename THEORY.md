@@ -25,7 +25,7 @@ Resueltas por el usuario el 1 nov 2026. Cada una fija una regla; si un caso de p
 
 6. **Inversiones con extensiones: palabras, no barra.** Decidido el 1 nov 2026 (`inversiones-tension-ui.md`, sección 1). El cifrado de bajo cifrado (⁶, ⁶₄, ⁶₅, ⁴₃, ⁴₂) queda para tríadas y séptimas. Los acordes con extensiones, add, sus, 6 o power chord llevan el grado y las palabras de `inversionText`: «V9 en 1ª inversión», «Imaj9 con bajo en la 9». La barra «/» se reserva a las funciones secundarias, que combinan las dos cosas: V⁶/V, V⁶₅/vi, vii°⁶₅/V. La hoja y el texto exportado muestran la forma completa (`text`); la franja de acordes, solo el grado (`short`). La raíz de un dim7 la fija la resolución: la nota un semitono bajo la raíz del acorde siguiente.
 
-7. **Tensión: base + contexto, sigue como estimación.** Decidido el 1 nov 2026 (`inversiones-tension-ui.md`, sección 2). La base no cambia (mitad función, mitad disonancia). Se suma un ajuste que depende del acorde anterior, siguiendo a Meyer (1956): **llegada** −0,15 (el anterior es D y este es su destino esperado y no es D), **sorpresa** +0,15 (el anterior es D y este ni es su destino ni es D) y **espera** +0,05 por cada D seguido, hasta +0,10. El total se recorta a 0–1. Los pesos son una elección razonada, no una medición: la tensión sigue rotulada «estimada» en todas partes.
+7. **Tensión: base + contexto, sigue como estimación.** Decidido el 1 nov 2026 (`inversiones-tension-ui.md`, sección 2). La base no cambia (mitad función, mitad disonancia). Se suma un ajuste que depende del acorde anterior, siguiendo a Meyer (1956): **llegada** −0,15 (el anterior es D y este es su destino esperado y no es D), **sorpresa** +0,15 (el anterior es D y este ni es su destino ni es D) y **espera** +0,05 por cada D seguido, hasta +0,10. Las tres reglas solo aplican a dominantes con sensible: V, V7, vii°, las secundarias (V/x, vii°/x), el 6/4 cadencial y el sustituto tritonal. El ♭VII de la menor natural y el v menor mantienen su función D, pero no reciben ajuste de contexto ni lo dan a lo que les sigue (decisión del 1 nov 2026). El total se recorta a 0–1. Los pesos son una elección razonada, no una medición: la tensión sigue rotulada «estimada» en todas partes.
 
 Sin decidir y sin cambios: nada de lo de `inversiones-tension-ui.md` queda sin decidir; los pesos de la tensión se medirán cuando exista el corpus externo.
 
@@ -68,18 +68,18 @@ Rama `feat/appoggiatura-roles`, sobre la anterior (fila 23 de la auditoría): la
 - Solo las notas que `splitHarmony` lee como melodía reciben rol; antes lo recibía la voz más aguda de cada ataque.
 - La ayuda de Apoyaturas (`index.html`, `src/i18n.js`) describe la regla nueva. Sin cambios en la sonda: 502 de 510.
 
-Rama `feat/tension-context`, desde `main` con los pasos 1 y 2 fusionados (decisión 7, paso 3): 519 de 527 (98 %); las 17 comprobaciones nuevas (T01–T05, T09, T06, T08 y la tonalidad de sus progresiones) pasan y no cae ninguna. Reglas en `src/analysis.js`:
+Rama `feat/tension-context`, desde `main` con los pasos 1 y 2 fusionados (decisión 7, paso 3): 534 de 542 (98 %); las 32 comprobaciones nuevas (T01–T05, T09–T11, T06, T08 y la tonalidad de sus progresiones) pasan y no cae ninguna. Reglas en `src/analysis.js`:
 
-- `analyzeProgression` devuelve `tenBase` (la base de siempre), `tenCtx` (`{rule, val}` por acorde, o `null`) y `ten` (el total). `contextTension` aplica las tres reglas; `expectedStep` da el destino de un acorde D: V y V/x una 4ª arriba, vii° un semitono arriba, el 6/4 cadencial a V (+7), el sustituto tritonal un semitono abajo. La raíz de un dim7 secundario es la de su resolución (`ro.rootPc`), no el bajo (T09).
+- `analyzeProgression` devuelve `tenBase` (la base de siempre), `tenCtx` (`{rule, val}` por acorde, o `null`) y `ten` (el total). `contextTension` aplica las tres reglas, y `leadingD` decide qué acordes D llevan sensible (el ♭VII de la menor y el v menor no); `expectedStep` da el destino de un acorde D: V y V/x una 4ª arriba, vii° un semitono arriba, el 6/4 cadencial a V (+7), el sustituto tritonal un semitono abajo. La raíz de un dim7 secundario es la de su resolución (`ro.rootPc`), no el bajo (T09).
 - Las constantes (`FN_TENSION`, `DISS`, `CTX`) alimentan el cálculo y el párrafo «Tensión armónica» de la pestaña Expresión (`tensionHelp`, escrito desde `fillEx`), así que no se desincronizan.
 - Hoja: el tooltip muestra «base 0,13 + sorpresa 0,15 = 0,28» solo cuando hay contexto, y la ayuda dice «tensión estimada». Texto exportado: la cabecera de la columna de grado pasa a «tensión estimada 0–1: base (función y disonancia) + contexto (llegada, sorpresa, espera)».
 - T07 (cadena de dominantes ≤ +0,10) y el desglose del tooltip están en `analysis.test.js`.
-- Fixtures regenerados revisando cada diferencia. `analysis.json`: 10 tensiones, todas de acordes que siguen a una D (Andaluza: F tras G; blues: F7 tras G7; iiVminor: Cm; popG: Em; secondary: Dm y C). `expression.json`: 6 de 72 corridas (todas `melody`), solo notas de acordes que siguen a una D (C tras G7, o G7 tras G7). `text.json`, `midi.json` (solo el `.txt` de cada paquete; los `.mid` son idénticos) y `theory/texts.json`: solo cambia la cabecera.
-- Efecto a tener en cuenta: en menor el ♭VII es D, así que en la andaluza (Am G F E) el F recibe una sorpresa de +0,15.
+- Fixtures regenerados revisando cada diferencia. `analysis.json`: 8 tensiones, todas de acordes que siguen a una D con sensible (blues: F7 tras G7; iiVminor: Cm; popG: Em; secondary: Dm y C), en los dos juegos de preferencias. `expression.json`: 6 de 72 corridas (todas `melody`), solo notas de acordes que siguen a una D (C tras G7, o G7 tras G7). `text.json`, `midi.json` (solo el `.txt` de cada paquete; los `.mid` son idénticos) y `theory/texts.json`: solo cambia la cabecera.
+- La andaluza (Am G F E) no cambia: el ♭VII es D pero no lleva sensible, así que el F no recibe sorpresa (T10). T11: el v menor tampoco da llegada al i.
 
 ### Retomar desde main
 
-Punto de partida: pasos 1 a 3 de `inversiones-tension-ui.md` fusionados en `main`; la sonda da 519 de 527 y quedan 8 fallos, los mismos de antes. Siguen: paso 4 (filas ✗ y ⚠ de la sección 3) y paso 5 (filas 5 y 10, con textos aprobados antes).
+Punto de partida: pasos 1 a 3 de `inversiones-tension-ui.md` fusionados en `main`; la sonda da 534 de 542 y quedan 8 fallos, los mismos de antes. Siguen: paso 4 (filas ✗ y ⚠ de la sección 3) y paso 5 (filas 5 y 10, con textos aprobados antes).
 
 Fallos que quedan:
 

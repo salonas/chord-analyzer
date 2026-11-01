@@ -318,7 +318,8 @@ function analyzeProgression(steps,prefs){
   const fn=romans.map((ro,i)=>harmonicFunction(ro,rs[i].c,key));
   // tension: what the chord is (function and dissonance) plus what came before it (Meyer's expectation)
   const tenBase=rs.map((r,i)=>+(.5*FN_TENSION[fn[i]]+.5*dissonance(r)).toFixed(2));
-  const tenCtx=rs.map((r,i)=>contextTension(rs,romans,fn,i));
+  const lead=rs.map((r,i)=>fn[i]==='D'&&leadingD(r.c,romans[i],key));
+  const tenCtx=rs.map((r,i)=>contextTension(rs,romans,fn,lead,i));
   const ten=tenBase.map((b,i)=>Math.min(1,Math.max(0,+(b+(tenCtx[i]?tenCtx[i].val:0)).toFixed(2))));
   return {rs,romans,key,alt,found,cad,fn,ten,tenBase,tenCtx};
 }
@@ -337,15 +338,24 @@ function expectedStep(c,ro){
   if(ro.deg===1&&c.type.q==='dom'&&!ro.secondary) return 11;
   return 5;
 }
-function contextTension(rs,romans,fn,i){
+// Only a dominant with a leading tone leaves a tendency waiting: V, V7, vii°, V/x, vii°/x, the cadential 6/4 and the tritone
+// substitute. The ♭VII of natural minor and the minor v keep the function D but carry no expectation
+function leadingD(c,ro,key){
+  if(!c||!ro) return false;
+  if(ro.cad64||ro.secondary) return true;
+  if(c.type.q==='dim'||c.type.q==='hdim') return ro.deg===11;
+  if(ro.deg===1) return c.type.q==='dom';
+  return ro.deg===7&&c.type.q!=='min';
+}
+function contextTension(rs,romans,fn,lead,i){
   const c=rs[i].c, pc=i&&rs[i-1].c, pro=i&&romans[i-1];
   if(!i||!c||!pc||!pro) return null;
-  if(fn[i-1]==='D'&&fn[i]!=='D'){
+  if(lead[i-1]&&fn[i]!=='D'){
     const dest=((pro.rootPc!==undefined?pro.rootPc:pc.root)+expectedStep(pc,pro))%12;
     return c.root===dest?{rule:'arrival',val:CTX.arrival}:{rule:'surprise',val:CTX.surprise};
   }
-  if(fn[i]==='D'&&fn[i-1]==='D'){
-    let run=0; while(i-1-run>=0&&fn[i-1-run]==='D') run++;
+  if(lead[i]&&lead[i-1]){
+    let run=0; while(i-1-run>=0&&lead[i-1-run]) run++;
     return {rule:'wait',val:Math.min(CTX.waitMax,+(CTX.wait*run).toFixed(2))};
   }
   return null;

@@ -189,6 +189,8 @@ prog('T02', 2, 'Sorpresa: Am tras G7 (cadencia rota)', [VC, 'F3 A3 C4', 'G2 B2 D
 prog('T03', 3, 'Espera: G7 tras el 6/4 cadencial', [VC, 'F3 A3 C4', 'G2 C4 E4', 'G2 B2 D3 F3', VC], { key: 'C mayor', ten: [null, null, null, 0.73, 0] });
 prog('T04', 3, 'Espera: G7 tras D7 (V7/V)', [VC, 'D3 F#3 A3 C4', 'G2 B2 D3 F3', VC], { key: 'C mayor', ten: [null, null, 0.73, 0] });
 prog('T05', 3, 'Sorpresa en menor: F tras E7 en La menor', ['A2 C3 E3', 'D3 F3 A3', 'E2 G#2 B2 D3', 'F2 A2 C3'], { key: 'A menor', ten: [null, null, null, 0.4] });
+prog('T10', 3, 'Andaluza: el ♭VII sigue siendo D pero el F no recibe sorpresa', ['A2 C3 E3', 'G2 B2 D3', 'F2 A2 C3', 'E2 G#2 B2'], { key: 'A menor', fn: ['T', 'D', 'S', 'D'], ten: [null, null, 0.25, null], ctx: [null, null, null, null] });
+prog('T11', 3, 'El v menor es D sin sensible: el i que sigue no recibe llegada', ['A2 C3 E3', 'E2 G2 B2', 'A2 C3 E3'], { key: 'A menor', ten: [null, null, 0.13], ctx: [null, null, null] });
 prog('T09', 3, 'Llegada tras un dim7 invertido: la raíz es C♯, no el bajo', [VC, 'G3 Bb3 C#4 E4', 'D3 F3 A3', 'G2 B2 D3 F3', VC], { key: 'C mayor', ten: [null, null, 0.13, null, 0] });
 
 prog('F01', 1, 'Tonalidad trivial Do', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor' });
@@ -256,6 +258,7 @@ for (const c of progCases) {
   if (ch.romans) ch.romans.forEach((e, i) => { if (e == null) return; add('grado', `${c.id}.${i + 1}`, c.level, `${head} · acorde ${i + 1} (${o.labels[i]})`, e, o.romans[i], acc(e, o.romans[i]), c.ref); });
   if (ch.short) ch.short.forEach((e, i) => { if (e == null) return; add('grado', `${c.id}.${i + 1}-franja`, c.level, `${head} · franja, acorde ${i + 1} (${o.labels[i]})`, e, o.shorts[i], acc(e, o.shorts[i]), c.ref); });
   if (ch.ten) ch.ten.forEach((e, i) => { if (e == null) return; add('tensión', `${c.id}.${i + 1}`, c.level, `${head} · tensión de ${o.labels[i]}`, e, o.ten[i], Math.abs(o.ten[i] - e) <= 0.01, c.ref); });
+  if (ch.ctx) ch.ctx.forEach((e, i) => add('tensión', `${c.id}.${i + 1}-contexto`, c.level, `${head} · contexto de ${o.labels[i]}`, e === null ? '(ninguno)' : e, o.ctx[i] ? o.ctx[i].rule : '(ninguno)', (o.ctx[i] ? o.ctx[i].rule : null) === e, c.ref));
   if (ch.fn) ch.fn.forEach((e, i) => add('función', `${c.id}.${i + 1}`, c.level, `${head} · ${o.romans[i]}`, e, o.fn[i], acc(e, o.fn[i]), c.ref));
   if (ch.spell) Object.entries(ch.spell).forEach(([i, e]) => {
     const got = o.spelled[i].join(' ');
