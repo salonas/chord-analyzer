@@ -1,7 +1,8 @@
 // Web Audio voices.
 import { freq } from './data.js';
 import { DRUMS } from './drums.js';
-import { isDrum } from './model.js';
+import { gmSamples } from './gm.js';
+import { isDrum, soundPat } from './model.js';
 import { st } from './state.js';
 
 // ---------- audio ----------
@@ -65,8 +66,10 @@ function synthVoice(kind,m,t,v,dest,hold,mix=1,bend){
   }
 }
 function playNotes(list,spread){
+  const sp=soundPat(st.prog,st.trk);
+  if(isDrum(sp)) list=list.filter(m=>DRUMS[m]); // a drum pattern sounds only its kit, never the oscillators
   if(!list.length) return;
-  const c=audio(), t0=c.currentTime+.02, vel=.32/Math.sqrt(list.length), p=isDrum(st.prog)?null:st.prog;
+  const c=audio(), t0=c.currentTime+.02, vel=.32/Math.sqrt(list.length), p=sp;
   list.forEach((m,i)=>patVoice(p,m,t0+i*spread,Math.round(90/Math.sqrt(list.length)),null,vel));
 }
 
@@ -91,21 +94,30 @@ function channelFor(p,m){
   return pick&&(m.channels[pick]||synthOf(pick,m))?pick:null;
 }
 const synthOf=(k,m=man)=>!!m&&!!m.synths&&m.synths[k]||null;
-const setOf=p=>channelFor(p,man);
+// a track with a General MIDI program (gm.js) plays its soundfont set, keyed 'gm:<program>'; drums keep the kit
+const gmOf=p=>p&&p.prog!=null&&!isDrum(p)?'gm:'+p.prog:null;
+const setOf=p=>gmOf(p)||channelFor(p,man);
+const GM_RELEASE=.3;
 function loadSet(key){
   if(!sets.has(key)){
     const s={ready:false,data:null}; sets.set(key,s);
-    const c=audio(), get=f=>fetch(BASE+f).then(r=>r.arrayBuffer()).then(b=>c.decodeAudioData(b));
+    const c=audio(), get=u=>fetch(u).then(r=>{ if(!r.ok) throw new Error(r.status); return r.arrayBuffer(); }).then(b=>c.decodeAudioData(b));
     s.load=(key==='drums'
-      ?Promise.all(Object.entries(man.drums).map(async([m,ls])=>[+m,await Promise.all(ls.map(async l=>({v:l.v,buf:await get(l.file)})))])).then(e=>new Map(e))
-      :Promise.all(man.channels[key].samples.map(async x=>({...x,buf:await get(x.file)}))).then(xs=>({pitched:man.channels[key].pitched,release:man.channels[key].release,xs}))
+      ?Promise.all(Object.entries(man.drums).map(async([m,ls])=>[+m,await Promise.all(ls.map(async l=>({v:l.v,buf:await get(BASE+l.file)})))])).then(e=>new Map(e))
+      // a soundfont note that fails to load is left out: its neighbors play it retuned (sampleFor)
+      :key.startsWith('gm:')
+      ?Promise.allSettled(gmSamples(+key.slice(3)).map(async x=>({...x,buf:await get(x.url)}))).then(r=>{
+        const xs=r.filter(x=>x.status==='fulfilled').map(x=>x.value); if(!xs.length) throw new Error('no GM samples'); return {pitched:true,release:GM_RELEASE,xs}; })
+      :Promise.all(man.channels[key].samples.map(async x=>({...x,buf:await get(BASE+x.file)}))).then(xs=>({pitched:man.channels[key].pitched,release:man.channels[key].release,xs}))
     ).then(d=>{ s.data=d; },()=>{ s.data=false; }).then(()=>{ s.ready=true; });
   }
   return sets.get(key).load;
 }
 // resolves once the pattern's samples are loaded, or known to be missing
-async function ensureSounds(p){ await loadManifest(); const k=setOf(p); if(k&&!synthOf(k)) await loadSet(k); }
-function soundsReady(p){ if(man===null) return false; const k=setOf(p); return !k||!!synthOf(k)||(sets.has(k)&&sets.get(k).ready); }
+// a drum pattern also loads the Congas channel: General MIDI percussion keys 60-65 (bongos, congas) have no sample in the kit
+const EXTRA='Congas', extraOf=k=>k==='drums'&&man&&man.channels&&man.channels[EXTRA]?EXTRA:null;
+async function ensureSounds(p){ await loadManifest(); const k=setOf(p); if(k&&!synthOf(k)) await loadSet(k); const e=extraOf(k); if(e) await loadSet(e); }
+function soundsReady(p){ if(man===null) return false; const k=setOf(p), e=extraOf(k); return !k||!!synthOf(k)||(sets.has(k)&&sets.get(k).ready&&(!e||(sets.has(e)&&sets.get(e).ready))); }
 // after hold seconds the note fades over the channel's release (as its .sfz sets it), then stops
 function start(buf,t,gain,rate,dest,hold,rel=.25,bend){
   const c=audio(), src=c.createBufferSource(), g=c.createGain();
@@ -123,10 +135,17 @@ function drumHit(kit,m,t,v,dest,f=1){
   if(['hho','crash','ride','bell'].includes(role)){ ringing.push({role,t,g}); if(ringing.length>64) ringing.shift(); }
   return true;
 }
-// other channels: the rendered note whose span holds this one, retuned; outside the instrument's
-// range nothing sounds, as in sforzando
+// other channels: the rendered note whose span holds this one, retuned. Outside the instrument's range a pitched
+// channel plays its nearest rendered note, retuned up to two octaves (sforzando would stay silent: here a note you wrote
+// should always be heard); an unpitched one stays silent, as a conga cannot be retuned into a snare
+const reach=(s,m)=>m<s.lo?s.lo-m:m>s.hi?m-s.hi:0;
+function sampleFor(set,m){
+  const x=set.xs.find(s=>m>=s.lo&&m<=s.hi); if(x||!set.pitched) return x;
+  const n=set.xs.reduce((a,s)=>!a||reach(s,m)<reach(a,m)?s:a,null);
+  return n&&Math.abs(m-n.k)<=24?n:undefined;
+}
 function noteHit(set,m,t,v,dest,hold,f=1,bend){
-  const x=set.xs.find(s=>m>=s.lo&&m<=s.hi);
+  const x=sampleFor(set,m);
   if(x) start(x.buf,t,f*LEVEL*Math.min(1.3,v/100),set.pitched?Math.pow(2,(m-x.k)/12):1,dest,hold,set.release,set.pitched?bend:null);
   return true;
 }
@@ -143,7 +162,11 @@ function patVoice(p,m,t,vel127,dest,vel,hold,bend){
   const k=setOf(p), s=k&&sets.get(k), d=s&&s.ready&&s.data, f=dest?1:mixOf(p);
   if(synthOf(k)){ synthVoice(synthOf(k),m,t,vel127,dest,hold,f,bend); return; }
   // a drum key the kit has no sample for stays silent: the oscillators would play it as a keyboard note
-  if(k==='drums'){ if(d) drumHit(d,m,t,vel127,dest,f); return; }
+  if(k==='drums'){
+    if(d&&DRUMS[m]) drumHit(d,m,t,vel127,dest,f);
+    else if(d){ const x=sets.get(EXTRA), xd=x&&x.ready&&x.data; if(xd) noteHit(xd,m,t,vel127,dest,hold,f); }
+    return;
+  }
   if(d&&noteHit(d,m,t,vel127,dest,hold,f,bend)) return;
   voice(m,t,vel*f,dest,hold,bend);
 }
@@ -161,10 +184,11 @@ function releasePreview(){
 const preview=m=>{
   releasePreview();
   if(!st.sound) return;
-  if(!soundsReady(st.prog)) ensureSounds(st.prog);
-  const c=audio(), t=c.currentTime+.02, bus=c.createGain(); bus.gain.value=mixOf(st.prog); bus.connect(master);
-  patVoice(st.prog,m,t,100,bus,.32,PREVIEW_MAX);
+  const sp=soundPat(st.prog,st.trk);
+  if(!soundsReady(sp)) ensureSounds(sp);
+  const c=audio(), t=c.currentTime+.02, bus=c.createGain(); bus.gain.value=mixOf(sp); bus.connect(master);
+  patVoice(sp,m,t,100,bus,.32,PREVIEW_MAX);
   held={c,bus,t};
 };
 
-export { SYNTHS, audio, channelFor, synthVoice, ensureSounds, loadManifest, master, mixOf, patVoice, playNotes, preview, releasePreview, setMix, soundsReady, voice };
+export { SYNTHS, sampleFor, audio, channelFor, synthVoice, ensureSounds, loadManifest, master, mixOf, patVoice, playNotes, preview, releasePreview, setMix, soundsReady, voice };

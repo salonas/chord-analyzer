@@ -53,3 +53,18 @@ describe('buildPack', () => {
     expect({ length: z.length, sha256: sha256(z) }).toEqual(c.zip);
   });
 });
+
+describe('midiFile of a pattern with tracks', () => {
+  it('writes a format 1 file with a conductor, a track per track and the kit on channel 10', async () => {
+    const { multiPattern, parseMidi } = await import('./importer.js');
+    const p = multiPattern('Song', [
+      { name: 'Lead', notes: [{ id: 'a', m: 72, s: 0, l: 96, v: 100, ch: 0 }] },
+      { name: 'Kit', notes: [{ id: 'b', m: 36, s: 0, l: 48, v: 90, ch: 9 }] },
+    ]);
+    const { bytes } = midiFile(p, 100, {});
+    expect([bytes[9], bytes[11]]).toEqual([1, 3]);
+    const r = parseMidi(bytes.buffer);
+    expect(Math.round(r.tempo)).toBe(100);
+    expect(r.tracks.map(t => [t.name, t.notes.map(n => [n.m, n.ch])])).toEqual([['Lead', [[72, 0]]], ['Kit', [[36, 9]]]]);
+  });
+});

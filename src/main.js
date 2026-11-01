@@ -1,7 +1,8 @@
 // Interface: inspector, keyboard, staff, library, panels and boot.
 import { BLACK, HIGH, INSTRUMENTS, IN_KEYS, LOW, T, TYPES, fmtB, freq, guessInst, instDefaults, intervalName, sigOf, uid } from './data.js';
 import { $, esc, fillRange, saveFile, toast } from './dom.js';
-import { EXAMPLE_NAME, activePat, isBlock, isDrum, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs } from './model.js';
+import { EXAMPLE_NAME, activePat, gmOn, isBlock, isDrum, isMulti, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs, trackPat } from './model.js';
+import { gmName } from './gm.js';
 import { fut, hist, lib, persistLib, saveDraft, savePrefs, st } from './state.js';
 import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, inversionText, keyName, letterName, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
 import { EX_KEYS, FEELINGS, exDefaults, exprSummary, expressPattern, instLabel } from './expression.js';
@@ -10,11 +11,11 @@ import { libText, parseText, pickInterp, projectText } from './text.js';
 import { buildPack, fileBase, midiFile, zipFiles } from './midi.js';
 import { FL_SCRIPT_DIR, flScript } from './flscript.js';
 import { PITCH_RANGE, pitchClip } from './flpitch.js';
-import { parseMidi, separatePatterns, separateVoices } from './importer.js';
+import { multiPattern, parseMidi, separatePatterns, separateVoices, splitTracks } from './importer.js';
 import { harmonySegs } from './harmony.js';
 import { BEND_RANGE, glidePlan, hasGlide, rangeOf } from './glide.js';
-import { audio, loadManifest, mixOf, playNotes, setMix } from './audio.js';
-import { P, R, addAtEnd, centerRoll, commit, curSeg, deleteSel, drawRoll, liveNotes, playProg, pxDisc, readColors, redo, rollSize, selChanged, setPlayBtn, setZoom, stopProg, syncGlideBtns, toggleKey, undo, velTargets } from './roll.js';
+import { audio, ensureSounds, loadManifest, mixOf, playNotes, setMix } from './audio.js';
+import { P, R, addAtEnd, curTrack, centerRoll, commit, curSeg, deleteSel, drawRoll, liveNotes, playProg, pxDisc, readColors, redo, rollSize, selChanged, setPlayBtn, setZoom, stopProg, syncGlideBtns, toggleKey, undo, velTargets } from './roll.js';
 import { LANG_KEY, getLang, setLang, shareLang, sharedLang, tr, translateStatic } from './i18n.js';
 
 // the static texts of index.html are read in Spanish before any code below rewrites one
@@ -130,9 +131,10 @@ let lastCur=null, spelledNow=[];
 // the keys show the active chord; with "Real time: All" a playing pattern shows what sounds at the playhead instead (R.live)
 function shownNotes(){ return R.live||st.notes; }
 function paintKeys(){
-  const shown=shownNotes(), rootPc=R.rootPc;
+  const shown=shownNotes(), rootPc=R.rootPc, drum=isDrum(st.prog);
   for(let m=LOW;m<=HIGH;m++){
     const k=keyEl[m], on=shown.has(m), pc=m%12, inChord=st.notes.has(m);
+    const dead=drum&&!DRUMS[m]; k.disabled=dead; k.classList.toggle('nokit',dead);
     const s=(inChord&&spelledNow.find(n=>n.midi===m))||plainSpell(m,st);
     const root=on&&inChord&&rootPc===pc;
     k.classList.toggle('on',on); k.classList.toggle('root',root);
@@ -243,6 +245,7 @@ function renderProgression(){
   const p=st.prog, pr=st.proj;
   if(document.activeElement!==$('projName')) $('projName').value=pr.name||'';
   if(document.activeElement!==$('patName')) $('patName').value=p.name||'';
+  $('projTabs').innerHTML=st.open.map(x=>`<span class="prtab" data-pid="${x.id}"><button class="prsel" role="tab" aria-selected="${x===pr}" data-pid="${x.id}"><span class="pn">${esc(x.name||tr('Proyecto sin nombre','Untitled project'))}</span><span class="pi">${x.bpm} BPM · ${x.patterns.length} pattern${x.patterns.length===1?'':'s'}</span></button><button class="prx" data-close="${x.id}" title="${tr('Cerrar proyecto','Close project')}" aria-label="${tr('Cerrar','Close')} ${esc(x.name||tr('Proyecto sin nombre','Untitled project'))}">×</button></span>`).join('');
   $('patTabs').innerHTML=pr.patterns.map((x,i)=>`<button class="ptab" role="tab" data-id="${x.id}" aria-selected="${x.id===p.id}" title="${tr('Doble clic para renombrar','Double-click to rename')}"><span class="pn">${i+1}. ${esc(x.name||tr('Sin nombre','Untitled'))}</span><span class="pi">${esc(instLabel(x.inst))} · ${isDrum(x)?tr(`${x.notes.length} golpe${x.notes.length===1?'':'s'}`,`${x.notes.length} hit${x.notes.length===1?'':'s'}`):(n=>tr(`${n} acorde${n===1?'':'s'}`,`${n} chord${n===1?'':'s'}`))(harmonySegs(x).length)}</span></button>`).join('');
   showPatTab(p.id);
   if(document.activeElement!==$('topInst')) $('topInst').value=p.inst.preset;
@@ -258,15 +261,17 @@ function renderProgression(){
   if(document.activeElement!==$('beats')) $('beats').value=p.beats||4;
   $('seedInfo').textContent=tr(`Semilla del proyecto: ${pr.seed}`,`Project seed: ${pr.seed}`);
   // the lane and the sheet show chords, not every change of the notes (a tune over chords would give one per note)
-  R.segs=isDrum(p)?[]:harmonySegs(p);
-  $('bSep').disabled=isDrum(p)||!p.notes.length;
+  R.segs=isDrum(p)||isMulti(p)?[]:harmonySegs(p);
+  $('bSep').disabled=isDrum(p)||isMulti(p)||!p.notes.length;
+  $('bAutoVel').disabled=isMulti(p); $('topInst').closest('label').hidden=isMulti(p);
+  renderTracks(p);
   const A=analyzeProgression(R.segs.map(S=>segStep(p,S)),st); R.A=A;
   R.lane=R.segs.map((S,i)=>({a:S.a,b:S.b,label:A.rs[i].label,roman:A.romans[i]?`${A.romans[i].text} · ${A.fn[i]}`:'—'}));
   const end=progEnd(p), saved=lib.projects.find(x=>x.id===pr.id);
   $('progStatus').textContent=saved?(JSON.stringify(saved)===JSON.stringify(pr)?tr('guardado en la biblioteca','saved in the library'):tr('cambios sin guardar','unsaved changes')):tr('sin guardar','not saved');
   const nseg=R.segs.length, nn=p.notes.length, secs=(end/T*60/(pr.bpm||90)).toLocaleString(getLang(),{maximumFractionDigits:1}), ns=R.sel.size;
-  $('progSummary').textContent=tr(`${p.name||'Pattern'} · ${isDrum(p)?'batería':`${nseg} acorde${nseg===1?'':'s'}`} ·${nn} nota${nn===1?'':'s'} · ${fmtB(end)} tiempos · ${secs} s`,
-    `${p.name||'Pattern'} · ${isDrum(p)?'drums':`${nseg} chord${nseg===1?'':'s'}`} · ${nn} note${nn===1?'':'s'} · ${fmtB(end)} beats · ${secs} s`);
+  $('progSummary').textContent=tr(`${p.name||'Pattern'} · ${isMulti(p)?`${p.tracks.length} pistas`:isDrum(p)?'batería':`${nseg} acorde${nseg===1?'':'s'}`} ·${nn} nota${nn===1?'':'s'} · ${fmtB(end)} tiempos · ${secs} s`,
+    `${p.name||'Pattern'} · ${isMulti(p)?`${p.tracks.length} tracks`:isDrum(p)?'drums':`${nseg} chord${nseg===1?'':'s'}`} · ${nn} note${nn===1?'':'s'} · ${fmtB(end)} beats · ${secs} s`);
   // glides play at any interval; only the pitch-bend .mid is held to the bend range
   const gs=isDrum(p)?0:glidePlan(p,Infinity).skipped, gw=isDrum(p)||p.glideNative?0:glidePlan(p).skipped-gs;
   $('rollInfo').textContent=[ns?tr(`${ns} nota${ns>1?'s':''} seleccionada${ns>1?'s':''}`,`${ns} note${ns>1?'s':''} selected`):'',
@@ -275,6 +280,7 @@ function renderProgression(){
   syncGlideBtns();
   let h='';
   if(R.segs.length) h=analysisSheet(A,p);
+  else if(isMulti(p)) h=`<div class="empty">${tr('Un pattern con varias pistas no se analiza como progresión: usa «Separar pistas» para analizar una en su propio pattern.','A pattern with several tracks is not analysed as a progression: use “Split tracks” to analyse one in its own pattern.')}</div>`;
   else if(!isDrum(p)&&p.notes.length) h=`<div class="empty">${tr('Solo melodía: ningún acorde. Un acorde empieza con tres notas a la vez, o con dos si una dura un tiempo o más.','Melody only: no chords. A chord starts with three notes at once, or two if one lasts a beat or more.')}</div>`;
   else h=isDrum(p)?drumSummaryHtml(p):`<div class="empty">${tr('Dibuja notas en el piano roll o arma un acorde y pulsa «+ Al final» (Enter). La tonalidad, los grados y los patrones aparecen aquí.','Draw notes in the piano roll or build a chord and press “+ At the end” (Enter). The key, the degrees and the patterns show up here.')}</div>`;
   $('progAnalysis').innerHTML=h;
@@ -301,11 +307,27 @@ function renderLibrary(){
     return `<li><div style="min-width:0"><span class="n">${esc(pr.name||tr('Sin nombre','Untitled'))}</span><span class="v">${pr.bpm} BPM · ${pr.patterns.length} pattern${pr.patterns.length===1?'':'s'}: ${esc(pats)}</span></div><div class="acts"><button class="sbtn" data-pload="${i}">${tr('Abrir','Open')}</button><button class="sbtn" data-pdel="${i}" aria-label="${tr('Quitar','Remove')} ${esc(pr.name)}">${tr('Quitar','Remove')}</button></div></li>`;
   }).join(''):`<li class="empty">${tr('Aún no hay proyectos guardados. «Guardar» en la barra superior guarda el proyecto con todos sus patterns.','No saved projects yet. “Save project” in the top bar saves the project with all its patterns.')}</li>`;
 }
-function openProject(pr){
-  stopProg(); commit(); hist.length=0; fut.length=0;
-  st.proj=normProject(JSON.parse(JSON.stringify(pr))); st.prog=activePat(st.proj);
-  R.sel.clear(); st.segA=null; st.src='builder'; R.start=0; render(); R.el.scrollLeft=0; centerRoll();
+// Each open project is a tab (st.open); undo history belongs to the project on screen and is dropped when you leave it
+function showProject(pr){
+  stopProg(); hist.length=0; fut.length=0;
+  st.proj=pr; st.prog=activePat(pr); st.notes.clear(); st.lockedRoot=null; st.rootMode=false; st.pick=0;
+  R.sel.clear(); st.segA=null; st.src='builder'; R.start=0; delArm=false; render(); R.el.scrollLeft=0; centerRoll();
 }
+// a project from the library, a text or a file opens in a tab of its own; one already open (same id) is just brought forward
+function openProject(pr){
+  const open=st.open.find(x=>x.id===pr.id);
+  if(open&&pr.id){ showProject(open); return open; }
+  const p=normProject(JSON.parse(JSON.stringify(pr))); st.open.push(p); showProject(p); return p;
+}
+function closeProject(id){
+  const i=st.open.findIndex(x=>x.id===id); if(i<0) return;
+  const pr=st.open[i];
+  if(pr.patterns.some(p=>p.notes.length)&&!confirm(tr(`¿Cerrar «${pr.name||'Proyecto sin nombre'}»? Lo que no guardaste en la biblioteca se pierde.`,`Close “${pr.name||'Untitled project'}”? Whatever you did not save to the library is lost.`))) return;
+  st.open.splice(i,1);
+  if(!st.open.length) st.open.push(normProject({id:uid(),name:'',bpm:pr.bpm,seed:newSeed(),patterns:[newPattern('Pattern 1')]}));
+  if(pr===st.proj) showProject(st.open[Math.min(i,st.open.length-1)]); else render();
+}
+
 function setPattern(id){
   const p=st.proj.patterns.find(x=>x.id===id); if(!p) return;
   stopProg(); st.proj.active=id; st.prog=p; R.sel.clear(); st.segA=null; if(st.src!=='builder') st.src='builder'; R.start=0; delArm=false;
@@ -350,7 +372,11 @@ $('patName').onchange=()=>{
   if(g&&st.prog.inst.preset==='generico'){ st.prog.inst=instDefaults(g); toast(tr(`Instrumento detectado por el nombre: ${INSTRUMENTS[g].label}`,`Instrument detected from the name: ${INSTRUMENTS[g].label}`)); }
   render();
 };
-$('projName').oninput=e=>{st.proj.name=e.target.value; saveDraft();};
+$('projName').oninput=e=>{ st.proj.name=e.target.value; saveDraft(); const t=$('projTabs').querySelector(`.prsel[data-pid="${st.proj.id}"] .pn`); if(t) t.textContent=e.target.value||tr('Proyecto sin nombre','Untitled project'); };
+$('projTabs').addEventListener('click',e=>{
+  const x=e.target.closest('.prx'); if(x){ closeProject(x.dataset.close); return; }
+  const b=e.target.closest('.prsel'); const pr=b&&st.open.find(p=>p.id===b.dataset.pid); if(pr&&pr!==st.proj) showProject(pr);
+});
 $('projName').onchange=()=>render();
 // New-pattern form: name, instrument (suggested from the name until the user picks one) and empty or copied notes
 let npTouched=false;
@@ -677,6 +703,63 @@ function analysisSheet(A,p){
   return `<div class="an">${head}<div class="an-rows"><span class="lines" aria-hidden="true">${'<b></b>'.repeat(N+2)}</span>${rows}</div>
     <div class="hint">${tr('Grado; al lado, el acorde, su función y su tensión (0 a 1). Las llaves numeradas del margen unen los grados de cada patrón reconocido; una llave abierta sigue en el otro extremo (patrón en bucle).','Degree; next to it, the chord, its function and its tension (0 to 1). The numbered brackets in the margin join the degrees of each recognized pattern; an open bracket continues at the other end (looping pattern).')}</div></div>`;
 }
+// The tracks of a multitrack pattern: pick the one you edit (the others stay as outlines), change its instrument, mute it
+function renderTracks(p){
+  const box=$('trackPanel'); box.hidden=!isMulti(p); $('bToTracks').hidden=isMulti(p); if(!isMulti(p)) return;
+  if(box.contains(document.activeElement)&&document.activeElement.tagName==='SELECT') return;
+  const cur=curTrack(), opts=$('npInst').innerHTML;
+  // a track whose .mid set a program can also play it from the General MIDI soundfont, the first option
+  const gmOpt=t=>t.prog==null?'':`<option value="gm" title="General MIDI">GM · ${esc(gmName(t.prog))}</option>`;
+  $('trackList').innerHTML=p.tracks.map(t=>{ const n=p.notes.filter(x=>x.tr===t.id).length;
+    return `<div class="trk" data-id="${t.id}"><button class="trsel" aria-pressed="${t===cur}" title="${tr('Editar esta pista','Edit this track')}"><span class="pn">${esc(t.name)}</span><span class="pi">${n} ${tr('notas','notes')}</span></button><select class="trinst" aria-label="${tr('Instrumento de','Instrument of')} ${esc(t.name)}">${gmOpt(t)}${opts}</select><label class="trm"><input type="checkbox" class="trmute"${t.mute?' checked':''}> ${tr('Silenciar','Mute')}</label><button class="trdel" title="${tr('Quitar esta pista','Remove this track')}" aria-label="${tr('Quitar','Remove')} ${esc(t.name)}"${p.tracks.length<2?' disabled':''}>×</button></div>`; }).join('');
+  const others=st.proj.patterns.filter(x=>x!==p&&!isMulti(x)&&x.notes.length);
+  $('trkFrom').innerHTML=others.map(x=>`<option value="${x.id}">${esc(x.name||tr('Sin nombre','Untitled'))} (${x.notes.length})</option>`).join(''); $('bTrkFrom').disabled=!others.length;
+  p.tracks.forEach(t=>{ const s=$('trackList').querySelector(`.trk[data-id="${t.id}"] .trinst`); if(s) s.value=gmOn(t)?'gm':t.inst.preset in INSTRUMENTS?t.inst.preset:'generico'; });
+}
+// changing the tracks themselves is not in the undo history (it keeps notes only), so it starts the history over
+function tracksChanged(){ hist.length=0; fut.length=0; saveDraft(); if(P.playing) playProg(); render(); }
+$('bToTracks').onclick=()=>{
+  const p=st.prog; if(isMulti(p)) return;
+  const t={id:uid(),name:p.name||tr('Pista 1','Track 1'),inst:JSON.parse(JSON.stringify(p.inst)),mute:false};
+  p.tracks=[t]; p.notes.forEach(n=>{ n.tr=t.id; }); st.trk=t.id; tracksChanged();
+  toast(tr('Pattern con pistas: suma más con «+ Pista vacía» o «Agregar»','Pattern with tracks: add more with “+ Empty track” or “Add”'));
+};
+$('bTrkAdd').onclick=()=>{
+  const p=st.prog; if(!isMulti(p)) return;
+  const t={id:uid(),name:tr('Pista ','Track ')+(p.tracks.length+1),inst:instDefaults('generico'),mute:false};
+  p.tracks.push(t); st.trk=t.id; tracksChanged();
+};
+$('bTrkFrom').onclick=()=>{
+  const p=st.prog, src=st.proj.patterns.find(x=>x.id===$('trkFrom').value); if(!isMulti(p)||!src) return;
+  const t={id:uid(),name:src.name||tr('Pista ','Track ')+(p.tracks.length+1),inst:JSON.parse(JSON.stringify(src.inst)),mute:false};
+  p.tracks.push(t); src.notes.forEach(n=>{ const {g,...c}=n; p.notes.push({...(src.inst.preset==='bateria'?c:n),id:uid(),tr:t.id}); });
+  p.beats=Math.max(p.beats||4,src.beats||4); st.trk=t.id; tracksChanged();
+  toast(tr(`«${t.name}» agregado como pista`,`“${t.name}” added as a track`));
+};
+$('trackList').addEventListener('click',e=>{
+  const row=e.target.closest('.trk'); if(!row) return;
+  if(e.target.closest('.trdel')){
+    const p=st.prog, t=p.tracks.find(x=>x.id===row.dataset.id), n=p.notes.filter(x=>x.tr===t.id).length;
+    if(p.tracks.length<2||(n&&!confirm(tr(`¿Quitar la pista «${t.name}» y sus ${n} notas?`,`Remove track “${t.name}” and its ${n} notes?`)))) return;
+    p.tracks=p.tracks.filter(x=>x!==t); p.notes=p.notes.filter(x=>x.tr!==t.id); R.sel.clear(); st.trk=null; tracksChanged(); return;
+  }
+  const b=e.target.closest('.trsel'); if(!b) return; st.trk=row.dataset.id; renderTracks(st.prog); drawRoll();
+});
+$('trackList').addEventListener('change',e=>{
+  const row=e.target.closest('.trk'); if(!row) return; const t=st.prog.tracks.find(x=>x.id===row.dataset.id); if(!t) return;
+  if(e.target.classList.contains('trinst')){
+    if(e.target.value==='gm') delete t.gm; else { t.inst=instDefaults(e.target.value); if(t.prog!=null) t.gm=false; }
+    ensureSounds(trackPat(st.prog,t));
+  }
+  else if(e.target.classList.contains('trmute')) t.mute=e.target.checked;
+  saveDraft(); if(P.playing) playProg(); render();
+});
+$('bTrkSplit').onclick=()=>{
+  const p=st.prog; if(!isMulti(p)) return;
+  const made=splitTracks(p); if(!made.length) return;
+  const i=st.proj.patterns.indexOf(p); st.proj.patterns.splice(i,1,...made); hist.length=0; fut.length=0; st.trk=null;
+  setPattern(made[0].id); toast(tr(`Pistas separadas: ${made.length} patterns`,`Tracks split: ${made.length} patterns`));
+};
 function drumSummaryHtml(p){
   const c={}; p.notes.forEach(n=>{ const k=DRUMS[n.m]?DRUMS[n.m].ch:tr('Otras teclas','Other keys'); c[k]=(c[k]||0)+1; });
   const n=p.notes.length;
@@ -698,29 +781,28 @@ $('bGroove').onclick=()=>{
   $('grInfo').textContent=tr(`Creado «${p.name}»: ${p.notes.length} golpes en ${bars} compás${bars===1?'':'es'}.`,`Created “${p.name}”: ${p.notes.length} hits in ${bars} bar${bars===1?'':'s'}.`);
 };
 
-// each track of each file becomes a pattern of the open project
+// each file opens as a project of its own, tempo included; each of its tracks becomes a pattern
 async function importMidiFiles(files){
-  const added=[]; let dropped=0, tempo=null;
+  const made=[]; let dropped=0;
   for(const f of files){
     let res; try{ res=parseMidi(await f.arrayBuffer()); }catch(e){ toast(`${f.name}: ${e.message}.`); continue; }
-    if(res.tempo&&!tempo) tempo=res.tempo;
-    const base=f.name.replace(/\.midi?$/i,'');
-    res.tracks.forEach((trk,i)=>{
-      const keep=trk.notes.filter(n=>n.m>=LOW&&n.m<=HIGH); dropped+=trk.notes.length-keep.length; if(!keep.length) return;
-      const name=res.tracks.length>1?`${base} · ${trk.name||tr('pista ','track ')+(i+1)}`:base;
-      const p=normProg({id:uid(),name,beats:4,notes:keep.map(({ch,...n})=>n),names:{}});
-      if(trk.notes.every(n=>n.ch===9)) p.inst=instDefaults('bateria');
-      st.proj.patterns.push(p); added.push(p);
-    });
+    const name=f.name.replace(/.midi?$/i,'');
+    const trks=res.tracks.map(trk=>{ const keep=trk.notes.filter(n=>n.m>=LOW&&n.m<=HIGH); dropped+=trk.notes.length-keep.length; return {...trk,notes:keep}; }).filter(trk=>trk.notes.length);
+    // one track is a pattern as before; several tracks are one pattern with a track each, so the file can be heard whole
+    if(trks.length) made.push({name,tempo:res.tempo,pats:[trks.length>1?multiPattern(name,trks):normProg({id:uid(),name,beats:4,notes:trks[0].notes.map(({ch,...n})=>n),names:{}})]});
+    if(trks.length===1&&trks[0].notes.every(n=>n.ch===9)) made[made.length-1].pats[0].inst=instDefaults('bateria');
   }
-  if(!added.length){ if(files.length) toast(tr('No encontré notas para importar en ese archivo.','No notes to import found in that file.')); return; }
-  const onlyNew=st.proj.patterns.every(p=>!p.notes.length||added.includes(p));
-  if(tempo&&onlyNew) st.proj.bpm=Math.round(tempo);
-  setPattern(added[0].id);
-  const nn=added.reduce((a,p)=>a+p.notes.length,0);
-  toast(tr(`Importado: ${added.length} pattern${added.length===1?'':'s'}, ${nn} notas${tempo?` · tempo del archivo ${Math.round(tempo)} BPM${onlyNew?'':' (el del proyecto no cambió)'}`:''}${dropped?` · ${dropped} notas fuera de MIDI 12–132 omitidas`:''}`,
-    `Imported: ${added.length} pattern${added.length===1?'':'s'}, ${nn} notes${tempo?` · file tempo ${Math.round(tempo)} BPM${onlyNew?'':' (the project’s did not change)'}`:''}${dropped?` · ${dropped} notes outside MIDI 12–132 skipped`:''}`));
+  if(!made.length){ if(files.length) toast(tr('No encontré notas para importar en ese archivo.','No notes to import found in that file.')); return; }
+  made.forEach(m=>openProject({id:uid(),name:m.name,bpm:Math.round(m.tempo||st.proj.bpm||90),seed:newSeed(),patterns:m.pats,active:m.pats[0].id}));
+  const np=made.reduce((a,m)=>a+m.pats.length,0), nn=made.reduce((a,m)=>a+m.pats.reduce((x,p)=>x+p.notes.length,0),0);
+  toast(tr(`Importado${made.length>1?`: ${made.length} proyectos`:''}: ${np} pattern${np===1?'':'s'}, ${nn} notas${made.length===1&&made[0].tempo?` · ${Math.round(made[0].tempo)} BPM del archivo`:''}${dropped?` · ${dropped} notas fuera de MIDI 12–132 omitidas`:''}`,
+    `Imported${made.length>1?`: ${made.length} projects`:''}: ${np} pattern${np===1?'':'s'}, ${nn} notes${made.length===1&&made[0].tempo?` · file tempo ${Math.round(made[0].tempo)} BPM`:''}${dropped?` · ${dropped} notes outside MIDI 12–132 skipped`:''}`));
 }
+// piano roll fullscreen: the browser's own, on the stage so the tools come along; the roll redraws through its ResizeObserver
+const stage=document.querySelector('.stage');
+function toggleFull(){ if(!stage.requestFullscreen) return; if(document.fullscreenElement) document.exitFullscreen(); else stage.requestFullscreen().catch(()=>{}); }
+$('bFull').onclick=toggleFull;
+document.addEventListener('fullscreenchange',()=>{ $('bFull').setAttribute('aria-pressed',!!document.fullscreenElement); requestAnimationFrame(()=>{ rollSize(); drawRoll(); }); });
 $('bMidiIn').onclick=()=>$('midiFile').click();
 $('midiFile').onchange=e=>{ importMidiFiles([...e.target.files]); e.target.value=''; };
 R.el.addEventListener('dragover',e=>{ if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')){ e.preventDefault(); R.el.classList.add('drop'); } });
@@ -843,6 +925,7 @@ document.addEventListener('keydown',e=>{
   if(k===' '&&!onBtn){ e.preventDefault(); P.playing?stopProg():playProg(); }
   else if(k==='Enter'&&!onBtn){ e.preventDefault(); addAtEnd(); }
   else if(k==='p'||k==='P'){ $('bPlay').click(); }
+  else if(k==='f'||k==='F'){ toggleFull(); }
   else if(k==='ArrowLeft'){ e.preventDefault(); shift(e.shiftKey?-12:-1); }
   else if(k==='ArrowRight'){ e.preventDefault(); shift(e.shiftKey?12:1); }
   else if(k==='ArrowUp'){ e.preventDefault(); invert(true); }

@@ -62,4 +62,7 @@ cada canal y usa solo bibliotecas CC0 (usa `sfzregions.py` y necesita `ffmpeg`).
   de stgiga, hakerg, little-scale, drunkenjesus, GASHISOFT, ZandroReville, CynthiaCelestic, switchworks, DekyoOngen,
   TheEighthBit/CincoModar, LifAlien, MrSanic, ASIA LUNAR, Moetsukiro, Awpwr, 48LAC y SpookyLolbit (WTFPL 2.0).
   Detalle y licencias en [CREDITS.md](CREDITS.md).
+- Modo General MIDI: las pistas de un .mid que fija un programa suenan con FluidR3 GM, de Frank Wen (MIT),
+  en el render nota por nota de [Benjamin Gleitzman](https://github.com/gleitz/midi-js-soundfonts) (CC BY 3.0).
+  No está en el repositorio: cada programa se descarga de jsDelivr la primera vez que suena.
 - Cursores, texturas y paleta: los de [salonas.github.io](https://salonas.github.io).

@@ -40,15 +40,27 @@
             <button class="sbtn" id="bPack" title="Un .zip con cada pattern en .mid, cada acorde suelto en .mid, tu biblioteca, el texto del proyecto y, por pattern con slides, un script de FL y un clip de pitch"><i class="ico i-pack" aria-hidden="true"></i>Pack completo</button>
           </div>
         </div>
-        <button class="sbtn" id="bMidiIn" title="Trae un .mid exportado de FL: cada pista se vuelve un pattern de este proyecto. También puedes soltar el archivo sobre el piano roll."><i class="ico i-import" aria-hidden="true"></i>Importar .mid</button>
+        <button class="sbtn" id="bMidiIn" title="Trae un .mid exportado de FL: el archivo se abre como proyecto nuevo y cada pista es un pattern. También puedes soltar el archivo sobre el piano roll."><i class="ico i-import" aria-hidden="true"></i>Importar .mid</button>
         <input type="file" id="midiFile" accept=".mid,.midi,audio/midi,audio/x-midi" multiple hidden>
       </div>
     </div>
+    <div class="prbar" role="tablist" aria-label="Proyectos abiertos" id="projTabs"></div>
     <div class="patbar">
       <button class="sbtn pscroll" id="bPatPrev" title="Patterns anteriores" aria-label="Patterns anteriores" hidden><i class="ico i-play flip" aria-hidden="true"></i></button>
       <div class="ptabs" role="tablist" aria-label="Patterns del proyecto" id="patTabs"></div>
       <button class="sbtn pscroll" id="bPatNext" title="Patterns siguientes" aria-label="Patterns siguientes" hidden><i class="ico i-play" aria-hidden="true"></i></button>
       <button class="sbtn" id="bPatAdd" aria-expanded="false">+ Pattern</button>
+    </div>
+    <div class="patedit trackpanel" id="trackPanel" hidden>
+      <b class="nptitle">Pistas del pattern</b>
+      <div class="tracklist" id="trackList"></div>
+      <div class="trkadd">
+        <button type="button" class="sbtn" id="bTrkAdd" title="Una pista vacía, para dibujar o importar notas en ella">+ Pista vacía</button>
+        <label class="fld" for="trkFrom">Agregar un pattern como pista<select id="trkFrom"></select></label>
+        <button type="button" class="sbtn" id="bTrkFrom" title="Copia las notas e instrumento de ese pattern como pista nueva; el pattern original no cambia">Agregar</button>
+      </div>
+      <button type="button" class="sbtn" id="bTrkSplit" title="Cada pista pasa a ser un pattern aparte, con su instrumento; este pattern se reemplaza">Separar pistas en patterns</button>
+      <span class="hint">La pista elegida es la que editas; las demás se ven como contornos y suenan igual. El .mid de este pattern lleva una pista y un canal por pista.</span>
     </div>
     <form class="patedit newpat" id="newPat" hidden>
       <b class="nptitle">Pattern nuevo</b>
@@ -65,6 +77,7 @@
       <label class="fld vol" for="patVol" title="Solo cambia lo que suena en esta página, para todos los patterns de este instrumento. El MIDI y el texto exportados no cambian.">Volumen al tocar<span><input type="range" id="patVol" min="0" max="100" step="5" value="100"><output class="mono" id="patVolOut" for="patVol"></output></span></label>
       <label class="fld bend" for="patBend" title="Semitonos que el instrumento sube o baja con el pitch bend: 2 en la mayoría de los canales de la plantilla; 12 en Pad y Guitarra Limpia, 5 en Saxo Barítono">Rango de bend (±st)<input type="number" id="patBend" min="1" max="24" step="1"></label>
       <label class="fld glide" for="patGlideNative" title="Marcado: el .mid lleva portamento estándar (CC65 y CC84) para instrumentos que deslizan solos. Sin marcar: los slides se exportan como pitch bend, para sforzando y los .sf2."><span><input type="checkbox" id="patGlideNative"> Slide nativo</span></label>
+      <button class="sbtn" id="bToTracks" title="Convierte este pattern en uno con pistas: la nota y el instrumento actuales pasan a la primera pista, y puedes sumar más para armar un .mid multipista">Pasar a pistas</button>
       <button class="sbtn" id="bPatDup">Duplicar</button>
       <button class="sbtn" id="bPatDel">Borrar</button>
       <span class="hint">El instrumento define cómo se aplica la expresión en este pattern (pestaña Expresión).</span>
@@ -95,6 +108,7 @@
           <button class="sbtn" id="bQuant" title="Ctrl+Q: ajusta inicio y duración a la grilla">Cuantizar</button>
           <button class="sbtn" id="bDelSel" title="Supr">Borrar selección</button>
           <button class="sbtn" id="bSep" aria-expanded="false" title="Saca la melodía, el bajo y los acordes de este pattern en patterns separados">Separar voces…</button>
+          <button class="sbtn" id="bFull" aria-pressed="false" title="F: el piano roll ocupa toda la pantalla; Esc para salir">Pantalla completa</button>
         </div>
         <span class="hint" id="rollInfo"></span>
       </div>
@@ -355,7 +369,7 @@
         <b>Piano roll</b> (con el foco en la grilla): <kbd>Supr</kbd> borrar · <kbd>Ctrl</kbd>+<kbd>A</kbd> todo · <kbd>Ctrl</kbd>+<kbd>B</kbd> duplicar · <kbd>Ctrl</kbd>+<kbd>Q</kbd> cuantizar · <kbd>↑</kbd><kbd>↓</kbd> ½ tono (<kbd>Shift</kbd>: octava) · <kbd>←</kbd><kbd>→</kbd> mover según el ajuste · <kbd>Esc</kbd> deseleccionar<br>
         <b>General</b>: <kbd>Espacio</kbd> tocar/detener · <kbd>Enter</kbd> agregar el acorde activo al final · <kbd>P</kbd> escuchar el acorde activo · <kbd>←</kbd><kbd>→</kbd> ½ tono · <kbd>Shift</kbd>+<kbd>←</kbd><kbd>→</kbd> octava · <kbd>↑</kbd><kbd>↓</kbd> inversión · <kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd> deshacer/rehacer
       </div>
-      <div class="keys"><b>Créditos de sonido</b>: Coro, Lead, Campana (Iglesia) y Chiptune suenan con muestras de Musyng Kite (WTFPL 2.0), Just t4 (fixed) de Milton Paredes, MP factory studios y RolandKnight (Creative Commons Sampling+ 1.0) y stgiga's Famicom Multichip Soundfont V2G (WTFPL 2.0). El resto, de las bibliotecas CC0 de Karoryfer, VSCO y VCSL. Detalle y enlaces en CREDITS.md del repositorio.</div>
+      <div class="keys"><b>Créditos de sonido</b>: Coro, Lead, Campana (Iglesia) y Chiptune suenan con muestras de Musyng Kite (WTFPL 2.0), Just t4 (fixed) de Milton Paredes, MP factory studios y RolandKnight (Creative Commons Sampling+ 1.0) y stgiga's Famicom Multichip Soundfont V2G (WTFPL 2.0). El resto, de las bibliotecas CC0 de Karoryfer, VSCO y VCSL. El modo General MIDI usa FluidR3 GM de Frank Wen (MIT), renderizado por Benjamin Gleitzman (CC BY 3.0) y descargado de jsDelivr al sonar. Detalle y enlaces en CREDITS.md del repositorio.</div>
     </div>
   </section>
   <dialog class="dlg" id="pitchDlg" aria-labelledby="pitchTitle">

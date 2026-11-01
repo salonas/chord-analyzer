@@ -160,7 +160,7 @@ input[type=range]::-moz-range-thumb{width:8px;height:22px;border-radius:0;backgr
 .fld input:not([type=checkbox]):not([type=range]),.fld select{border:2px solid var(--ink);border-radius:0;padding:4px 8px;background:var(--card);color:var(--ink);font-size:14px;min-width:170px;max-width:100%}
 .fld input:not([type=checkbox]):not([type=range]):hover,.fld select:hover{background:var(--paper)}
 /* the bar's background and bottom line run edge to edge, so nothing peeks out at the sides while it sticks */
-.transportbar::before{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:calc(50% - 50vw);right:calc(50% - 50vw);background:var(--bg) url(/img/wall.png) fixed;border-bottom:3px solid var(--ink)}
+.transportbar::before{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:calc(50% - 50vw);right:calc(50% - 50vw);background:var(--bg) url(/img/wall.png) 0 0;border-bottom:3px solid var(--ink)}
 .transportbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;padding-block:10px 13px;
   display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
 .brand{display:flex;flex-direction:column;gap:2px;flex:1 1 260px;min-width:0}
@@ -232,7 +232,7 @@ kbd{display:inline-block;font:inherit;font-size:13px;line-height:1.2;border:2px 
 .work{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:18px;align-items:start}
 .stage{display:flex;flex-direction:column;gap:12px;min-width:0}
 .rolltools{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
-.roll{position:relative;height:clamp(340px,60vh,760px);overflow:auto;border:3px solid var(--ink);background:var(--roll-w);box-shadow:6px 6px 0 var(--tan-dark);overscroll-behavior:contain}
+.roll{position:relative;height:clamp(340px,60vh,760px);min-height:240px;resize:vertical;overflow:auto;border:3px solid var(--ink);background:var(--roll-w);box-shadow:6px 6px 0 var(--tan-dark);overscroll-behavior:contain}
 .rollInner{position:relative}
 /* Slide/Porta row: the canvas draws the row (surface, lines, label) and these buttons sit over it; the zero-size sticky bar keeps them fixed while the roll scrolls */
 .modebar{position:sticky;top:0;left:0;z-index:2;width:0;height:0}
@@ -363,7 +363,9 @@ kbd{display:inline-block;font:inherit;font-size:13px;line-height:1.2;border:2px 
 .key.w:hover{background-color:var(--card)}
 .key.b:hover{background-color:var(--brown)}
 /* keys outside the 88-key piano or outside MIDI read as inactive: a ghost with a thin --tan outline and no lip or shadow, unlike the filled keys that are pressed */
-.key.out,.key.nomidi{border-color:var(--tan);box-shadow:none}
+.key.out,.key.nomidi,.key.nokit{border-color:var(--tan);box-shadow:none}
+.key.nokit{cursor:not-allowed;background-color:var(--paper);background-image:repeating-linear-gradient(135deg,transparent 0 4px,var(--tan) 4px 5px)}
+.key.nokit:hover{background-color:var(--paper)}
 .key.out.w{background-color:var(--paper)}
 .key.out.b{background-color:var(--card)}
 .key.nomidi.w{background-color:var(--card)}
@@ -437,3 +439,36 @@ footer{font-size:13px;color:var(--ink)}
 /* on touch screens the strip is swiped, so the arrows only take room */
 @media (hover:none){ .patbar .pscroll{display:none} }
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* fullscreen piano roll: the stage fills the screen, the roll takes what the tools leave */
+.stage:fullscreen{display:flex;flex-direction:column;gap:10px;padding:12px;background:var(--bg) url(/img/wall.png) 0 0;overflow:auto}
+.stage:fullscreen .roll{flex:1 1 auto;height:auto;min-height:0;resize:none}
+#bFull[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+
+/* open projects: a strip of tabs above the patterns' */
+.prbar{display:flex;gap:4px;overflow-x:auto;min-width:0;scrollbar-width:none;margin-bottom:6px}
+.prbar::-webkit-scrollbar{display:none}
+.prtab{display:flex;align-items:stretch;flex:none;border:2px solid var(--ink);background:var(--card)}
+.prsel{border:0;background:none;padding:4px 10px;display:flex;flex-direction:column;align-items:flex-start;gap:0;white-space:nowrap;text-align:left;max-width:240px}
+.prsel .pn{font-size:14px;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.prsel .pi{font-size:11px;color:var(--muted)}
+.prsel[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+.prsel[aria-selected="true"] .pi{color:var(--paper)}
+.prx{border:0;border-left:2px solid var(--ink);background:var(--paper);padding:0 8px;font-size:16px;line-height:1}
+.prx:hover{background:var(--tan)}
+
+/* tracks of a multitrack pattern */
+.trackpanel{flex-wrap:wrap;gap:8px 12px;align-items:flex-start}
+.tracklist{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%}
+.trk{display:flex;align-items:center;gap:6px;border:2px solid var(--ink);background:var(--card);padding:3px 6px}
+.trsel{border:0;background:none;display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:2px 6px;max-width:200px}
+.trsel .pn{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.trsel .pi{font-size:11px;color:var(--muted)}
+.trsel[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.trsel[aria-pressed="true"] .pi{color:var(--paper)}
+.trinst{border:2px solid var(--ink);background:var(--paper);font-size:13px;max-width:150px}
+.trm{display:flex;align-items:center;gap:4px;font-size:13px}
+.trkadd{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 10px;flex:1 1 100%}
+.trdel{border:0;border-left:2px solid var(--ink);background:var(--paper);padding:0 8px;align-self:stretch;font-size:16px;line-height:1}
+.trdel:hover:not(:disabled){background:var(--tan)}
+.trdel:disabled{opacity:.4;cursor:not-allowed}

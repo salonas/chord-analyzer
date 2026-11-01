@@ -1,7 +1,7 @@
 // Piano roll, transport, history and chord (segment) operations.
 import { BLACK, HIGH, LOW, T, sigOf, uid } from './data.js';
 import { $, fillRange, toast } from './dom.js';
-import { isBlock, isDrum, progEnd } from './model.js';
+import { isBlock, isDrum, isMulti, progEnd, trackOf, trackPat } from './model.js';
 import { fut, hist, savePrefs, st } from './state.js';
 import { noteText, octOff, plainSpell } from './analysis.js';
 import { DRUMS } from './drums.js';
@@ -23,31 +23,49 @@ function undo(){ if(!hist.length) return; fut.push(snapshot()); restore(hist.pop
 function redo(){ if(!fut.length) return; hist.push(snapshot()); restore(fut.pop()); render(); }
 
 // ---------- transport ----------
-const P={bus:null,raf:0,t0:0,from:0,end:0,spt:0,next:null,playing:false};
+const P={bus:null,raf:0,t0:0,from:0,cur:0,end:0,spt:0,next:null,parts:[],playing:false};
 // notes are scheduled ahead on the audio clock; tick() follows with the playhead and queues the next loop pass one beat early
-function scheduleFrom(from,t0){
-  const drum=isDrum(st.prog);
+// the parts that sound: a multitrack pattern plays each unmuted track on its own instrument, any other pattern is one part
+function parts(p){ return isMulti(p)?p.tracks.filter(t=>!t.mute).map(t=>({t,pat:{...trackPat(p,t),notes:p.notes.filter(n=>trackOf(p,n)===t)}})):[{t:null,pat:p}]; }
+function curTrack(){ const p=st.prog; return isMulti(p)?(p.tracks.find(t=>t.id===st.trk)||p.tracks[0]):null; }
+// Notes are queued a window ahead (LOOK seconds), not all at once: a pattern with thousands of notes would create thousands of
+// voices in the first instant, freezing the page and the audio. Each part's voices are worked out once per playback.
+const LOOK=3;
+function voicesOf(pat){
   // drums go in time order, so a closing hi-hat can cut the open one scheduled before it
   // melodic notes go as voices, so slides and portamento (glide.js) bend them
-  const notes=drum?[...st.prog.notes].sort((a,b)=>a.s-b.s).map(n=>({m:n.m,s:n.s,e:n.s+n.l,v:n.v||100,bend:[]})):glidePlan(st.prog,Infinity).voices;
-  const sec=x=>t0+(x-from)*P.spt;
-  notes.forEach(n=>{
-    if(n.e<=from||n.s>=P.end) return;
-    const s0=Math.max(n.s,from), e0=Math.min(n.e,P.end), t=sec(s0), vel=.2*Math.pow(n.v/127,1.6), hold=(e0-s0)*P.spt;
+  const v=isDrum(pat)?pat.notes.map(n=>({m:n.m,s:n.s,e:n.s+n.l,v:n.v||100,bend:[]})):glidePlan(pat,Infinity).voices;
+  return v.slice().sort((a,b)=>a.s-b.s);
+}
+// queues the notes that start in [pass.cur, upto) of a pass ({from,t0,cur}: where it began and when, on the audio clock); the first
+// window of a pass also takes the notes already sounding at its start
+function fill(pass,upto){
+  upto=Math.min(upto,P.end); if(upto<=pass.cur) return;
+  const a=pass.cur, first=a===pass.from, sec=x=>pass.t0+(x-pass.from)*P.spt;
+  P.parts.forEach(({pat,bus,notes})=>notes.forEach(n=>{
+    if(n.s>=upto) return;
+    if(!(n.s>=a||(first&&n.e>a))) return;
+    if(n.e<=a) return;
+    const s0=Math.max(n.s,a), e0=Math.min(n.e,P.end), t=sec(s0), vel=.2*Math.pow(n.v/127,1.6), hold=(e0-s0)*P.spt;
     const bend=n.bend.length?[{t,d:bendAt(n.bend,s0)},...n.bend.filter(b=>b.t>s0&&b.t<e0).map(b=>({t:sec(b.t),d:b.d})),{t:sec(e0),d:bendAt(n.bend,e0)}]:null;
-    patVoice(st.prog,n.m,t,n.v,P.bus,vel,hold,bend);
-  });
+    patVoice(pat,n.m,t,n.v,bus,vel,hold,bend);
+  }));
+  pass.cur=upto;
 }
 function playProg(){
   stopProg();
   if(!st.prog.notes.length) return;
   // the first playback of an instrument waits for its samples; stopping meanwhile cancels it
-  if(!soundsReady(st.prog)){ const ask=P.ask=Symbol(); ensureSounds(st.prog).then(()=>{ if(P.ask===ask) playProg(); }); return; }
-  const c=audio(); P.bus=c.createGain(); P.bus.gain.value=mixOf(st.prog); P.bus.connect(master);
+  const ps=parts(st.prog);
+  if(!ps.every(x=>soundsReady(x.pat))){ const ask=P.ask=Symbol(); Promise.all(ps.map(x=>ensureSounds(x.pat))).then(()=>{ if(P.ask===ask) playProg(); }); return; }
+  // a multitrack pattern has a bus per track (its instrument's volume) under one that stopProg fades
+  const c=audio(); P.bus=c.createGain(); P.bus.gain.value=isMulti(st.prog)?1:mixOf(st.prog); P.bus.connect(master);
+  P.tbus=new Map(ps.filter(x=>x.t).map(x=>{ const g=c.createGain(); g.gain.value=mixOf(x.pat); g.connect(P.bus); return [x.t.id,g]; }));
+  P.parts=ps.map(x=>({pat:x.pat,bus:x.t?P.tbus.get(x.t.id):P.bus,notes:voicesOf(x.pat)}));
   P.spt=60/(st.proj.bpm||90)/T;
   P.end=Math.max(4*T,Math.ceil(progEnd(st.prog)/(4*T))*4*T);
-  P.from=R.start<P.end?R.start:0; P.t0=c.currentTime+.06; P.next=null; P.playing=true;
-  scheduleFrom(P.from,P.t0);
+  P.from=R.start<P.end?R.start:0; P.t0=c.currentTime+.06; P.cur=P.from; P.next=null; P.playing=true;
+  fill(P,P.from+LOOK/P.spt);
   P.raf=requestAnimationFrame(tick); P.timer=setInterval(pump,250);
   setPlayBtn(true);
 }
@@ -71,10 +89,16 @@ function followLive(pos){
 // a timer still fires there (throttled to about 1 s), so the next pass is queued 2 s ahead
 function pump(){
   if(!P.playing) return;
-  const c=audio(), pos=P.from+(c.currentTime-P.t0)/P.spt;
-  if(st.loop&&!P.next&&(P.end-pos)*P.spt<=2){ const t0n=P.t0+(P.end-P.from)*P.spt; scheduleFrom(0,t0n); P.next={t0:t0n}; }
+  const c=audio(), pos=P.from+(c.currentTime-P.t0)/P.spt, ahead=pos+LOOK/P.spt;
+  // the frame loop calls this too: only queue once half a window has been played
+  const half=LOOK/P.spt/2;
+  if(P.cur<P.end&&ahead-P.cur>=half) fill(P,ahead);
+  if(st.loop&&ahead>P.end){
+    if(!P.next) P.next={from:0,cur:0,t0:P.t0+(P.end-P.from)*P.spt};
+    if(P.cur>=P.end&&(P.next.cur===0||ahead-P.end-P.next.cur>=half)) fill(P.next,ahead-P.end);
+  }
   if(pos>=P.end){
-    if(P.next){ P.from=0; P.t0=P.next.t0; P.next=null; R.el.scrollLeft=0; }
+    if(P.next){ P.from=0; P.t0=P.next.t0; P.cur=P.next.cur; P.next=null; R.el.scrollLeft=0; }
     else stopProg();
   }
 }
@@ -143,25 +167,27 @@ function drawRoll(){
   }
   // notes: pixel boxes with clipped corners; the selected one is dark, with a 2 px edge and a light triangle top left
   g.font=R.F.small; g.textBaseline='middle';
+  const at=curTrack(); // other tracks of a multitrack pattern are drawn as outlines, so the track being edited reads without colour
   for(const n of st.prog.notes){
     const x=Math.round(tX(n.s)), y=Math.round(rowY(n.m)), w=Math.max(4,Math.round(n.l/T*bw));
     if(x>W||x+w<K||y>H||y+rh<TOP) continue;
-    const sel=R.sel.has(n.id), t=sel?2:1, x0=x+1, y0=y+1, w0=w-2, h0=rh-2;
+    const sel=R.sel.has(n.id), t=sel?2:1, x0=x+1, y0=y+1, w0=w-2, h0=rh-2, dim=at&&!sel&&trackOf(st.prog,n)!==at;
     // softer notes fade, down to 40% at velocity 0, so quiet ones stay visible
     g.globalAlpha=sel?1:.4+.6*(n.v||100)/127;
-    g.fillStyle=sel?C.sel:C.note; g.fillRect(x0+t,y0+t,Math.max(0,w0-2*t),h0-2*t);
-    g.globalAlpha=1;
+    if(!dim){ g.fillStyle=sel?C.sel:C.note; g.fillRect(x0+t,y0+t,Math.max(0,w0-2*t),h0-2*t); }
+    g.globalAlpha=dim?.55:1;
     g.fillStyle=sel?C.note:C.edge;
     g.fillRect(x0+1,y0,Math.max(0,w0-2),t); g.fillRect(x0+1,y0+h0-t,Math.max(0,w0-2),t); g.fillRect(x0,y0+1,t,h0-2); g.fillRect(x0+w0-t,y0+1,t,h0-2);
     g.fillStyle=sel?C.selInk:C.ink;
     if(sel&&w0>=10) for(let i=0;i<4;i++) g.fillRect(x0+t,y0+t+i,4-i,1);
-    g.fillRect(x+w-5,y+4,1,rh-8);
+    if(!dim) g.fillRect(x+w-5,y+4,1,rh-8);
+    g.globalAlpha=1;
     // "key names: only the chord" labels just the notes under the selected chord band
     if(w>34&&(st.showNames||cur&&n.s<cur.b&&n.s+n.l>cur.a)){ g.save(); g.beginPath(); g.rect(x,y,w-6,rh); g.clip(); g.fillText(noteText(plainSpell(n.m,st),st),x+(sel?8:5),y+rh/2); g.restore(); }
   }
   // glides that count: a 2 px trace of the pitch that sounds, along the whole voice when slides bend it
   // and over the glide alone for a portamento; columns join so steep glides stay continuous
-  if(!isDrum(st.prog)){
+  if(!isDrum(st.prog)&&st.prog.notes.some(n=>n.g)){
     const plan=glidePlan(st.prog,Infinity), slid=new Set(plan.glides.filter(x=>x.n.g==='s').map(x=>x.V));
     g.fillStyle=C.text;
     for(const V of plan.voices){
@@ -309,7 +335,7 @@ function pointerDown(h,e){
     else {
       if(isDrum(st.prog)&&!DRUMS[m]) return; // only the keys the kit has samples for
       commit();
-      const nn={id:uid(),m,s:Math.max(0,snapFloor(t,e.altKey)),l:R.lastLen,v:R.lastVel,...(R.glide&&!isDrum(st.prog)?{g:R.glide}:{})};
+      const nn={id:uid(),m,s:Math.max(0,snapFloor(t,e.altKey)),l:R.lastLen,v:R.lastVel,...(curTrack()?{tr:curTrack().id}:{}),...(R.glide&&!isDrum(st.prog)?{g:R.glide}:{})};
       st.prog.notes.push(nn); R.sel=new Set([nn.id]);
       R.drag={type:'move',t0:t,m0:m,anchor:nn,orig:new Map([[nn.id,{s:nn.s,l:nn.l,m:nn.m}]]),changed:true,created:true};
       preview(m);
@@ -410,6 +436,7 @@ function selChanged(edited){
   if(edited) render(); else { renderActive(); drawRoll(); drawMini(); syncGlideBtns(); }
 }
 function toggleKey(m){
+  if(isDrum(st.prog)&&!DRUMS[m]) return; // only the keys the kit has samples for
   commit();
   if(st.rootMode){ st.notes.add(m); st.lockedRoot=st.lockedRoot===m%12?null:m%12; st.rootMode=false; }
   else if(st.notes.has(m)){ st.notes.delete(m); if(st.lockedRoot!==null&&![...st.notes].some(n=>n%12===st.lockedRoot)) st.lockedRoot=null; }
@@ -549,4 +576,4 @@ $('bSegLeft').onclick=()=>swapSeg(-1); $('bSegRight').onclick=()=>swapSeg(1); $(
 function centerRoll(){ const ns=st.prog.notes.length?st.prog.notes.map(n=>n.m):[...st.notes]; const m=ns.length?Math.round((Math.min(...ns)+Math.max(...ns))/2):60; R.el.scrollTop=R.TOP+(HIGH-m)*R.rh-R.el.clientHeight/2; }
 function velTargets(){ return R.sel.size?selNotes():st.prog.notes; }
 
-export { P, R, addAtEnd, centerRoll, commit, curSeg, deleteSel, drawRoll, liveNotes, playProg, pxDisc, readColors, redo, rollSize, selChanged, setPlayBtn, setZoom, stopProg, syncGlideBtns, toggleKey, undo, velTargets };
+export { P, R, addAtEnd, curTrack, centerRoll, commit, curSeg, deleteSel, drawRoll, liveNotes, playProg, pxDisc, readColors, redo, rollSize, selChanged, setPlayBtn, setZoom, stopProg, syncGlideBtns, toggleKey, undo, velTargets };

@@ -13,6 +13,11 @@ function normProg(p){
   if(!Array.isArray(p.notes)){ const r=blocksToNotes((p.steps||[]).map(s=>({...s,beats:s.beats||p.beats||4}))); p.notes=r.notes; p.names={...r.names,...(p.names||{})}; delete p.steps; }
   p.notes.forEach(n=>{ n.v=Math.min(127,Math.max(1,Math.round(n.v||100))); });
   p.names=p.names||{}; p.beats=p.beats||4; p.v=2;
+  if(p.tracks){
+    // an imported multitrack .mid: every track has its own instrument, and each note says which track it belongs to
+    p.tracks.forEach(t=>{ t.id=t.id||uid(); if(!t.inst||!(t.inst.preset in INSTRUMENTS||t.inst.preset==='custom')) t.inst=instDefaults('generico'); });
+    if(!p.tracks.length) delete p.tracks; else p.notes.forEach(n=>{ if(!p.tracks.some(t=>t.id===n.tr)) n.tr=p.tracks[0].id; });
+  }
   if(!p.inst||!(p.inst.preset in INSTRUMENTS||p.inst.preset==='custom')) p.inst=instDefaults(guessInst(p.name)||'generico');
   return p;
 }
@@ -37,7 +42,7 @@ const activePat=pr=>pr.patterns.find(p=>p.id===pr.active)||pr.patterns[0];
 function hash01(...xs){ let h=2166136261>>>0; for(const x of xs){ h^=x>>>0; h=Math.imul(h,16777619)>>>0; h^=h>>>13; h=Math.imul(h,0x5bd1e995)>>>0; h^=h>>>15; } return (h>>>0)/4294967296; }
 const progEnd=p=>p.notes.reduce((a,n)=>Math.max(a,n.s+n.l),0);
 function segs(p){
-  const ns=p.notes; if(!ns.length) return [];
+  const ns=p.notes; if(!ns.length||isMulti(p)) return [];
   const pts=[...new Set(ns.flatMap(n=>[n.s,n.s+n.l]))].sort((a,b)=>a-b);
   const out=[];
   for(let i=0;i<pts.length-1;i++){
@@ -61,6 +66,16 @@ const EXAMPLE=()=>{
     {notes:[50,60,65,69],root:2,sym:'m7',beats:2},{notes:[43,53,59,62],root:7,sym:'7',beats:2}]});
   return normProject({id:uid(),name:tr(...EXAMPLE_NAME),bpm:90,seed:20261027,patterns:[pat],active:pat.id});
 };
+// A multitrack pattern: p.tracks [{id,name,inst,mute,prog?,gm?}] and n.tr on each note. prog is the track's General MIDI
+// program from the .mid; it plays the soundfont (gm.js) unless gm is false, when the track plays its inst. Playback, sounds and the .mid go track by track;
+// the chord analysis does not apply (segs gives none), as the tracks would mix into one nonsense chord line.
+const isMulti=p=>!!(p&&p.tracks&&p.tracks.length);
+const trackOf=(p,n)=>p.tracks.find(t=>t.id===n.tr)||p.tracks[0];
+// what the sound code needs of a track, shaped like a pattern
+const gmOn=t=>t.prog!=null&&t.gm!==false;
+const trackPat=(p,t)=>({id:t.id,name:t.name,inst:t.inst,bend:p.bend,...(gmOn(t)&&{prog:t.prog})});
+// the pattern that sounds for a preview or a key: the active track of a multitrack pattern, else the pattern
+const soundPat=(p,id)=>isMulti(p)?trackPat(p,p.tracks.find(t=>t.id===id)||p.tracks[0]):p;
 function isDrum(p){ return !!(p&&p.inst&&p.inst.preset==='bateria'); }
 
-export { EXAMPLE, EXAMPLE_NAME, activePat, hash01, isBlock, isDrum, isPure, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs };
+export { EXAMPLE, EXAMPLE_NAME, activePat, gmOn, hash01, isBlock, isDrum, isMulti, isPure, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs, soundPat, trackOf, trackPat };
