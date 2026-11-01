@@ -46,7 +46,11 @@ function defaultProject(){
   const {tracks,tempo}=parseMidi(u8.buffer), trk=tracks[0];
   const p=normProg({id:uid(),name:trk.name||'Pattern 1',beats:4,notes:trk.notes.map(({ch,...n})=>n),names:{}});
   p.inst=instDefaults('piano');
-  return normProject({id:uid(),name:tr(...EXAMPLE_NAME),bpm:Math.round(tempo||90),seed:20261027,patterns:[p],active:p.id});
+  // a second pattern to hear portamento and slide: C, then D and E that glide in from the note before (p), and an F that slides out of the held E (s)
+  const g=normProg({id:uid(),name:tr('Prueba: portamento y slide','Test: portamento and slide'),beats:4,names:{},notes:[
+    {id:uid(),m:60,s:0,l:T,v:100},{id:uid(),m:62,s:T,l:T,v:100,g:'p'},{id:uid(),m:64,s:2*T,l:2*T,v:100},{id:uid(),m:65,s:3*T,l:T,v:100,g:'s'}]});
+  g.inst=instDefaults('lead');
+  return normProject({id:uid(),name:tr(...EXAMPLE_NAME),bpm:Math.round(tempo||90),seed:20261027,patterns:[p,g],active:p.id});
 }
 // ---------- voice separation ----------
 // Bass: the lowest sounding note at an onset, if low enough or well below the rest.

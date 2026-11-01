@@ -1,4 +1,5 @@
-import { parseMidi, separatePatterns, separateVoices } from './importer.js';
+import { defaultProject, parseMidi, separatePatterns, separateVoices } from './importer.js';
+import { glidePlan } from './glide.js';
 import fx from './test/fixtures/importer.json';
 import turnaround from './test/fixtures/turnaround.json';
 import { clone, fromHex, noId } from './test/helpers.js';
@@ -52,5 +53,15 @@ describe('parseMidi channels', () => {
   it('keeps a track of one channel as it is', () => {
     const r = parseMidi(bytes([...hdr(2), ...trk(on(0, 60)), ...trk(on(1, 64))]));
     expect(r.tracks.length).toBe(2);
+  });
+});
+
+describe('defaultProject', () => {
+  it('adds a portamento and slide test pattern after the turnaround', () => {
+    const pr = defaultProject();
+    expect(pr.patterns.length).toBe(2);
+    expect(pr.active).toBe(pr.patterns[0].id);
+    expect(pr.patterns[1].notes.map(n => n.g || null)).toEqual([null, 'p', null, 's']);
+    expect(glidePlan(pr.patterns[1]).skipped).toBe(0);
   });
 });
