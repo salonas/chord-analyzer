@@ -4,7 +4,7 @@ import { $, esc, fillRange, saveFile, toast } from './dom.js';
 import { EXAMPLE_NAME, activePat, gmOn, isBlock, isDrum, isMulti, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs, trackPat } from './model.js';
 import { gmName } from './gm.js';
 import { fut, hist, lib, persistLib, saveDraft, savePrefs, st } from './state.js';
-import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, inversionText, keyName, keyText, letterName, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
+import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, inversionText, keyName, keyText, letterName, noteText, octOff, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp } from './analysis.js';
 import { EX_KEYS, FEELINGS, exDefaults, exprSummary, expressPattern, instLabel } from './expression.js';
 import { DRUMS, GROOVES, expressDrums, genGroove } from './drums.js';
 import { libText, parseText, pickInterp, projectText } from './text.js';
@@ -530,7 +530,7 @@ $('bImport').onclick=()=>{
 
 const exId=k=>'ex'+k[0].toUpperCase()+k.slice(1);
 function syncExOut(){ document.querySelectorAll('#exControls output').forEach(o=>{ o.textContent=$(o.dataset.for).value+(o.dataset.unit||''); fillRange($(o.dataset.for)); }); $('exArt').disabled=!$('exArtOn').checked; }
-function fillEx(){ const e=st.ex; $('exPreset').value=e.preset; EX_KEYS.forEach(k=>{ $(exId(k)).value=e[k]; }); $('exArtOn').checked=!!e.artOn; syncExOut(); }
+function fillEx(){ const e=st.ex; $('exPreset').value=e.preset; EX_KEYS.forEach(k=>{ $(exId(k)).value=e[k]; }); $('exArtOn').checked=!!e.artOn; $('exTenHelp').textContent=tensionHelp(); syncExOut(); }
 function readEx(){ const e={preset:'custom'}; EX_KEYS.forEach(k=>{ const v=$(exId(k)).value; e[k]=k==='arc'?v:+v; }); e.artOn=$('exArtOn').checked; return e; }
 $('exPreset').onchange=e=>{ if(e.target.value==='custom') return; st.ex=exDefaults(e.target.value); fillEx(); savePrefs(); };
 $('exControls').addEventListener('input',()=>{ st.ex=readEx(); $('exPreset').value='custom'; syncExOut(); savePrefs(); });
@@ -688,7 +688,7 @@ function analysisSheet(A,p){
     <div><span class="lab">${tr('Final','Ending')}</span><span class="stamp"><span>${A.cad?degText(A.cad):tr('sin cadencia final','no final cadence')}</span></span></div>
     ${p.expr?`<div><span class="lab">${tr('Expresión aplicada','Applied expression')}</span><span class="expr">${esc(exprSummary(p.expr))}</span></div>`:''}<div class="an-pats"><span class="lab">${tr('Patrones reconocidos','Recognized patterns')}</span><div>${pats.length?pats.map(f=>`<span class="tag"><b>${f.k}</b>${degText(f.name)}${f.wrap?tr(' (en bucle)',' (looping)'):''}</span>`).join(''):`<span class="none">${tr('Ninguno de los '+PATTERNS.length+' patrones conocidos.','None of the '+PATTERNS.length+' known patterns.')}</span>`}</div></div></div>`;
   const row=i=>{ const r=A.romans[i], lab=esc(A.rs[i].label), fn=FN_NAME[A.fn[i]];
-    return `<div class="an-row"><span class="n">${i+1}</span><span class="main">${r?esc(r.text):lab}</span><span class="sub" title="${r?`${lab} · `:''}${fn} ${ten(A.ten[i])}"><span class="fn">${r?`<span class="sym">${lab}</span> · `:''}${fn}</span> <span class="ten">${ten(A.ten[i])}</span></span></div>`; };
+    return `<div class="an-row"><span class="n">${i+1}</span><span class="main">${r?esc(r.text):lab}</span><span class="sub" title="${r?`${lab} · `:''}${fn} ${ten(A.ten[i])}${A.tenCtx[i]?` · ${tenDetail(A,i)}`:''}"><span class="fn">${r?`<span class="sym">${lab}</span> · `:''}${fn}</span> <span class="ten">${ten(A.ten[i])}</span></span></div>`; };
   // a looping pattern gets two open brackets, one at each end of the sheet
   const N=A.rs.length, B=pats.filter(f=>!f.cycle).flatMap(f=>f.wrap?[{k:f.k,a:f.from,b:N-1,open:'b'},{k:f.k,a:0,b:f.to,open:'t'}]:[{k:f.k,a:f.from,b:f.to}]).sort((x,y)=>x.a-y.a||x.k-y.k);
   let rows='';
@@ -703,7 +703,7 @@ function analysisSheet(A,p){
     rows+='</div>'; i=b+1;
   }
   return `<div class="an">${head}<div class="an-rows"><span class="lines" aria-hidden="true">${'<b></b>'.repeat(N+2)}</span>${rows}</div>
-    <div class="hint">${tr('Grado; al lado, el acorde, su función y su tensión (0 a 1). Las llaves numeradas del margen unen los grados de cada patrón reconocido; una llave abierta sigue en el otro extremo (patrón en bucle).','Degree; next to it, the chord, its function and its tension (0 to 1). The numbered brackets in the margin join the degrees of each recognized pattern; an open bracket continues at the other end (looping pattern).')}</div></div>`;
+    <div class="hint">${tr('Grado; al lado, el acorde, su función y su tensión estimada (0 a 1). Las llaves numeradas del margen unen los grados de cada patrón reconocido; una llave abierta sigue en el otro extremo (patrón en bucle).','Degree; next to it, the chord, its function and its estimated tension (0 to 1). The numbered brackets in the margin join the degrees of each recognized pattern; an open bracket continues at the other end (looping pattern).')}</div></div>`;
 }
 // The tracks of a multitrack pattern: pick the one you edit (the others stay as outlines), change its instrument, mute it
 function renderTracks(p){

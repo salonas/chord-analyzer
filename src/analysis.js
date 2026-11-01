@@ -255,7 +255,7 @@ function chromaticReading(rs,romans,key,prefs){
       ro.short=g+(ro.fig||(sev?'7':''))+to; ro.text=ro.short+(ro.words?' '+ro.words:''); ro.secondary=true;
     } else if(lt!==undefined){
       const fig={0:'7',3:'⁶₅',6:'⁴₃',9:'⁴₂'}[(c.bass-lt+12)%12];
-      ro.short='vii°'+fig+'/'+targetBase(nx,key); ro.text=ro.short; ro.secondary=true;
+      ro.short='vii°'+fig+'/'+targetBase(nx,key); ro.text=ro.short; ro.secondary=true; ro.rootPc=lt;
       // F♯ A C E♭ before G: the root takes the letter under the target's, then thirds
       const rel=(nc.root-key.tonic+12)%12, sc=key.mode==='major'?MAJ:MIN;
       let ts=sc.indexOf(rel); if(ts<0&&key.mode==='minor'&&rel===11) ts=6;
@@ -316,11 +316,53 @@ function analyzeProgression(steps,prefs){
     else if(bd===7) cad=tr('Semicadencia (termina en V)','Half cadence (ends on V)');
   }
   const fn=romans.map((ro,i)=>harmonicFunction(ro,rs[i].c,key));
-  const ten=rs.map((r,i)=>+(.5*FN_TENSION[fn[i]]+.5*dissonance(r)).toFixed(2));
-  return {rs,romans,key,alt,found,cad,fn,ten};
+  // tension: what the chord is (function and dissonance) plus what came before it (Meyer's expectation)
+  const tenBase=rs.map((r,i)=>+(.5*FN_TENSION[fn[i]]+.5*dissonance(r)).toFixed(2));
+  const tenCtx=rs.map((r,i)=>contextTension(rs,romans,fn,i));
+  const ten=tenBase.map((b,i)=>Math.min(1,Math.max(0,+(b+(tenCtx[i]?tenCtx[i].val:0)).toFixed(2))));
+  return {rs,romans,key,alt,found,cad,fn,ten,tenBase,tenCtx};
 }
 // Harmonic function in the detected key: T tonic, S subdominant, D dominant, C color (borrowed or chromatic)
 const FN_TENSION={T:.1,S:.4,D:.8,C:.5,'?':.5};
+// Context (Meyer, Emotion and Meaning in Music, 1956): tension is expectation. A dominant leaves a tendency waiting; the chord it
+// resolves to releases it (arrival), any other chord frustrates it (surprise), and a dominant after a dominant keeps it
+// waiting (wait, per dominant in a row up to a maximum). The weights are chosen, not measured: the tension stays an estimate
+const CTX={arrival:-.15,surprise:.15,wait:.05,waitMax:.1};
+const CTX_NAME={get arrival(){return tr('llegada','arrival');},get surprise(){return tr('sorpresa','surprise');},get wait(){return tr('espera','wait');}};
+// Where a dominant-function chord is expected to go, in semitones above its root: V and V/x a fourth up, vii° a semitone up,
+// the cadential 6/4 to V, the tritone substitute a semitone down
+function expectedStep(c,ro){
+  if(ro.cad64) return 7;
+  if(c.type.q==='dim'||c.type.q==='hdim') return 1;
+  if(ro.deg===1&&c.type.q==='dom'&&!ro.secondary) return 11;
+  return 5;
+}
+function contextTension(rs,romans,fn,i){
+  const c=rs[i].c, pc=i&&rs[i-1].c, pro=i&&romans[i-1];
+  if(!i||!c||!pc||!pro) return null;
+  if(fn[i-1]==='D'&&fn[i]!=='D'){
+    const dest=((pro.rootPc!==undefined?pro.rootPc:pc.root)+expectedStep(pc,pro))%12;
+    return c.root===dest?{rule:'arrival',val:CTX.arrival}:{rule:'surprise',val:CTX.surprise};
+  }
+  if(fn[i]==='D'&&fn[i-1]==='D'){
+    let run=0; while(i-1-run>=0&&fn[i-1-run]==='D') run++;
+    return {rule:'wait',val:Math.min(CTX.waitMax,+(CTX.wait*run).toFixed(2))};
+  }
+  return null;
+}
+const tenNum=x=>tr(String(x).replace('.',','),String(x));
+// «base 0,13 + sorpresa 0,15 = 0,28», for the tooltip of the sheet
+function tenDetail(A,i){
+  const c=A.tenCtx[i];
+  if(!c) return `${tr('base','base')} ${tenNum(A.tenBase[i])}`;
+  return `${tr('base','base')} ${tenNum(A.tenBase[i])} ${c.val<0?'−':'+'} ${CTX_NAME[c.rule]} ${tenNum(Math.abs(c.val))} = ${tenNum(A.ten[i])}`;
+}
+// The help of the Expression tab, written from the constants above so that it cannot drift from them
+function tensionHelp(){
+  const n=tenNum, F=FN_TENSION;
+  return tr(`cada acorde recibe una tensión estimada de 0 a 1. Base: la mitad de su función en la tonalidad (tónica ${n(F.T)} · subdominante ${n(F.S)} · dominante ${n(F.D)} · color ${n(F.C)}) y la mitad de su disonancia (tríada mayor ${n(DISS.maj)} … disminuido ${n(DISS.dim)}, más extensiones alteradas). Contexto, según Meyer: tras una dominante, el acorde de destino baja ${n(Math.abs(CTX.arrival))} (llegada) y cualquier otro sube ${n(CTX.surprise)} (sorpresa, como en la cadencia rota); una dominante tras otra sube ${n(CTX.wait)} por cada una seguida, hasta ${n(CTX.waitMax)} (espera). El total se recorta a 0–1. Positivo: lo tenso suena más fuerte. Negativo: lo tenso se suaviza.`,
+    `each chord gets an estimated tension from 0 to 1. Base: half its function in the key (tonic ${n(F.T)} · subdominant ${n(F.S)} · dominant ${n(F.D)} · color ${n(F.C)}) and half its dissonance (major triad ${n(DISS.maj)} … diminished ${n(DISS.dim)}, plus altered extensions). Context, after Meyer: after a dominant, the chord it resolves to drops ${n(Math.abs(CTX.arrival))} (arrival) and any other rises ${n(CTX.surprise)} (surprise, as in the deceptive cadence); a dominant after a dominant rises ${n(CTX.wait)} for each one in a row, up to ${n(CTX.waitMax)} (wait). The total is clipped to 0–1. Positive: tense chords sound louder. Negative: tense chords soften.`);
+}
 const FN_NAME={get T(){return tr('tónica','tonic');},get S(){return tr('subdominante','subdominant');},get D(){return tr('dominante','dominant');},C:'color',get '?'(){return tr('sin función','no function');}};
 function harmonicFunction(ro,c,key){
   if(!ro||!c) return '?';
@@ -333,13 +375,14 @@ function harmonicFunction(ro,c,key){
   if(d===7||d===11||(minor&&d===10)) return 'D';
   return 'C';
 }
+const DISS={maj:.1,min:.15,sus:.35,dom:.55,hdim:.65,dim:.75,aug:.7};
 function dissonance(r){
   const c=r.c; if(!c) return r.notes.length>=3?.9:.2;
-  let v={maj:.1,min:.15,sus:.35,dom:.55,hdim:.65,dim:.75,aug:.7}[c.type.q]??.5;
+  let v=DISS[c.type.q]??.5;
   if(/[♭♯](5|9|11|13)/.test(c.type.sym)) v+=.2;
   else if(/9|11|13|6/.test(c.type.sym)) v+=.05;
   if(c.slash) v+=.05;
   return Math.min(1,v);
 }
 
-export { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, letterName, modeName, noteText, octOff, plainSpell, resolveStep, spellCandidate };
+export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, letterName, modeName, noteText, octOff, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp };
