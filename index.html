@@ -54,6 +54,11 @@
     <div class="patedit trackpanel" id="trackPanel" hidden>
       <b class="nptitle">Pistas del pattern</b>
       <div class="tracklist" id="trackList"></div>
+      <div class="trkadd">
+        <button type="button" class="sbtn" id="bTrkAdd" title="Una pista vacía, para dibujar o importar notas en ella">+ Pista vacía</button>
+        <label class="fld" for="trkFrom">Agregar un pattern como pista<select id="trkFrom"></select></label>
+        <button type="button" class="sbtn" id="bTrkFrom" title="Copia las notas e instrumento de ese pattern como pista nueva; el pattern original no cambia">Agregar</button>
+      </div>
       <button type="button" class="sbtn" id="bTrkSplit" title="Cada pista pasa a ser un pattern aparte, con su instrumento; este pattern se reemplaza">Separar pistas en patterns</button>
       <span class="hint">La pista elegida es la que editas; las demás se ven como contornos y suenan igual. El .mid de este pattern lleva una pista y un canal por pista.</span>
     </div>
@@ -72,6 +77,7 @@
       <label class="fld vol" for="patVol" title="Solo cambia lo que suena en esta página, para todos los patterns de este instrumento. El MIDI y el texto exportados no cambian.">Volumen al tocar<span><input type="range" id="patVol" min="0" max="100" step="5" value="100"><output class="mono" id="patVolOut" for="patVol"></output></span></label>
       <label class="fld bend" for="patBend" title="Semitonos que el instrumento sube o baja con el pitch bend: 2 en la mayoría de los canales de la plantilla; 12 en Pad y Guitarra Limpia, 5 en Saxo Barítono">Rango de bend (±st)<input type="number" id="patBend" min="1" max="24" step="1"></label>
       <label class="fld glide" for="patGlideNative" title="Marcado: el .mid lleva portamento estándar (CC65 y CC84) para instrumentos que deslizan solos. Sin marcar: los slides se exportan como pitch bend, para sforzando y los .sf2."><span><input type="checkbox" id="patGlideNative"> Slide nativo</span></label>
+      <button class="sbtn" id="bToTracks" title="Convierte este pattern en uno con pistas: la nota y el instrumento actuales pasan a la primera pista, y puedes sumar más para armar un .mid multipista">Pasar a pistas</button>
       <button class="sbtn" id="bPatDup">Duplicar</button>
       <button class="sbtn" id="bPatDel">Borrar</button>
       <span class="hint">El instrumento define cómo se aplica la expresión en este pattern (pestaña Expresión).</span>

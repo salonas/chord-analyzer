@@ -704,14 +704,44 @@ function analysisSheet(A,p){
 }
 // The tracks of a multitrack pattern: pick the one you edit (the others stay as outlines), change its instrument, mute it
 function renderTracks(p){
-  const box=$('trackPanel'); box.hidden=!isMulti(p); if(!isMulti(p)) return;
+  const box=$('trackPanel'); box.hidden=!isMulti(p); $('bToTracks').hidden=isMulti(p); if(!isMulti(p)) return;
   if(box.contains(document.activeElement)&&document.activeElement.tagName==='SELECT') return;
   const cur=curTrack(), opts=$('npInst').innerHTML;
   $('trackList').innerHTML=p.tracks.map(t=>{ const n=p.notes.filter(x=>x.tr===t.id).length;
-    return `<div class="trk" data-id="${t.id}"><button class="trsel" aria-pressed="${t===cur}" title="${tr('Editar esta pista','Edit this track')}"><span class="pn">${esc(t.name)}</span><span class="pi">${n} ${tr('notas','notes')}</span></button><select class="trinst" aria-label="${tr('Instrumento de','Instrument of')} ${esc(t.name)}">${opts}</select><label class="trm"><input type="checkbox" class="trmute"${t.mute?' checked':''}> ${tr('Silenciar','Mute')}</label></div>`; }).join('');
+    return `<div class="trk" data-id="${t.id}"><button class="trsel" aria-pressed="${t===cur}" title="${tr('Editar esta pista','Edit this track')}"><span class="pn">${esc(t.name)}</span><span class="pi">${n} ${tr('notas','notes')}</span></button><select class="trinst" aria-label="${tr('Instrumento de','Instrument of')} ${esc(t.name)}">${opts}</select><label class="trm"><input type="checkbox" class="trmute"${t.mute?' checked':''}> ${tr('Silenciar','Mute')}</label><button class="trdel" title="${tr('Quitar esta pista','Remove this track')}" aria-label="${tr('Quitar','Remove')} ${esc(t.name)}"${p.tracks.length<2?' disabled':''}>×</button></div>`; }).join('');
+  const others=st.proj.patterns.filter(x=>x!==p&&!isMulti(x)&&x.notes.length);
+  $('trkFrom').innerHTML=others.map(x=>`<option value="${x.id}">${esc(x.name||tr('Sin nombre','Untitled'))} (${x.notes.length})</option>`).join(''); $('bTrkFrom').disabled=!others.length;
   p.tracks.forEach(t=>{ const s=$('trackList').querySelector(`.trk[data-id="${t.id}"] .trinst`); if(s) s.value=t.inst.preset in INSTRUMENTS?t.inst.preset:'generico'; });
 }
-$('trackList').addEventListener('click',e=>{ const b=e.target.closest('.trsel'); if(!b) return; st.trk=b.closest('.trk').dataset.id; renderTracks(st.prog); drawRoll(); });
+// changing the tracks themselves is not in the undo history (it keeps notes only), so it starts the history over
+function tracksChanged(){ hist.length=0; fut.length=0; saveDraft(); if(P.playing) playProg(); render(); }
+$('bToTracks').onclick=()=>{
+  const p=st.prog; if(isMulti(p)) return;
+  const t={id:uid(),name:p.name||tr('Pista 1','Track 1'),inst:JSON.parse(JSON.stringify(p.inst)),mute:false};
+  p.tracks=[t]; p.notes.forEach(n=>{ n.tr=t.id; }); st.trk=t.id; tracksChanged();
+  toast(tr('Pattern con pistas: suma más con «+ Pista vacía» o «Agregar»','Pattern with tracks: add more with “+ Empty track” or “Add”'));
+};
+$('bTrkAdd').onclick=()=>{
+  const p=st.prog; if(!isMulti(p)) return;
+  const t={id:uid(),name:tr('Pista ','Track ')+(p.tracks.length+1),inst:instDefaults('generico'),mute:false};
+  p.tracks.push(t); st.trk=t.id; tracksChanged();
+};
+$('bTrkFrom').onclick=()=>{
+  const p=st.prog, src=st.proj.patterns.find(x=>x.id===$('trkFrom').value); if(!isMulti(p)||!src) return;
+  const t={id:uid(),name:src.name||tr('Pista ','Track ')+(p.tracks.length+1),inst:JSON.parse(JSON.stringify(src.inst)),mute:false};
+  p.tracks.push(t); src.notes.forEach(n=>{ const {g,...c}=n; p.notes.push({...(src.inst.preset==='bateria'?c:n),id:uid(),tr:t.id}); });
+  p.beats=Math.max(p.beats||4,src.beats||4); st.trk=t.id; tracksChanged();
+  toast(tr(`«${t.name}» agregado como pista`,`“${t.name}” added as a track`));
+};
+$('trackList').addEventListener('click',e=>{
+  const row=e.target.closest('.trk'); if(!row) return;
+  if(e.target.closest('.trdel')){
+    const p=st.prog, t=p.tracks.find(x=>x.id===row.dataset.id), n=p.notes.filter(x=>x.tr===t.id).length;
+    if(p.tracks.length<2||(n&&!confirm(tr(`¿Quitar la pista «${t.name}» y sus ${n} notas?`,`Remove track “${t.name}” and its ${n} notes?`)))) return;
+    p.tracks=p.tracks.filter(x=>x!==t); p.notes=p.notes.filter(x=>x.tr!==t.id); R.sel.clear(); st.trk=null; tracksChanged(); return;
+  }
+  const b=e.target.closest('.trsel'); if(!b) return; st.trk=row.dataset.id; renderTracks(st.prog); drawRoll();
+});
 $('trackList').addEventListener('change',e=>{
   const row=e.target.closest('.trk'); if(!row) return; const t=st.prog.tracks.find(x=>x.id===row.dataset.id); if(!t) return;
   if(e.target.classList.contains('trinst')){ t.inst=instDefaults(e.target.value); ensureSounds({name:t.name,inst:t.inst}); }

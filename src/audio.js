@@ -106,8 +106,10 @@ function loadSet(key){
   return sets.get(key).load;
 }
 // resolves once the pattern's samples are loaded, or known to be missing
-async function ensureSounds(p){ await loadManifest(); const k=setOf(p); if(k&&!synthOf(k)) await loadSet(k); }
-function soundsReady(p){ if(man===null) return false; const k=setOf(p); return !k||!!synthOf(k)||(sets.has(k)&&sets.get(k).ready); }
+// a drum pattern also loads the Congas channel: General MIDI percussion keys 60-65 (bongos, congas) have no sample in the kit
+const EXTRA='Congas', extraOf=k=>k==='drums'&&man&&man.channels&&man.channels[EXTRA]?EXTRA:null;
+async function ensureSounds(p){ await loadManifest(); const k=setOf(p); if(k&&!synthOf(k)) await loadSet(k); const e=extraOf(k); if(e) await loadSet(e); }
+function soundsReady(p){ if(man===null) return false; const k=setOf(p), e=extraOf(k); return !k||!!synthOf(k)||(sets.has(k)&&sets.get(k).ready&&(!e||(sets.has(e)&&sets.get(e).ready))); }
 // after hold seconds the note fades over the channel's release (as its .sfz sets it), then stops
 function start(buf,t,gain,rate,dest,hold,rel=.25,bend){
   const c=audio(), src=c.createBufferSource(), g=c.createGain();
@@ -125,10 +127,17 @@ function drumHit(kit,m,t,v,dest,f=1){
   if(['hho','crash','ride','bell'].includes(role)){ ringing.push({role,t,g}); if(ringing.length>64) ringing.shift(); }
   return true;
 }
-// other channels: the rendered note whose span holds this one, retuned; outside the instrument's
-// range nothing sounds, as in sforzando
+// other channels: the rendered note whose span holds this one, retuned. Outside the instrument's range a pitched
+// channel plays its nearest rendered note, retuned up to two octaves (sforzando would stay silent: here a note you wrote
+// should always be heard); an unpitched one stays silent, as a conga cannot be retuned into a snare
+const reach=(s,m)=>m<s.lo?s.lo-m:m>s.hi?m-s.hi:0;
+function sampleFor(set,m){
+  const x=set.xs.find(s=>m>=s.lo&&m<=s.hi); if(x||!set.pitched) return x;
+  const n=set.xs.reduce((a,s)=>!a||reach(s,m)<reach(a,m)?s:a,null);
+  return n&&Math.abs(m-n.k)<=24?n:undefined;
+}
 function noteHit(set,m,t,v,dest,hold,f=1,bend){
-  const x=set.xs.find(s=>m>=s.lo&&m<=s.hi);
+  const x=sampleFor(set,m);
   if(x) start(x.buf,t,f*LEVEL*Math.min(1.3,v/100),set.pitched?Math.pow(2,(m-x.k)/12):1,dest,hold,set.release,set.pitched?bend:null);
   return true;
 }
@@ -145,7 +154,11 @@ function patVoice(p,m,t,vel127,dest,vel,hold,bend){
   const k=setOf(p), s=k&&sets.get(k), d=s&&s.ready&&s.data, f=dest?1:mixOf(p);
   if(synthOf(k)){ synthVoice(synthOf(k),m,t,vel127,dest,hold,f,bend); return; }
   // a drum key the kit has no sample for stays silent: the oscillators would play it as a keyboard note
-  if(k==='drums'){ if(d) drumHit(d,m,t,vel127,dest,f); return; }
+  if(k==='drums'){
+    if(d&&DRUMS[m]) drumHit(d,m,t,vel127,dest,f);
+    else if(d){ const x=sets.get(EXTRA), xd=x&&x.ready&&x.data; if(xd) noteHit(xd,m,t,vel127,dest,hold,f); }
+    return;
+  }
   if(d&&noteHit(d,m,t,vel127,dest,hold,f,bend)) return;
   voice(m,t,vel*f,dest,hold,bend);
 }
@@ -170,4 +183,4 @@ const preview=m=>{
   held={c,bus,t};
 };
 
-export { SYNTHS, audio, channelFor, synthVoice, ensureSounds, loadManifest, master, mixOf, patVoice, playNotes, preview, releasePreview, setMix, soundsReady, voice };
+export { SYNTHS, sampleFor, audio, channelFor, synthVoice, ensureSounds, loadManifest, master, mixOf, patVoice, playNotes, preview, releasePreview, setMix, soundsReady, voice };

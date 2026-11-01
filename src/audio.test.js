@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { SYNTHS, channelFor } from './audio.js';
+import { SYNTHS, channelFor, sampleFor } from './audio.js';
 
 const man = JSON.parse(readFileSync('public/samples/manifest.json', 'utf8'));
 const pat = (name, preset = 'generico') => ({ name, inst: { preset } });
@@ -58,4 +58,15 @@ describe('channelFor', () => {
   it('sends drum patterns to the drum kit', () => {
     expect(channelFor(pat('Batería - 1', 'bateria'), man)).toBe('drums');
   });
+});
+
+describe('sampleFor', () => {
+  const set = { pitched: true, xs: [{ lo: 40, hi: 43, k: 41 }, { lo: 44, hi: 47, k: 45 }] };
+  it('takes the sample that holds the note', () => { expect(sampleFor(set, 46).k).toBe(45); });
+  it('takes the nearest one for a note outside the range, up to two octaves from its note', () => {
+    expect(sampleFor(set, 30).k).toBe(41);
+    expect(sampleFor(set, 60).k).toBe(45);
+    expect(sampleFor(set, 90)).toBeUndefined();
+  });
+  it('leaves an unpitched channel silent outside its range', () => { expect(sampleFor({ ...set, pitched: false }, 60)).toBeUndefined(); });
 });
