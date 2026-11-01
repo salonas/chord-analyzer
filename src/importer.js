@@ -1,5 +1,5 @@
 // MIDI import and voice separation.
-import { T, instDefaults, uid } from './data.js';
+import { T, guessInst, instDefaults, uid } from './data.js';
 import { EXAMPLE_NAME, normProg, normProject } from './model.js';
 import DEFAULT_MID from './default_in_c.mid?inline';
 import { tr } from './i18n.js';
@@ -39,6 +39,21 @@ function parseMidi(buf){
   const sc=T/div;
   tracks.forEach(tr=>tr.notes=tr.notes.map(n=>({id:uid(),m:n.m,s:Math.round(n.s*sc),l:Math.max(1,Math.round(n.l*sc)),v:n.v||100,ch:n.ch})));
   return {tracks,tempo};
+}
+// A multitrack .mid as one pattern, so it can be heard whole: a track per MIDI track with its own instrument
+// (guessed from its name; channel 10 is the drum kit), each note tagged with its track
+function multiPattern(name,tracks){
+  const ts=tracks.map((t,i)=>({id:uid(),name:t.name||tr('Pista ','Track ')+(i+1),mute:false,
+    inst:instDefaults(t.notes.every(n=>n.ch===9)?'bateria':guessInst(t.name)||'generico')}));
+  const notes=tracks.flatMap((t,i)=>t.notes.map(({ch,...n})=>({...n,tr:ts[i].id})));
+  return normProg({id:uid(),name,beats:4,notes,names:{},tracks:ts});
+}
+// the other way: one pattern per track, each with its instrument and no track marks
+function splitTracks(p){
+  return p.tracks.map(t=>{
+    const q=normProg({id:uid(),name:t.name,beats:p.beats,names:{},notes:p.notes.filter(n=>(n.tr||p.tracks[0].id)===t.id).map(({tr:_,...n})=>({...n,id:uid()}))});
+    q.inst=JSON.parse(JSON.stringify(t.inst)); if(p.bend) q.bend=p.bend; return q;
+  }).filter(q=>q.notes.length);
 }
 // the project of a first visit: default_in_c.mid (FL pattern «Turnaround») on the Piano profile
 function defaultProject(){
@@ -123,4 +138,4 @@ function separatePatterns(p,r,opt){
   return made;
 }
 
-export { defaultProject, parseMidi, separatePatterns, separateVoices };
+export { defaultProject, multiPattern, parseMidi, splitTracks, separatePatterns, separateVoices };

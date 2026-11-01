@@ -1,7 +1,7 @@
 // Interface: inspector, keyboard, staff, library, panels and boot.
 import { BLACK, HIGH, INSTRUMENTS, IN_KEYS, LOW, T, TYPES, fmtB, freq, guessInst, instDefaults, intervalName, sigOf, uid } from './data.js';
 import { $, esc, fillRange, saveFile, toast } from './dom.js';
-import { EXAMPLE_NAME, activePat, isBlock, isDrum, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs } from './model.js';
+import { EXAMPLE_NAME, activePat, isBlock, isDrum, isMulti, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs } from './model.js';
 import { fut, hist, lib, persistLib, saveDraft, savePrefs, st } from './state.js';
 import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, inversionText, keyName, letterName, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
 import { EX_KEYS, FEELINGS, exDefaults, exprSummary, expressPattern, instLabel } from './expression.js';
@@ -10,11 +10,11 @@ import { libText, parseText, pickInterp, projectText } from './text.js';
 import { buildPack, fileBase, midiFile, zipFiles } from './midi.js';
 import { FL_SCRIPT_DIR, flScript } from './flscript.js';
 import { PITCH_RANGE, pitchClip } from './flpitch.js';
-import { parseMidi, separatePatterns, separateVoices } from './importer.js';
+import { multiPattern, parseMidi, separatePatterns, separateVoices, splitTracks } from './importer.js';
 import { harmonySegs } from './harmony.js';
 import { BEND_RANGE, glidePlan, hasGlide, rangeOf } from './glide.js';
-import { audio, loadManifest, mixOf, playNotes, setMix } from './audio.js';
-import { P, R, addAtEnd, centerRoll, commit, curSeg, deleteSel, drawRoll, liveNotes, playProg, pxDisc, readColors, redo, rollSize, selChanged, setPlayBtn, setZoom, stopProg, syncGlideBtns, toggleKey, undo, velTargets } from './roll.js';
+import { audio, ensureSounds, loadManifest, mixOf, playNotes, setMix } from './audio.js';
+import { P, R, addAtEnd, curTrack, centerRoll, commit, curSeg, deleteSel, drawRoll, liveNotes, playProg, pxDisc, readColors, redo, rollSize, selChanged, setPlayBtn, setZoom, stopProg, syncGlideBtns, toggleKey, undo, velTargets } from './roll.js';
 import { LANG_KEY, getLang, setLang, shareLang, sharedLang, tr, translateStatic } from './i18n.js';
 
 // the static texts of index.html are read in Spanish before any code below rewrites one
@@ -260,15 +260,17 @@ function renderProgression(){
   if(document.activeElement!==$('beats')) $('beats').value=p.beats||4;
   $('seedInfo').textContent=tr(`Semilla del proyecto: ${pr.seed}`,`Project seed: ${pr.seed}`);
   // the lane and the sheet show chords, not every change of the notes (a tune over chords would give one per note)
-  R.segs=isDrum(p)?[]:harmonySegs(p);
-  $('bSep').disabled=isDrum(p)||!p.notes.length;
+  R.segs=isDrum(p)||isMulti(p)?[]:harmonySegs(p);
+  $('bSep').disabled=isDrum(p)||isMulti(p)||!p.notes.length;
+  $('bAutoVel').disabled=isMulti(p); $('topInst').closest('label').hidden=isMulti(p);
+  renderTracks(p);
   const A=analyzeProgression(R.segs.map(S=>segStep(p,S)),st); R.A=A;
   R.lane=R.segs.map((S,i)=>({a:S.a,b:S.b,label:A.rs[i].label,roman:A.romans[i]?`${A.romans[i].text} · ${A.fn[i]}`:'—'}));
   const end=progEnd(p), saved=lib.projects.find(x=>x.id===pr.id);
   $('progStatus').textContent=saved?(JSON.stringify(saved)===JSON.stringify(pr)?tr('guardado en la biblioteca','saved in the library'):tr('cambios sin guardar','unsaved changes')):tr('sin guardar','not saved');
   const nseg=R.segs.length, nn=p.notes.length, secs=(end/T*60/(pr.bpm||90)).toLocaleString(getLang(),{maximumFractionDigits:1}), ns=R.sel.size;
-  $('progSummary').textContent=tr(`${p.name||'Pattern'} · ${isDrum(p)?'batería':`${nseg} acorde${nseg===1?'':'s'}`} ·${nn} nota${nn===1?'':'s'} · ${fmtB(end)} tiempos · ${secs} s`,
-    `${p.name||'Pattern'} · ${isDrum(p)?'drums':`${nseg} chord${nseg===1?'':'s'}`} · ${nn} note${nn===1?'':'s'} · ${fmtB(end)} beats · ${secs} s`);
+  $('progSummary').textContent=tr(`${p.name||'Pattern'} · ${isMulti(p)?`${p.tracks.length} pistas`:isDrum(p)?'batería':`${nseg} acorde${nseg===1?'':'s'}`} ·${nn} nota${nn===1?'':'s'} · ${fmtB(end)} tiempos · ${secs} s`,
+    `${p.name||'Pattern'} · ${isMulti(p)?`${p.tracks.length} tracks`:isDrum(p)?'drums':`${nseg} chord${nseg===1?'':'s'}`} · ${nn} note${nn===1?'':'s'} · ${fmtB(end)} beats · ${secs} s`);
   // glides play at any interval; only the pitch-bend .mid is held to the bend range
   const gs=isDrum(p)?0:glidePlan(p,Infinity).skipped, gw=isDrum(p)||p.glideNative?0:glidePlan(p).skipped-gs;
   $('rollInfo').textContent=[ns?tr(`${ns} nota${ns>1?'s':''} seleccionada${ns>1?'s':''}`,`${ns} note${ns>1?'s':''} selected`):'',
@@ -277,6 +279,7 @@ function renderProgression(){
   syncGlideBtns();
   let h='';
   if(R.segs.length) h=analysisSheet(A,p);
+  else if(isMulti(p)) h=`<div class="empty">${tr('Un pattern con varias pistas no se analiza como progresión: usa «Separar pistas» para analizar una en su propio pattern.','A pattern with several tracks is not analysed as a progression: use “Split tracks” to analyse one in its own pattern.')}</div>`;
   else if(!isDrum(p)&&p.notes.length) h=`<div class="empty">${tr('Solo melodía: ningún acorde. Un acorde empieza con tres notas a la vez, o con dos si una dura un tiempo o más.','Melody only: no chords. A chord starts with three notes at once, or two if one lasts a beat or more.')}</div>`;
   else h=isDrum(p)?drumSummaryHtml(p):`<div class="empty">${tr('Dibuja notas en el piano roll o arma un acorde y pulsa «+ Al final» (Enter). La tonalidad, los grados y los patrones aparecen aquí.','Draw notes in the piano roll or build a chord and press “+ At the end” (Enter). The key, the degrees and the patterns show up here.')}</div>`;
   $('progAnalysis').innerHTML=h;
@@ -699,6 +702,28 @@ function analysisSheet(A,p){
   return `<div class="an">${head}<div class="an-rows"><span class="lines" aria-hidden="true">${'<b></b>'.repeat(N+2)}</span>${rows}</div>
     <div class="hint">${tr('Grado; al lado, el acorde, su función y su tensión (0 a 1). Las llaves numeradas del margen unen los grados de cada patrón reconocido; una llave abierta sigue en el otro extremo (patrón en bucle).','Degree; next to it, the chord, its function and its tension (0 to 1). The numbered brackets in the margin join the degrees of each recognized pattern; an open bracket continues at the other end (looping pattern).')}</div></div>`;
 }
+// The tracks of a multitrack pattern: pick the one you edit (the others stay as outlines), change its instrument, mute it
+function renderTracks(p){
+  const box=$('trackPanel'); box.hidden=!isMulti(p); if(!isMulti(p)) return;
+  if(box.contains(document.activeElement)&&document.activeElement.tagName==='SELECT') return;
+  const cur=curTrack(), opts=$('npInst').innerHTML;
+  $('trackList').innerHTML=p.tracks.map(t=>{ const n=p.notes.filter(x=>x.tr===t.id).length;
+    return `<div class="trk" data-id="${t.id}"><button class="trsel" aria-pressed="${t===cur}" title="${tr('Editar esta pista','Edit this track')}"><span class="pn">${esc(t.name)}</span><span class="pi">${n} ${tr('notas','notes')}</span></button><select class="trinst" aria-label="${tr('Instrumento de','Instrument of')} ${esc(t.name)}">${opts}</select><label class="trm"><input type="checkbox" class="trmute"${t.mute?' checked':''}> ${tr('Silenciar','Mute')}</label></div>`; }).join('');
+  p.tracks.forEach(t=>{ const s=$('trackList').querySelector(`.trk[data-id="${t.id}"] .trinst`); if(s) s.value=t.inst.preset in INSTRUMENTS?t.inst.preset:'generico'; });
+}
+$('trackList').addEventListener('click',e=>{ const b=e.target.closest('.trsel'); if(!b) return; st.trk=b.closest('.trk').dataset.id; renderTracks(st.prog); drawRoll(); });
+$('trackList').addEventListener('change',e=>{
+  const row=e.target.closest('.trk'); if(!row) return; const t=st.prog.tracks.find(x=>x.id===row.dataset.id); if(!t) return;
+  if(e.target.classList.contains('trinst')){ t.inst=instDefaults(e.target.value); ensureSounds({name:t.name,inst:t.inst}); }
+  else if(e.target.classList.contains('trmute')) t.mute=e.target.checked;
+  saveDraft(); if(P.playing) playProg(); render();
+});
+$('bTrkSplit').onclick=()=>{
+  const p=st.prog; if(!isMulti(p)) return;
+  const made=splitTracks(p); if(!made.length) return;
+  const i=st.proj.patterns.indexOf(p); st.proj.patterns.splice(i,1,...made); hist.length=0; fut.length=0; st.trk=null;
+  setPattern(made[0].id); toast(tr(`Pistas separadas: ${made.length} patterns`,`Tracks split: ${made.length} patterns`));
+};
 function drumSummaryHtml(p){
   const c={}; p.notes.forEach(n=>{ const k=DRUMS[n.m]?DRUMS[n.m].ch:tr('Otras teclas','Other keys'); c[k]=(c[k]||0)+1; });
   const n=p.notes.length;
@@ -725,14 +750,11 @@ async function importMidiFiles(files){
   const made=[]; let dropped=0;
   for(const f of files){
     let res; try{ res=parseMidi(await f.arrayBuffer()); }catch(e){ toast(`${f.name}: ${e.message}.`); continue; }
-    const pats=[];
-    res.tracks.forEach((trk,i)=>{
-      const keep=trk.notes.filter(n=>n.m>=LOW&&n.m<=HIGH); dropped+=trk.notes.length-keep.length; if(!keep.length) return;
-      const p=normProg({id:uid(),name:trk.name||tr('Pista ','Track ')+(i+1),beats:4,notes:keep.map(({ch,...n})=>n),names:{}});
-      if(trk.notes.every(n=>n.ch===9)) p.inst=instDefaults('bateria');
-      pats.push(p);
-    });
-    if(pats.length) made.push({name:f.name.replace(/.midi?$/i,''),tempo:res.tempo,pats});
+    const name=f.name.replace(/.midi?$/i,'');
+    const trks=res.tracks.map(trk=>{ const keep=trk.notes.filter(n=>n.m>=LOW&&n.m<=HIGH); dropped+=trk.notes.length-keep.length; return {...trk,notes:keep}; }).filter(trk=>trk.notes.length);
+    // one track is a pattern as before; several tracks are one pattern with a track each, so the file can be heard whole
+    if(trks.length) made.push({name,tempo:res.tempo,pats:[trks.length>1?multiPattern(name,trks):normProg({id:uid(),name,beats:4,notes:trks[0].notes.map(({ch,...n})=>n),names:{}})]});
+    if(trks.length===1&&trks[0].notes.every(n=>n.ch===9)) made[made.length-1].pats[0].inst=instDefaults('bateria');
   }
   if(!made.length){ if(files.length) toast(tr('No encontré notas para importar en ese archivo.','No notes to import found in that file.')); return; }
   made.forEach(m=>openProject({id:uid(),name:m.name,bpm:Math.round(m.tempo||st.proj.bpm||90),seed:newSeed(),patterns:m.pats,active:m.pats[0].id}));

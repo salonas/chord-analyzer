@@ -51,6 +51,12 @@
       <button class="sbtn pscroll" id="bPatNext" title="Patterns siguientes" aria-label="Patterns siguientes" hidden><i class="ico i-play" aria-hidden="true"></i></button>
       <button class="sbtn" id="bPatAdd" aria-expanded="false">+ Pattern</button>
     </div>
+    <div class="patedit trackpanel" id="trackPanel" hidden>
+      <b class="nptitle">Pistas del pattern</b>
+      <div class="tracklist" id="trackList"></div>
+      <button type="button" class="sbtn" id="bTrkSplit" title="Cada pista pasa a ser un pattern aparte, con su instrumento; este pattern se reemplaza">Separar pistas en patterns</button>
+      <span class="hint">La pista elegida es la que editas; las demás se ven como contornos y suenan igual. El .mid de este pattern lleva una pista y un canal por pista.</span>
+    </div>
     <form class="patedit newpat" id="newPat" hidden>
       <b class="nptitle">Pattern nuevo</b>
       <label class="fld" for="npName">Nombre<input type="text" id="npName" maxlength="60" autocomplete="off"></label>

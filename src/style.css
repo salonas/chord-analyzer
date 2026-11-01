@@ -456,3 +456,15 @@ footer{font-size:13px;color:var(--ink)}
 .prsel[aria-selected="true"] .pi{color:var(--paper)}
 .prx{border:0;border-left:2px solid var(--ink);background:var(--paper);padding:0 8px;font-size:16px;line-height:1}
 .prx:hover{background:var(--tan)}
+
+/* tracks of a multitrack pattern */
+.trackpanel{flex-wrap:wrap;gap:8px 12px;align-items:flex-start}
+.tracklist{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%}
+.trk{display:flex;align-items:center;gap:6px;border:2px solid var(--ink);background:var(--card);padding:3px 6px}
+.trsel{border:0;background:none;display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:2px 6px;max-width:200px}
+.trsel .pn{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.trsel .pi{font-size:11px;color:var(--muted)}
+.trsel[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.trsel[aria-pressed="true"] .pi{color:var(--paper)}
+.trinst{border:2px solid var(--ink);background:var(--paper);font-size:13px;max-width:150px}
+.trm{display:flex;align-items:center;gap:4px;font-size:13px}

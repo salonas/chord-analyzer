@@ -1,6 +1,6 @@
 // MIDI export (format 0, 96 PPQ), stored zip and the full pack.
 import { T, uid } from './data.js';
-import { isDrum, segStep, segs } from './model.js';
+import { isDrum, isMulti, segStep, segs, trackOf } from './model.js';
 import { bendAt, glidePlan, hasGlide, rangeOf } from './glide.js';
 import { analyzeProgression, resolveStep } from './analysis.js';
 import { projectText } from './text.js';
@@ -12,7 +12,24 @@ import { pitchClip } from './flpitch.js';
 const SUPSUB={'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','𝄫':'bb'};
 const ascii=s=>String(s).replace(/[\u2070\u00B9\u00B2\u00B3\u2074-\u2079\u2080-\u2089]|\u{1D12B}/gu,c=>SUPSUB[c]||'').replace(/♯/g,'#').replace(/♭/g,'b').replace(/Δ/g,'maj').replace(/ø/g,'m7b5').replace(/°/g,'dim').normalize('NFD').replace(/\p{M}/gu,'').replace(/[^\x20-\x7e]/g,'?');
 function vlq(n){ const b=[n&0x7f]; while((n>>>=7)) b.unshift((n&0x7f)|0x80); return b; }
+// A multitrack pattern as a format 1 file: a conductor track (tempo, 4/4), then one track per pattern track on its own
+// channel (the kit on 10); muted tracks go too, as the file is for the DAW. Slides and portamentos are not written.
+function midiMulti(p,bpm,prefs){
+  const enc=s=>[...new TextEncoder().encode(ascii(s))], meta=(type,data)=>[0xFF,type,...vlq(data.length),...data];
+  const sh=prefs.midiShift||0, us=Math.round(60000000/(bpm||90)); let skipped=0, next=0;
+  const trk=ev=>{ const d=[]; let last=0; ev.sort((a,b)=>a.t-b.t||a.o-b.o).forEach(e=>{ d.push(...vlq(e.t-last),...e.d); last=e.t; }); d.push(0,0xFF,0x2F,0); const L=d.length; return [0x4D,0x54,0x72,0x6B,(L>>>24)&255,(L>>>16)&255,(L>>>8)&255,L&255,...d]; };
+  const tracks=[trk([{t:0,o:0,d:[...meta(0x03,enc(p.name||'Pattern')),0,...meta(0x51,[(us>>16)&255,(us>>8)&255,us&255]),0,...meta(0x58,[4,2,24,8])]}])];
+  p.tracks.forEach(t=>{
+    const drum=t.inst&&t.inst.preset==='bateria'; let ch=9; if(!drum){ if(next===9) next++; ch=next++%16; }
+    const ev=[{t:0,o:0,d:meta(0x03,enc(t.name||'Track'))}];
+    p.notes.filter(n=>trackOf(p,n)===t).forEach(n=>{ const m=n.m+sh; if(m>127||m<0){ skipped++; return; } ev.push({t:n.s,o:2,d:[0x90|ch,m,n.v||100]},{t:n.s+n.l,o:1,d:[0x80|ch,m,64]}); });
+    tracks.push(trk(ev));
+  });
+  const n=tracks.length;
+  return {bytes:new Uint8Array([0x4D,0x54,0x68,0x64,0,0,0,6,0,1,(n>>8)&255,n&255,(T>>8)&255,T&255,...tracks.flat()]),skipped};
+}
 function midiFile(p,bpm,prefs){
+  if(isMulti(p)) return midiMulti(p,bpm,prefs);
   const enc=s=>[...new TextEncoder().encode(ascii(s))];
   const meta=(type,data)=>[0xFF,type,...vlq(data.length),...data];
   const ev=[]; let skipped=0;

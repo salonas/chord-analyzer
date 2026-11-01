@@ -1,6 +1,6 @@
 // Text export and import (reimportable plain text).
 import { HIGH, LATIN, LETTERS, LOW, NAT, OCT_CONV, T, barsText, fmtB, numB, sigOf, uid } from './data.js';
-import { isDrum, isPure, normProg, progEnd, segStep, segs } from './model.js';
+import { isDrum, isMulti, isPure, normProg, progEnd, segStep, segs } from './model.js';
 import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, keyName, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
 import { exprSummary, instLabel, instText } from './expression.js';
 import { splitHarmony } from './harmony.js';
@@ -95,6 +95,10 @@ function harmonyLines(p,prefs,L){
 }
 function progText(p,prefs){
   p=normProg(p); if(isDrum(p)) return drumText(p,prefs);
+  if(isMulti(p)) return `# Pattern: ${p.name||tr('Sin nombre','Untitled')}
+# ${tr('Varias pistas','Several tracks')}: ${p.tracks.map(t=>`${t.name} (${p.notes.filter(n=>n.tr===t.id).length})`).join(', ')}
+# ${tr('Este texto no lleva las notas de un pattern con pistas: usa Separar pistas o el .mid.','This text does not carry the notes of a pattern with tracks: use Split tracks or the .mid.')}
+`;
   const S=segs(p), pure=!p.notes.length||isPure(p,S), L=[`# Pattern: ${p.name||tr('Sin nombre','Untitled')}`];
   // plain block chords keep one line per chord (the text reads back from them); anything else splits harmony and melody
   const H=pure?null:harmonyLines(p,prefs,L);

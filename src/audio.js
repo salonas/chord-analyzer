@@ -1,7 +1,7 @@
 // Web Audio voices.
 import { freq } from './data.js';
 import { DRUMS } from './drums.js';
-import { isDrum } from './model.js';
+import { isDrum, soundPat } from './model.js';
 import { st } from './state.js';
 
 // ---------- audio ----------
@@ -65,9 +65,10 @@ function synthVoice(kind,m,t,v,dest,hold,mix=1,bend){
   }
 }
 function playNotes(list,spread){
-  if(isDrum(st.prog)) list=list.filter(m=>DRUMS[m]); // a drum pattern sounds only its kit, never the oscillators
+  const sp=soundPat(st.prog,st.trk);
+  if(isDrum(sp)) list=list.filter(m=>DRUMS[m]); // a drum pattern sounds only its kit, never the oscillators
   if(!list.length) return;
-  const c=audio(), t0=c.currentTime+.02, vel=.32/Math.sqrt(list.length), p=st.prog;
+  const c=audio(), t0=c.currentTime+.02, vel=.32/Math.sqrt(list.length), p=sp;
   list.forEach((m,i)=>patVoice(p,m,t0+i*spread,Math.round(90/Math.sqrt(list.length)),null,vel));
 }
 
@@ -162,9 +163,10 @@ function releasePreview(){
 const preview=m=>{
   releasePreview();
   if(!st.sound) return;
-  if(!soundsReady(st.prog)) ensureSounds(st.prog);
-  const c=audio(), t=c.currentTime+.02, bus=c.createGain(); bus.gain.value=mixOf(st.prog); bus.connect(master);
-  patVoice(st.prog,m,t,100,bus,.32,PREVIEW_MAX);
+  const sp=soundPat(st.prog,st.trk);
+  if(!soundsReady(sp)) ensureSounds(sp);
+  const c=audio(), t=c.currentTime+.02, bus=c.createGain(); bus.gain.value=mixOf(sp); bus.connect(master);
+  patVoice(sp,m,t,100,bus,.32,PREVIEW_MAX);
   held={c,bus,t};
 };
 

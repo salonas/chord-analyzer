@@ -1,4 +1,4 @@
-import { defaultProject, parseMidi, separatePatterns, separateVoices } from './importer.js';
+import { defaultProject, multiPattern, parseMidi, separatePatterns, separateVoices, splitTracks } from './importer.js';
 import { glidePlan } from './glide.js';
 import fx from './test/fixtures/importer.json';
 import turnaround from './test/fixtures/turnaround.json';
@@ -63,5 +63,23 @@ describe('defaultProject', () => {
     expect(pr.active).toBe(pr.patterns[0].id);
     expect(pr.patterns[1].notes.map(n => n.g || null)).toEqual([null, 'p', null, 's']);
     expect(glidePlan(pr.patterns[1]).skipped).toBe(0);
+  });
+});
+
+describe('multitrack patterns', () => {
+  const tracks = [
+    { name: 'Lead', notes: [{ id: 'a', m: 72, s: 0, l: 96, v: 100, ch: 0 }] },
+    { name: 'Kit', notes: [{ id: 'b', m: 36, s: 0, l: 48, v: 90, ch: 9 }, { id: 'c', m: 38, s: 96, l: 48, v: 90, ch: 9 }] },
+  ];
+  it('puts every track in one pattern, the kit track on drums', () => {
+    const p = multiPattern('Song', tracks);
+    expect(p.tracks.map(t => [t.name, t.inst.preset])).toEqual([['Lead', 'lead'], ['Kit', 'bateria']]);
+    expect(p.notes.map(n => p.tracks.findIndex(t => t.id === n.tr))).toEqual([0, 1, 1]);
+    expect(p.notes.some(n => 'ch' in n)).toBe(false);
+  });
+  it('splits back into a pattern per track with its instrument', () => {
+    const q = splitTracks(multiPattern('Song', tracks));
+    expect(q.map(x => [x.name, x.notes.length, x.inst.preset, x.tracks])).toEqual([['Lead', 1, 'lead', undefined], ['Kit', 2, 'bateria', undefined]]);
+    expect(q.every(x => x.notes.every(n => !('tr' in n)))).toBe(true);
   });
 });

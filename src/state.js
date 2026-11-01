@@ -5,7 +5,7 @@ import { browserLanguages, detectLanguage, setLang, sharedLang } from './i18n.js
 
 const st={notes:new Set(),lockedRoot:null,rootMode:false,showNames:false,
   naming:'letters',accPref:'auto',sound:true,pick:0,prefer:null,mix:{},
-  proj:null,open:[],prog:null,octConv:'sci',midiShift:0,src:'builder',srcSig:'',segA:null,exportMode:'pat',snap:.25,beatW:56,loop:true,liveAll:false,tab:'kb',ex:null,lang:detectLanguage(browserLanguages())};
+  proj:null,open:[],prog:null,trk:null,octConv:'sci',midiShift:0,src:'builder',srcSig:'',segA:null,exportMode:'pat',snap:.25,beatW:56,loop:true,liveAll:false,tab:'kb',ex:null,lang:detectLanguage(browserLanguages())};
 let lib={chords:[],projects:[]};
 const hist=[], fut=[];
 
