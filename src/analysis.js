@@ -6,13 +6,19 @@ import { tr } from './i18n.js';
 const accStr=a=>({'-2':'♭♭','-1':'♭','0':'','1':'♯','2':'♯♯'})[a];
 const letterName=(l,a,prefs)=>(prefs.naming==='latin'?LATIN:LETTERS)[l]+accStr(a);
 // With auto accidentals and a known key, the notes of its scale take its spelling (B♭ in D minor, C♯ as its leading tone)
-const FLAT_KEYS=new Set([5,10,3,8,1]), SHARP_KEYS=new Set([7,2,9,4,11,6]), MAJOR_SCALE=new Set([0,2,4,5,7,9,11]);
+// The tonic is spelled once, with the fewest accidentals in the key signature; ties (F♯/G♭ major, E♭/D♯ minor) take F♯ and E♭.
+// Every scale degree then takes the next letter from the tonic, so F♯ major has E♯ and C♯ minor has B♯ as its leading tone.
+const KEY_TONIC={major:[[0,0],[1,-1],[1,0],[2,-1],[2,0],[3,0],[3,1],[4,0],[5,-1],[5,0],[6,-1],[6,0]],
+                 minor:[[0,0],[0,1],[1,0],[2,-1],[2,0],[3,0],[3,1],[4,0],[4,1],[5,0],[6,-1],[6,0]]};
+const SCALE_STEPS={major:[0,2,4,5,7,9,11],minor:[0,2,3,5,7,8,10,11]};
+const keyTonicSpell=(key,prefs)=>prefs.accPref==='sharp'||prefs.accPref==='flat'?null:KEY_TONIC[key.mode][key.tonic];
 function keySpell(pc,key,prefs){
   if(!key||prefs.accPref==='sharp'||prefs.accPref==='flat') return null;
-  const minor=key.mode==='minor', major=minor?(key.tonic+3)%12:key.tonic;
-  if(minor&&pc===(key.tonic+11)%12) return SHARP[pc];
-  if(!MAJOR_SCALE.has((pc-major+12)%12)) return null;
-  return FLAT_KEYS.has(major)?FLAT[pc]:SHARP_KEYS.has(major)?SHARP[pc]:null;
+  const [tl]=KEY_TONIC[key.mode][key.tonic], steps=SCALE_STEPS[key.mode];
+  const k=steps.findIndex(s=>(key.tonic+s)%12===pc); if(k<0) return null;
+  const l=(tl+(k===7?6:k))%7;
+  let a=((pc-NAT[l])%12+12)%12; if(a>6) a-=12;
+  return [l,a];
 }
 function defaultSpell(pc,prefs,key){
   if(prefs.accPref==='flat') return FLAT[pc];
@@ -125,7 +131,7 @@ function detectKey(items){
   }
   return res.sort((a,b)=>b.score-a.score);
 }
-const keyName=(k,prefs)=>{const [l,a]=rootSpell(k.tonic,k.mode==='minor'?'min':'maj',prefs); return letterName(l,a,prefs)+(k.mode==='major'?tr(' mayor',' major'):tr(' menor',' minor'));};
+const keyName=(k,prefs)=>{const [l,a]=keyTonicSpell(k,prefs)||rootSpell(k.tonic,k.mode==='minor'?'min':'maj',prefs); return letterName(l,a,prefs)+(k.mode==='major'?tr(' mayor',' major'):tr(' menor',' minor'));};
 function romanFor(c,key){
   const deg=(c.root-key.tonic+12)%12, q=c.type.q;
   let base=ROMAN[deg];
