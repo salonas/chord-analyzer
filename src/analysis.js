@@ -112,15 +112,21 @@ function detectKey(items){
   const res=[];
   for(let t=0;t<12;t++) for(const mode of ['major','minor']){
     const sc=mode==='major'?MAJ:MIN; let s=0;
-    items.forEach(it=>{
+    items.forEach((it,i)=>{
       const own7=it.q==='dom'?(it.root+10)%12:-1;
-      it.pcs.forEach(p=>{const r=(p-t+12)%12; s+=sc.includes(r)?1:p===own7?0:(mode==='minor'&&(r===11||r===1)?.3:-1.2);});
+      // the chromatic notes of a secondary dominant (V or vii° of a chord in the scale) do not count against the key
+      const nx=items[i+1], lead=!!nx&&nx.q&&sc.includes((nx.root-t+12)%12)&&
+        (((it.q==='dom'||it.q==='maj')&&(nx.root-it.root+12)%12===5)||((it.q==='dim'||it.q==='hdim')&&(nx.root-it.root+12)%12===1));
+      // major tolerates the notes it borrows from its parallel minor (♭3, ♭6, ♭7), as minor tolerates its raised 7th
+      it.pcs.forEach(p=>{const r=(p-t+12)%12; s+=sc.includes(r)?1:p===own7||lead?0:(mode==='minor'&&(r===11||r===1)?.3:mode==='major'&&(r===3||r===8||r===10)?-.5:-1.2);});
       if(it.q){ const e=EXPK[mode][(it.root-t+12)%12]; if(e&&e.includes(it.q)) s+=1.5; else if(e&&it.q==='sus') s+=.5; }
     });
     const tq=mode==='major'?['maj','dom']:['min'];
     const f=items[0], l=items[items.length-1];
     if(f.root===t&&tq.includes(f.q)) s+=2;
-    if(l.root===t&&tq.includes(l.q)) s+=3;
+    // V7–vi of the relative major is a deceptive cadence: it ends off the tonic on purpose, so it is no evidence for the minor
+    const pv=items[items.length-2], deceptive=mode==='minor'&&pv&&pv.q==='dom'&&pv.root===(t+10)%12;
+    if(l.root===t&&tq.includes(l.q)&&!deceptive) s+=3;
     items.forEach((it,i)=>{
       if(it.root===t&&tq.includes(it.q)) s+=.5;
       const nx=items[i+1];
