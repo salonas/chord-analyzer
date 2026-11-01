@@ -40,10 +40,11 @@
             <button class="sbtn" id="bPack" title="Un .zip con cada pattern en .mid, cada acorde suelto en .mid, tu biblioteca, el texto del proyecto y, por pattern con slides, un script de FL y un clip de pitch"><i class="ico i-pack" aria-hidden="true"></i>Pack completo</button>
           </div>
         </div>
-        <button class="sbtn" id="bMidiIn" title="Trae un .mid exportado de FL: cada pista se vuelve un pattern de este proyecto. También puedes soltar el archivo sobre el piano roll."><i class="ico i-import" aria-hidden="true"></i>Importar .mid</button>
+        <button class="sbtn" id="bMidiIn" title="Trae un .mid exportado de FL: el archivo se abre como proyecto nuevo y cada pista es un pattern. También puedes soltar el archivo sobre el piano roll."><i class="ico i-import" aria-hidden="true"></i>Importar .mid</button>
         <input type="file" id="midiFile" accept=".mid,.midi,audio/midi,audio/x-midi" multiple hidden>
       </div>
     </div>
+    <div class="prbar" role="tablist" aria-label="Proyectos abiertos" id="projTabs"></div>
     <div class="patbar">
       <button class="sbtn pscroll" id="bPatPrev" title="Patterns anteriores" aria-label="Patterns anteriores" hidden><i class="ico i-play flip" aria-hidden="true"></i></button>
       <div class="ptabs" role="tablist" aria-label="Patterns del proyecto" id="patTabs"></div>

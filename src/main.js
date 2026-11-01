@@ -244,6 +244,7 @@ function renderProgression(){
   const p=st.prog, pr=st.proj;
   if(document.activeElement!==$('projName')) $('projName').value=pr.name||'';
   if(document.activeElement!==$('patName')) $('patName').value=p.name||'';
+  $('projTabs').innerHTML=st.open.map(x=>`<span class="prtab" data-pid="${x.id}"><button class="prsel" role="tab" aria-selected="${x===pr}" data-pid="${x.id}"><span class="pn">${esc(x.name||tr('Proyecto sin nombre','Untitled project'))}</span><span class="pi">${x.bpm} BPM · ${x.patterns.length} pattern${x.patterns.length===1?'':'s'}</span></button><button class="prx" data-close="${x.id}" title="${tr('Cerrar proyecto','Close project')}" aria-label="${tr('Cerrar','Close')} ${esc(x.name||tr('Proyecto sin nombre','Untitled project'))}">×</button></span>`).join('');
   $('patTabs').innerHTML=pr.patterns.map((x,i)=>`<button class="ptab" role="tab" data-id="${x.id}" aria-selected="${x.id===p.id}" title="${tr('Doble clic para renombrar','Double-click to rename')}"><span class="pn">${i+1}. ${esc(x.name||tr('Sin nombre','Untitled'))}</span><span class="pi">${esc(instLabel(x.inst))} · ${isDrum(x)?tr(`${x.notes.length} golpe${x.notes.length===1?'':'s'}`,`${x.notes.length} hit${x.notes.length===1?'':'s'}`):(n=>tr(`${n} acorde${n===1?'':'s'}`,`${n} chord${n===1?'':'s'}`))(harmonySegs(x).length)}</span></button>`).join('');
   showPatTab(p.id);
   if(document.activeElement!==$('topInst')) $('topInst').value=p.inst.preset;
@@ -302,11 +303,27 @@ function renderLibrary(){
     return `<li><div style="min-width:0"><span class="n">${esc(pr.name||tr('Sin nombre','Untitled'))}</span><span class="v">${pr.bpm} BPM · ${pr.patterns.length} pattern${pr.patterns.length===1?'':'s'}: ${esc(pats)}</span></div><div class="acts"><button class="sbtn" data-pload="${i}">${tr('Abrir','Open')}</button><button class="sbtn" data-pdel="${i}" aria-label="${tr('Quitar','Remove')} ${esc(pr.name)}">${tr('Quitar','Remove')}</button></div></li>`;
   }).join(''):`<li class="empty">${tr('Aún no hay proyectos guardados. «Guardar» en la barra superior guarda el proyecto con todos sus patterns.','No saved projects yet. “Save project” in the top bar saves the project with all its patterns.')}</li>`;
 }
-function openProject(pr){
-  stopProg(); commit(); hist.length=0; fut.length=0;
-  st.proj=normProject(JSON.parse(JSON.stringify(pr))); st.prog=activePat(st.proj);
-  R.sel.clear(); st.segA=null; st.src='builder'; R.start=0; render(); R.el.scrollLeft=0; centerRoll();
+// Each open project is a tab (st.open); undo history belongs to the project on screen and is dropped when you leave it
+function showProject(pr){
+  stopProg(); hist.length=0; fut.length=0;
+  st.proj=pr; st.prog=activePat(pr); st.notes.clear(); st.lockedRoot=null; st.rootMode=false; st.pick=0;
+  R.sel.clear(); st.segA=null; st.src='builder'; R.start=0; delArm=false; render(); R.el.scrollLeft=0; centerRoll();
 }
+// a project from the library, a text or a file opens in a tab of its own; one already open (same id) is just brought forward
+function openProject(pr){
+  const open=st.open.find(x=>x.id===pr.id);
+  if(open&&pr.id){ showProject(open); return open; }
+  const p=normProject(JSON.parse(JSON.stringify(pr))); st.open.push(p); showProject(p); return p;
+}
+function closeProject(id){
+  const i=st.open.findIndex(x=>x.id===id); if(i<0) return;
+  const pr=st.open[i];
+  if(pr.patterns.some(p=>p.notes.length)&&!confirm(tr(`¿Cerrar «${pr.name||'Proyecto sin nombre'}»? Lo que no guardaste en la biblioteca se pierde.`,`Close “${pr.name||'Untitled project'}”? Whatever you did not save to the library is lost.`))) return;
+  st.open.splice(i,1);
+  if(!st.open.length) st.open.push(normProject({id:uid(),name:'',bpm:pr.bpm,seed:newSeed(),patterns:[newPattern('Pattern 1')]}));
+  if(pr===st.proj) showProject(st.open[Math.min(i,st.open.length-1)]); else render();
+}
+
 function setPattern(id){
   const p=st.proj.patterns.find(x=>x.id===id); if(!p) return;
   stopProg(); st.proj.active=id; st.prog=p; R.sel.clear(); st.segA=null; if(st.src!=='builder') st.src='builder'; R.start=0; delArm=false;
@@ -351,7 +368,11 @@ $('patName').onchange=()=>{
   if(g&&st.prog.inst.preset==='generico'){ st.prog.inst=instDefaults(g); toast(tr(`Instrumento detectado por el nombre: ${INSTRUMENTS[g].label}`,`Instrument detected from the name: ${INSTRUMENTS[g].label}`)); }
   render();
 };
-$('projName').oninput=e=>{st.proj.name=e.target.value; saveDraft();};
+$('projName').oninput=e=>{ st.proj.name=e.target.value; saveDraft(); const t=$('projTabs').querySelector(`.prsel[data-pid="${st.proj.id}"] .pn`); if(t) t.textContent=e.target.value||tr('Proyecto sin nombre','Untitled project'); };
+$('projTabs').addEventListener('click',e=>{
+  const x=e.target.closest('.prx'); if(x){ closeProject(x.dataset.close); return; }
+  const b=e.target.closest('.prsel'); const pr=b&&st.open.find(p=>p.id===b.dataset.pid); if(pr&&pr!==st.proj) showProject(pr);
+});
 $('projName').onchange=()=>render();
 // New-pattern form: name, instrument (suggested from the name until the user picks one) and empty or copied notes
 let npTouched=false;
@@ -699,28 +720,25 @@ $('bGroove').onclick=()=>{
   $('grInfo').textContent=tr(`Creado «${p.name}»: ${p.notes.length} golpes en ${bars} compás${bars===1?'':'es'}.`,`Created “${p.name}”: ${p.notes.length} hits in ${bars} bar${bars===1?'':'s'}.`);
 };
 
-// each track of each file becomes a pattern of the open project
+// each file opens as a project of its own, tempo included; each of its tracks becomes a pattern
 async function importMidiFiles(files){
-  const added=[]; let dropped=0, tempo=null;
+  const made=[]; let dropped=0;
   for(const f of files){
     let res; try{ res=parseMidi(await f.arrayBuffer()); }catch(e){ toast(`${f.name}: ${e.message}.`); continue; }
-    if(res.tempo&&!tempo) tempo=res.tempo;
-    const base=f.name.replace(/\.midi?$/i,'');
+    const pats=[];
     res.tracks.forEach((trk,i)=>{
       const keep=trk.notes.filter(n=>n.m>=LOW&&n.m<=HIGH); dropped+=trk.notes.length-keep.length; if(!keep.length) return;
-      const name=res.tracks.length>1?`${base} · ${trk.name||tr('pista ','track ')+(i+1)}`:base;
-      const p=normProg({id:uid(),name,beats:4,notes:keep.map(({ch,...n})=>n),names:{}});
+      const p=normProg({id:uid(),name:trk.name||tr('Pista ','Track ')+(i+1),beats:4,notes:keep.map(({ch,...n})=>n),names:{}});
       if(trk.notes.every(n=>n.ch===9)) p.inst=instDefaults('bateria');
-      st.proj.patterns.push(p); added.push(p);
+      pats.push(p);
     });
+    if(pats.length) made.push({name:f.name.replace(/.midi?$/i,''),tempo:res.tempo,pats});
   }
-  if(!added.length){ if(files.length) toast(tr('No encontré notas para importar en ese archivo.','No notes to import found in that file.')); return; }
-  const onlyNew=st.proj.patterns.every(p=>!p.notes.length||added.includes(p));
-  if(tempo&&onlyNew) st.proj.bpm=Math.round(tempo);
-  setPattern(added[0].id);
-  const nn=added.reduce((a,p)=>a+p.notes.length,0);
-  toast(tr(`Importado: ${added.length} pattern${added.length===1?'':'s'}, ${nn} notas${tempo?` · tempo del archivo ${Math.round(tempo)} BPM${onlyNew?'':' (el del proyecto no cambió)'}`:''}${dropped?` · ${dropped} notas fuera de MIDI 12–132 omitidas`:''}`,
-    `Imported: ${added.length} pattern${added.length===1?'':'s'}, ${nn} notes${tempo?` · file tempo ${Math.round(tempo)} BPM${onlyNew?'':' (the project’s did not change)'}`:''}${dropped?` · ${dropped} notes outside MIDI 12–132 skipped`:''}`));
+  if(!made.length){ if(files.length) toast(tr('No encontré notas para importar en ese archivo.','No notes to import found in that file.')); return; }
+  made.forEach(m=>openProject({id:uid(),name:m.name,bpm:Math.round(m.tempo||st.proj.bpm||90),seed:newSeed(),patterns:m.pats,active:m.pats[0].id}));
+  const np=made.reduce((a,m)=>a+m.pats.length,0), nn=made.reduce((a,m)=>a+m.pats.reduce((x,p)=>x+p.notes.length,0),0);
+  toast(tr(`Importado${made.length>1?`: ${made.length} proyectos`:''}: ${np} pattern${np===1?'':'s'}, ${nn} notas${made.length===1&&made[0].tempo?` · ${Math.round(made[0].tempo)} BPM del archivo`:''}${dropped?` · ${dropped} notas fuera de MIDI 12–132 omitidas`:''}`,
+    `Imported${made.length>1?`: ${made.length} projects`:''}: ${np} pattern${np===1?'':'s'}, ${nn} notes${made.length===1&&made[0].tempo?` · file tempo ${Math.round(made[0].tempo)} BPM`:''}${dropped?` · ${dropped} notes outside MIDI 12–132 skipped`:''}`));
 }
 // piano roll fullscreen: the browser's own, on the stage so the tools come along; the roll redraws through its ResizeObserver
 const stage=document.querySelector('.stage');

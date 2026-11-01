@@ -444,3 +444,15 @@ footer{font-size:13px;color:var(--ink)}
 .stage:fullscreen{display:flex;flex-direction:column;gap:10px;padding:12px;background:var(--bg) url(/img/wall.png) 0 0;overflow:auto}
 .stage:fullscreen .roll{flex:1 1 auto;height:auto;min-height:0;resize:none}
 #bFull[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+
+/* open projects: a strip of tabs above the patterns' */
+.prbar{display:flex;gap:4px;overflow-x:auto;min-width:0;scrollbar-width:none;margin-bottom:6px}
+.prbar::-webkit-scrollbar{display:none}
+.prtab{display:flex;align-items:stretch;flex:none;border:2px solid var(--ink);background:var(--card)}
+.prsel{border:0;background:none;padding:4px 10px;display:flex;flex-direction:column;align-items:flex-start;gap:0;white-space:nowrap;text-align:left;max-width:240px}
+.prsel .pn{font-size:14px;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.prsel .pi{font-size:11px;color:var(--muted)}
+.prsel[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+.prsel[aria-selected="true"] .pi{color:var(--paper)}
+.prx{border:0;border-left:2px solid var(--ink);background:var(--paper);padding:0 8px;font-size:16px;line-height:1}
+.prx:hover{background:var(--tan)}
