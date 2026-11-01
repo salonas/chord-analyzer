@@ -1,7 +1,7 @@
 // Harmony and melody for the text export: which notes make the chords, which are the tune.
 // Heuristics from the rules the user wrote down (session 14), not measurements.
 import { T, sigOf } from './data.js';
-import { isBlock, progEnd, segs } from './model.js';
+import { isBlock, isMulti, progEnd, segs } from './model.js';
 import { analyze } from './analysis.js';
 
 const TOL=Math.round(.05*T); // notes that start within ±0.05 beats start together
@@ -65,10 +65,48 @@ function blockMelody(p,S){
   return new Set(p.notes.filter(n=>S.some((s,i)=>tops[i]===n.m&&s.ids.has(n.id))).map(n=>n.id));
 }
 
+// A broken chord (Alberti bass, arpeggio): one voice, no two notes sounding together, read as chords by half bar, or by
+// bar when the halves do not work; equal neighbours merge. Each group must move only by leaps (a minor third or more)
+// and hold three or more pitch classes that make a chord; one group that fails voids the reading, so a scale or a
+// tune stays notes.
+const BAR=4*T, LEAP=3;
+function arpeggioChords(p){
+  const ns=[...p.notes].sort((a,b)=>a.s-b.s||a.m-b.m);
+  if(isMulti(p)||ns.length<3||ns.some((n,i)=>i&&n.s<ns[i-1].s+ns[i-1].l)) return null;
+  for(const len of [BAR/2,BAR]){
+    const groups=new Map();
+    ns.forEach(n=>{ const k=Math.floor(n.s/len); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(n); });
+    const chords=[];
+    for(const [k,g] of groups){
+      const ms=[...new Set(g.map(n=>n.m))].sort((a,b)=>a-b);
+      if(g.length<3||new Set(ms.map(m=>m%12)).size<3||g.some((n,i)=>i&&Math.abs(n.m-g[i-1].m)<LEAP)||!analyze(ms,null).length) break;
+      chords.push({a:k*len,b:Math.max(...g.map(n=>n.s+n.l)),notes:ms,ids:g.map(n=>n.id)});
+    }
+    if(chords.length===groups.size){
+      const pcsOf=c=>[...new Set(c.notes.map(m=>m%12))].sort((a,b)=>a-b).join();
+      const out=[];
+      for(const c of chords){
+        const prev=out[out.length-1];
+        if(prev&&pcsOf(prev)===pcsOf(c)){ prev.b=c.b; prev.notes=[...new Set([...prev.notes,...c.notes])].sort((a,b)=>a-b); prev.ids.push(...c.ids); }
+        else out.push(c);
+      }
+      // each chord lasts until the next one starts
+      out.forEach((c,i)=>{ if(out[i+1]) c.b=out[i+1].a; });
+      return out;
+    }
+  }
+  return null;
+}
+
 // Chords change when the pitch classes above the bass change, the bass changes, or the whole chord is struck again.
 // Returns {chords:[{a,b,notes,bass:[{m,s,pass}],adds:[{m,s}]}], mel:[{notes:[...],s,l}]} in ticks.
 function splitHarmony(p){
   // plain blocks (each note starts and ends with its chord) are chords as drawn, even a lone note
+  const arp=arpeggioChords(p);
+  if(arp){
+    const chords=arp.map(c=>({a:c.a,b:c.b,notes:c.notes,pcs:new Set(c.notes.map(m=>m%12)),bass:[{m:c.notes[0],s:c.a}],adds:[]}));
+    return {chords,mel:[],top:[],role:new Map(p.notes.map(n=>[n.id,'harm'])),chordAt:t=>chords.find(c=>c.a<=t&&t<c.b)};
+  }
   const S=segs(p);
   if(S.length&&S.every(s=>isBlock(p,s))){
     const tune=blockMelody(p,S);
@@ -139,4 +177,4 @@ function harmonySegs(p){
     ids:new Set(p.notes.filter(n=>H.role.get(n.id)!=='mel'&&n.s>=c.a-TOL&&n.s<c.b-TOL).map(n=>n.id))}));
 }
 
-export { blockMelody, harmonySegs, noteRoles, splitHarmony };
+export { arpeggioChords, blockMelody, harmonySegs, noteRoles, splitHarmony };

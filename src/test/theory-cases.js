@@ -293,7 +293,11 @@ mc('J12', 2, 'Un solo bloque con 9ª aguda: sigue siendo acorde (decisión 2)', 
 mc('J22', 2, 'Pad abierto en dos bloques (C2 G2 E4): acorde, no melodía', [['C2 G2 E4', 4], ['F2 C3 A4', 4]], [], { chords: ['C', 'F'], melody: [] });
 mc('J23', 2, 'Disposición muy amplia en dos bloques (A24, C2 E5 G6): acorde, no melodía', [['C2 E5 G6', 4], ['G1 B4 D6', 4]], [], { chords: ['C', 'G'], melody: [] });
 mc('J24', 2, 'Pad de dos bloques con la voz aguda a una octava justa: acorde, no melodía', [['C3 E3 G3 G4', 4], ['G2 B2 D3 D4', 4]], [], { chords: ['C', 'G'], melody: [] });
-mc('J13', 3, 'Acorde arpegiado (Alberti) sin bloque', [], [['C4', 0, .5], ['G4', .5, .5], ['E4', 1, .5], ['G4', 1.5, .5], ['C4', 2, .5], ['G4', 2.5, .5], ['E4', 3, .5], ['G4', 3.5, .5], ['B3', 4, .5], ['G4', 4.5, .5], ['D4', 5, .5], ['G4', 5.5, .5], ['B3', 6, .5], ['G4', 6.5, .5], ['D4', 7, .5], ['G4', 7.5, .5]], { chords: ['C', 'G'] });
+mc('J13', 3, 'Acorde arpegiado (Alberti) sin bloque', [], [['C4', 0, .5], ['G4', .5, .5], ['E4', 1, .5], ['G4', 1.5, .5], ['C4', 2, .5], ['G4', 2.5, .5], ['E4', 3, .5], ['G4', 3.5, .5], ['B3', 4, .5], ['G4', 4.5, .5], ['D4', 5, .5], ['G4', 5.5, .5], ['B3', 6, .5], ['G4', 6.5, .5], ['D4', 7, .5], ['G4', 7.5, .5]], { chords: ['C', ['G', 'G/B']] }); // B3 is the lowest note of bar 2: V⁶
+mc('J25', 2, 'Escala sola (C D E F G): notas, no acordes', [], [['C4', 0, 1], ['D4', 1, 1], ['E4', 2, 1], ['F4', 3, 1], ['G4', 4, 4]], { noChords: true });
+mc('J26', 2, 'Escala en corcheas dentro de un compás: notas, no acordes', [], [['C4', 0, .5], ['D4', .5, .5], ['E4', 1, .5], ['F4', 1.5, .5], ['G4', 2, .5], ['F4', 2.5, .5], ['E4', 3, .5], ['D4', 3.5, .5]], { noChords: true });
+mc('J27', 2, 'Melodía sola con saltos y grados: notas, no acordes', [], [['E4', 0, 1], ['G4', 1, 1], ['F4', 2, 1], ['D4', 3, 1], ['C4', 4, 2], ['E4', 6, 2]], { noChords: true });
+mc('J28', 2, 'Arpegio a medio compás (C y G cada dos tiempos)', [], [['C4', 0, .5], ['E4', .5, .5], ['G4', 1, .5], ['E4', 1.5, .5], ['B3', 2, .5], ['D4', 2.5, .5], ['G4', 3, .5], ['D4', 3.5, .5]], { chords: ['C', 'G/B'] });
 mc('J14', 2, 'Bajo y melodía a dos voces', [], [['C3', 0, 4], ['E4', 0, 1], ['G4', 1, 1], ['C5', 2, 2], ['G2', 4, 4], ['D4', 4, 1], ['B3', 5, 1], ['G3', 6, 2]], { chords: [['C', 'C(no5)'], ['G', 'G(no3)', 'G5', 'G(5)']] });
 mc('J15', 3, 'Melodía con E♯ en Fa♯ mayor (deletreo en el texto)', [['F#3 A#3 C#4', 4], ['B2 D#3 F#3', 4], ['C#3 E#3 G#3 B3', 4], ['F#3 A#3 C#4', 4]], [['A#4', 0, 4], ['B4', 4, 4], ['E#5', 8, 2], ['G#5', 10, 2], ['F#5', 12, 4]], { key: 'F# mayor', textHas: ['E#5'], textNot: ['F5 (77)'] });
 mc('J16', 3, 'Melodía con B♯ (sensible) en Do♯ menor', [['C#3 E3 G#3', 4], ['G#2 B#2 D#3', 4], ['C#3 E3 G#3', 4]], [['E4', 0, 2], ['C#4', 2, 2], ['B#3', 4, 2], ['D#4', 6, 2], ['C#4', 8, 4]], { key: 'C# menor', textHas: ['B#3'], textNot: ['C4 (60)'] });
@@ -316,6 +320,8 @@ for (const c of melCases) {
     add('melodía+acordes', c.id + '-acordes', c.level, head + ' · acordes detectados', ch.chords.map(x => Array.isArray(x) ? x.join('/') : x).join(' – '), labels.join(' – ') || '(ninguno)',
       labels.length === ch.chords.length && ch.chords.every((e, i) => acc(e, labels[i])), c.ref);
   }
+  // a lone note in the chord list is "nota: C4", not a chord
+  if (ch.noChords) add('melodía+acordes', c.id + '-sin-acordes', c.level, head + ' · ningún acorde', '(ninguno)', labels.filter(l => !/^nota:/.test(l)).join(' – ') || '(ninguno)', labels.every(l => /^nota:/.test(l)), c.ref);
   if (ch.romans) add('melodía+acordes', c.id + '-grados', c.level, head + ' · grados', ch.romans.join(' – '), romans.join(' – '), romans.length === ch.romans.length && ch.romans.every((e, i) => acc(e, romans[i])), c.ref);
   if (ch.key) { const m = txt.match(/Tonalidad estimada: ([^·(]+)/); const k = m ? m[1].trim() : '(sin línea)'; add('melodía+acordes', c.id + '-tonalidad', c.level, head + ' · tonalidad', ch.key, k, acc(ch.key, k), c.ref); }
   if (ch.textHas) ch.textHas.forEach(s => add('melodía+acordes', c.id + '-texto', c.level, head + ` · el texto contiene "${s}"`, s, txt.includes(s) || norm(txt).includes(norm(s)) ? 'sí' : 'no', txt.includes(s) || norm(txt).includes(norm(s)), c.ref));
