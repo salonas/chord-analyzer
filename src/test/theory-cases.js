@@ -101,12 +101,13 @@ const runProg = chs => {
   return {
     A,
     key: keyName(A.key, P), alt: A.alt ? keyName(A.alt, P) : '', mode: modeName(A.key), keyText: keyText(A.key, A.alt, P),
-    labels: A.rs.map(r => r.label), romans: A.romans.map(r => r ? r.text : '?'), fn: A.fn,
+    labels: A.rs.map(r => r.label), romans: A.romans.map(r => r ? r.text : '?'), shorts: A.romans.map(r => r ? r.short : '?'), fn: A.fn,
     spelled: A.rs.map(r => r.spelled.map(spellName)), cad: A.cad || '', found: A.found.map(f => f.name),
   };
 };
 const progCases = [];
 const prog = (id, level, desc, chords, checks, ref) => progCases.push({ id, level, desc, chords, checks, ref });
+const ALL_ROMANS = [];
 
 // C. enharmonic spelling in context (spell: index -> expected set of note names)
 prog('C01', 1, 'Do mayor I–IV–V7–I', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3 F3', 'C3 E3 G3'], { key: 'C mayor', spell: { 2: 'G B D F' } });
@@ -165,6 +166,23 @@ prog('D21', 2, 'Cadencia rota V7–vi', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3 F3', 
 prog('D22', 3, 'Sustituto tritonal ♭II7 → I', ['D3 F3 A3 C4', 'Db3 F3 Ab3 B3', 'C3 E3 G3 B3'], { key: 'C mayor', romans: ['ii7', ['subV7', '♭II7'], 'Imaj7'], fn: ['S', 'D', 'T'], cad: { has: 'tritonal' } });
 prog('D23', 3, 'iii como dominante débil (iii → vi)', ['C3 E3 G3', 'E3 G3 B3', 'A2 C3 E3', 'F3 A3 C4', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', romans: ['I', 'iii', 'vi', 'IV', 'V', 'I'], fn: ['T', ['T', 'D'], ['T', 'S'], 'S', 'D', 'T'] });
 
+// V. inversions: figured bass for triads and sevenths, words for extensions, "/" only for secondary functions
+const VC = 'C3 E3 G3', VG = 'G2 B2 D3';
+prog('V01', 2, 'V9 en primera inversión', [VC, 'B2 D3 F3 G3 A3', VC], { key: 'C mayor', romans: [null, 'V9 en 1ª inversión'] });
+prog('V02', 3, 'Gsus4/D antes de V (ambiguo sin contexto)', [VC, 'D3 G3 C4', VG, VC], { key: 'C mayor', romans: [null, ['Vsus4 en 2ª inversión', 'II7sus4']] });
+prog('V03', 3, 'Cadd9 con bajo en D antes de V (ambiguo sin contexto)', [VC, 'D3 C4 E4 G4', VG, VC], { key: 'C mayor', romans: [null, ['Iadd9 con bajo en la 9', 'II9sus4']] });
+prog('V04', 2, 'Dominante secundaria invertida V⁶/V', [VC, 'F#2 A2 D3', VG, VC], { key: 'C mayor', romans: [null, 'V⁶/V'], fn: ['T', 'D', 'D', 'T'] });
+prog('V05', 3, 'Séptima secundaria invertida V⁶₅/vi', [VC, 'G#2 B2 D3 E3', 'A2 C3 E3', 'D3 F3 A3', 'G2 B2 D3 F3', VC], { key: 'C mayor', romans: [null, 'V⁶₅/vi', 'vi', 'ii', 'V7', 'I'] });
+prog('V06', 3, 'Dim7 invertido: la raíz es F♯, la que resuelve a G', [VC, 'A2 C3 Eb3 F#3', VG, VC], { key: 'C mayor', romans: [null, 'vii°⁶₅/V'], fn: ['T', 'D', 'D', 'T'], spell: { 1: 'F# A C Eb' } });
+prog('V07', 1, 'Séptima de dominante invertida: sin cambios', [VC, 'B2 D3 F3 G3', VC], { key: 'C mayor', romans: [null, 'V⁶₅'] });
+prog('V08', 2, 'Franja: V9 sin palabras', [VC, 'B2 D3 F3 G3 A3', VC], { key: 'C mayor', short: [null, 'V9'] });
+prog('V09', 3, 'Extensión secundaria invertida: V9/V en 1ª inversión', [VC, 'F#2 D3 A3 C4 E4', VG, VC], { key: 'C mayor', romans: [null, 'V9/V en 1ª inversión'], short: [null, 'V9/V'] });
+prog('V10', 3, 'Dim7 con otra nota en el bajo: vii°⁴₂/V', [VC, 'Eb3 F#3 A3 C4', VG, VC], { key: 'C mayor', romans: [null, 'vii°⁴₂/V'] });
+prog('V11', 2, 'Maj9 con la 9ª en el bajo', [VC, 'D3 C4 E4 G4 B4', VC], { key: 'C mayor', romans: [null, 'Imaj9 con bajo en la 9'], short: [null, 'Imaj9'] });
+prog('V12', 2, 'V9 con la 9ª en el bajo (no es 1ª inversión)', [VC, 'A2 G3 B3 D4 F4', VC], { key: 'C mayor', romans: [null, 'V9 con bajo en la 9'] });
+
+prog('V13', 3, 'Franja: la sexta aumentada conserva su cifra', ['C3 E3 G3', 'Ab2 C3 D3 F#3', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', short: [null, 'Fr⁴₃'] });
+
 prog('F01', 1, 'Tonalidad trivial Do', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor' });
 prog('F02', 1, 'Tonalidad trivial La menor', ['A2 C3 E3', 'D3 F3 A3', 'E2 G#2 B2', 'A2 C3 E3'], { key: 'A menor' });
 prog('F03', 1, 'Un solo acorde mayor', ['C3 E3 G3'], { key: 'C mayor' });
@@ -221,12 +239,14 @@ prog('H07', 2, 'Sin patrón (acordes al azar)', ['C3 E3 G3', 'Eb3 G3 Bb3', 'F#3 
 for (const c of progCases) {
   const o = runProg(c.chords);
   const ch = c.checks;
+  ALL_ROMANS.push(...o.romans);
   const head = `${c.desc}: ${o.labels.join(' – ')}`;
   if (ch.key) add('tonalidad', c.id, c.level, head, ch.key, o.key + (o.alt ? ` (alt ${o.alt})` : ''), acc(ch.key, o.key) && !ch.regions, c.ref, ch.regions ? 'la app da una sola tonalidad para todo el pattern' : '');
   if (ch.mode != null) add('modo', c.id + '-modo', c.level, head, ch.mode || '(sin etiqueta)', o.mode || '(sin etiqueta)', o.mode === ch.mode, c.ref);
   if (ch.text) add('modo', c.id + '-texto', c.level, head, ch.text, o.keyText, o.keyText === ch.text, c.ref);
   if (ch.alt) add('tonalidad', c.id + '-alt', c.level, head + ' (alternativa visible)', ch.alt, o.alt || '(sin alternativa)', !!o.alt, c.ref);
   if (ch.romans) ch.romans.forEach((e, i) => { if (e == null) return; add('grado', `${c.id}.${i + 1}`, c.level, `${head} · acorde ${i + 1} (${o.labels[i]})`, e, o.romans[i], acc(e, o.romans[i]), c.ref); });
+  if (ch.short) ch.short.forEach((e, i) => { if (e == null) return; add('grado', `${c.id}.${i + 1}-franja`, c.level, `${head} · franja, acorde ${i + 1} (${o.labels[i]})`, e, o.shorts[i], acc(e, o.shorts[i]), c.ref); });
   if (ch.fn) ch.fn.forEach((e, i) => add('función', `${c.id}.${i + 1}`, c.level, `${head} · ${o.romans[i]}`, e, o.fn[i], acc(e, o.fn[i]), c.ref));
   if (ch.spell) Object.entries(ch.spell).forEach(([i, e]) => {
     const got = o.spelled[i].join(' ');
@@ -379,6 +399,14 @@ for (const c of melCases.slice(-2)) {
   const a = p.notes.map(n => n.m).sort().join(' '), b = back.steps.flatMap(s => s.notes).sort().join(' ');
   add('texto', 'K01', 1, 'Progresión en bloque: exportar e importar', 'mismas notas', a === b ? 'iguales' : 'distintas', a === b);
   add('texto', 'K01-final', 1, 'Progresión en bloque: línea "# Final"', 'Cadencia rota o ninguna (termina en IV)', (txt.match(/# Final: (.*)/) || [, '(ninguna)'])[1], !/auténtica|Semicadencia/.test(txt.match(/# Final: (.*)/)?.[1] || ''));
+}
+
+// "/" means a secondary function and nothing else: a degree that has it is V or vii° over a target, with the figure and the words after
+{
+  const SECONDARY = /^(V\d*[⁶⁴₄₅₃₂]*|vii[°ø][⁶⁴₄₅₃₂7]*)\/[^/ ]+( [^/]+)?$/;
+  const grades = [...ALL_ROMANS, ...Object.values(texts).flatMap(t => t.text.split('\n').map(l => l.match(/^\d+\. [^|]+\| ([^|]+?) \([^)]*·/)).filter(Boolean).map(m => m[1]))];
+  const bad = [...new Set(grades.filter(g => g.includes('/') && !SECONDARY.test(g)))];
+  add('grado', 'V-barra', 2, `Ningún grado lleva "/" salvo una función secundaria (${grades.length} grados revisados)`, '(ninguno)', bad.join('; ') || '(ninguno)', !bad.length);
 }
 
 const caseKey = r => `${r.cat}:${r.id}:${r.expected}`;

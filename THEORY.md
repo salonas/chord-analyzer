@@ -23,7 +23,9 @@ Resueltas por el usuario el 1 nov 2026. Cada una fija una regla; si un caso de p
 4. **Funciones de iii y vi: ambos tónica.** El ♭VI en menor queda como subdominante (`harmonicFunction`, grado 8 en menor).
 5. **G12 (C – D7 – G) es ambiguo.** Se acepta Sol mayor con cadencia auténtica o Do mayor con semicadencia; la app muestra la otra lectura como alternativa.
 
-Sin decidir y sin cambios: la notación de inversiones con extensiones y la tensión, que sigue rotulada "estimación".
+6. **Inversiones con extensiones: palabras, no barra.** Decidido el 1 nov 2026 (`inversiones-tension-ui.md`, sección 1). El cifrado de bajo cifrado (⁶, ⁶₄, ⁶₅, ⁴₃, ⁴₂) queda para tríadas y séptimas. Los acordes con extensiones, add, sus, 6 o power chord llevan el grado y las palabras de `inversionText`: «V9 en 1ª inversión», «Imaj9 con bajo en la 9». La barra «/» se reserva a las funciones secundarias, que combinan las dos cosas: V⁶/V, V⁶₅/vi, vii°⁶₅/V. La hoja y el texto exportado muestran la forma completa (`text`); la franja de acordes, solo el grado (`short`). La raíz de un dim7 la fija la resolución: la nota un semitono bajo la raíz del acorde siguiente.
+
+Sin decidir y sin cambios: la tensión, que sigue rotulada "estimación" (se decide en el paso 3).
 
 ## Estado
 
@@ -49,9 +51,19 @@ Rama `feat/mode-labels`, desde `main` con #16 fusionado (decisión 3, modos como
 
 Con el filtro de escala, D16 (C – A♭ – B♭ – C) y el blues K03 (tiene E♭) quedan sin etiqueta (F29 lo fija). El caso «abre y cierra» no tiene caso propio que dependa de la regla, porque la puntuación de `detectKey` ya lo resuelve.
 
+Rama `feat/inversion-notation`, desde `main` con #17 fusionado (decisión 6, paso 1 de `inversiones-tension-ui.md`): 502 de 510 (98 %); las 42 comprobaciones nuevas (V01–V13 y el chequeo `V-barra`) pasan, y no cae ninguna. Reglas en `src/analysis.js`:
+
+- `romanFor` devuelve `text` (completo), `short` (solo el grado), `fig`, `kind` y `words`. `invWords` arma las palabras: «en 1ª inversión» si el bajo es la 3ª, 5ª o 7ª, «con bajo en la 9» en cualquier otro caso.
+- `chromaticReading` conserva la inversión en las secundarias: la cifra reemplaza el 7 de una dominante séptima (V⁶₅/vi); con extensiones va en palabras después del destino (V9/V en 1ª inversión).
+- Dim7 sin raíz clara: si ninguna nota propia resuelve un semitono arriba pero otra de las cuatro sí, esa es la raíz (vii°⁶₅/V para A C E♭ F♯ antes de G). El acorde se deletrea desde esa raíz con `respell`; su etiqueta de acorde («Adim7») no cambia.
+- Chequeo `V-barra`: ningún grado de la sonda ni de los textos lleva «/» salvo una función secundaria. `analysis.test.js` cambia `V7♭9/3` por `V7♭9 en 1ª inversión`; J17 cambia `V11/11` por «V11 con bajo en la 11» (el texto de la sonda).
+- La franja usa `short` (`main.js`); el marcador de grado del `.mid` (`midi.js`) sigue usando `text`.
+
 ### Retomar desde main
 
-Punto de partida: `feat/mode-labels` fusionado en `main`; la sonda da 459 de 467 y quedan 8 fallos, los mismos de antes:
+Punto de partida: `feat/inversion-notation` fusionado en `main` (paso 1 de `inversiones-tension-ui.md`); la sonda da 502 de 510 y quedan 8 fallos, los mismos de antes. Siguen, en ese orden: paso 2 (fila 23, apoyaturas con `melodyRole`), paso 3 (tensión con contexto), paso 4 (filas ✗ y ⚠ de la sección 3) y paso 5 (filas 5 y 10, con textos aprobados antes).
+
+Fallos que quedan:
 
 - C9, diccionario: A36 (maj9♯11) y A43 (dominante alterado 7♯5♯9).
 - C12, parseo: I10 (𝄪), I11 (𝄫), I13 (minúsculas) e I19 (H alemana descartada sin aviso).

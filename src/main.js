@@ -268,7 +268,7 @@ function renderProgression(){
   $('bAutoVel').disabled=isMulti(p); $('topInst').closest('label').hidden=isMulti(p);
   renderTracks(p);
   const A=analyzeProgression(R.segs.map(S=>segStep(p,S)),st); R.A=A;
-  R.lane=R.segs.map((S,i)=>({a:S.a,b:S.b,label:A.rs[i].label,roman:A.romans[i]?`${A.romans[i].text} · ${A.fn[i]}`:'—'}));
+  R.lane=R.segs.map((S,i)=>({a:S.a,b:S.b,label:A.rs[i].label,roman:A.romans[i]?`${A.romans[i].short} · ${A.fn[i]}`:'—'}));
   const end=progEnd(p), saved=lib.projects.find(x=>x.id===pr.id);
   $('progStatus').textContent=saved?(JSON.stringify(saved)===JSON.stringify(pr)?tr('guardado en la biblioteca','saved in the library'):tr('cambios sin guardar','unsaved changes')):tr('sin guardar','not saved');
   const nseg=R.segs.length, nn=p.notes.length, secs=(end/T*60/(pr.bpm||90)).toLocaleString(getLang(),{maximumFractionDigits:1}), ns=R.sel.size;

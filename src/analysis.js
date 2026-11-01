@@ -180,6 +180,11 @@ function keyText(k,alt,prefs){
   const inner=[modeName(k),alt?tr('o ','or ')+keyName(alt,prefs):''].filter(Boolean).join('; ');
   return keyName(k,prefs)+(inner?` (${inner})`:'');
 }
+// A triad or a seventh in inversion takes a figured bass (⁶, ⁶₅…); anything with extensions, add, sus, 6 or a power chord takes words,
+// so that "/" stays for secondary functions: V9 in 1st inversion, Iadd9 with the bass on the 9
+function invWords(c,d){
+  return [3,5,7].includes(d.n)?tr('en ','in ')+inversionText(c):tr('con bajo en la ','with the bass on the ')+d.label;
+}
 function romanFor(c,key){
   const deg=(c.root-key.tonic+12)%12, q=c.type.q;
   let base=ROMAN[deg];
@@ -190,16 +195,18 @@ function romanFor(c,key){
   else if(q==='hdim') ext='7';
   else if(q==='aug') ext=ext==='aug'?'':ext.replace('maj7♯5','maj7').replace('7♯5','7');
   else if(q==='min') ext=ext.replace(/^m/,'');
-  let fig='';
+  let fig='', kind='', words='';
   if(c.slash){
     const d=bassDeg(c);
-    if(c.type.degs.length===3&&q!=='sus'&&d.n===3) fig='⁶';
-    else if(c.type.degs.length===3&&q!=='sus'&&d.n===5) fig='⁶₄';
-    else if(SEVENTHS.has(c.type.sym)&&[3,5,7].includes(d.n)){ fig={3:'⁶₅',5:'⁴₃',7:'⁴₂'}[d.n]; ext=ext.replace(/7$/,''); }
-    else fig='/'+d.label;
+    if(c.type.degs.length===3&&q!=='sus'&&d.n===3){ fig='⁶'; kind='triad'; }
+    else if(c.type.degs.length===3&&q!=='sus'&&d.n===5){ fig='⁶₄'; kind='triad'; }
+    else if(SEVENTHS.has(c.type.sym)&&[3,5,7].includes(d.n)){ fig={3:'⁶₅',5:'⁴₃',7:'⁴₂'}[d.n]; kind='seventh'; ext=ext.replace(/7$/,''); }
+    else words=invWords(c,d);
   }
   const token=base+(q==='dim'||q==='hdim'?'°':q==='aug'?'+':'');
-  return {deg,base,token,text:base+mark+ext+fig,diatonic:(expFor(key)[deg]||[]).includes(q)||(q==='sus'&&!!expFor(key)[deg])};
+  // short is the degree alone, for the chord strip; text adds the words of an inversion with extensions
+  const short=base+mark+ext+fig;
+  return {deg,base,token,fig,kind,words,short,text:short+(words?' '+words:''),diatonic:(expFor(key)[deg]||[]).includes(q)||(q==='sus'&&!!expFor(key)[deg])};
 }
 const PATTERNS=[
  ['Pop I–V–vi–IV','Pop I–V–vi–IV','I V vi IV'],['Pop vi–IV–I–V','Pop vi–IV–I–V','vi IV I V'],['Años 50 (doo-wop)','50s progression (doo-wop)','I vi IV V'],
@@ -236,10 +243,23 @@ function chromaticReading(rs,romans,key,prefs){
     const up=(nc.root-c.root+12)%12, q=c.type.q;
     // I7 is the tonic when no tonic triad shows up or the IV that follows is a seventh too (blues), else it points at IV
     if(ro.deg===0&&q==='dom'&&(!tonicTriad||(nx.deg===5&&nc.type.q==='dom'))) return;
+    // a dim7 is symmetrical, so the bass is not its root: the root is the note a semitone under the chord it resolves to
+    const lt=c.type.sym==='dim7'&&nx.deg!==0&&up!==1?rs[i].notes.map(m=>m%12).find(p=>(p+1)%12===nc.root%12):undefined;
     if((q==='dom'||q==='maj')&&up===5&&nx.deg!==0){
-      ro.text='V'+(q==='dom'?(c.type.sym.match(/^\d+/)||[''])[0]:'')+'/'+targetBase(nx,key); ro.secondary=true;
+      // the figure replaces the 7 of a dominant seventh; extensions and the like keep their number and take the inversion in words
+      const dom=q==='dom', num=dom?(c.type.sym.match(/^\d+/)||[''])[0]:'', fig=ro.kind==='triad'||(ro.kind==='seventh'&&dom&&num==='7');
+      const g='V'+(fig?ro.fig:num), words=fig||!c.slash?'':invWords(c,bassDeg(c)), to='/'+targetBase(nx,key);
+      ro.short=g+to; ro.text=ro.short+(words?' '+words:''); ro.secondary=true;
     } else if((q==='dim'||q==='hdim')&&up===1&&nx.deg!==0){
-      ro.text='vii'+(q==='hdim'?'ø':'°')+(q==='hdim'||c.type.sym==='dim7'?'7':'')+'/'+targetBase(nx,key); ro.secondary=true;
+      const g='vii'+(q==='hdim'?'ø':'°'), sev=q==='hdim'||c.type.sym==='dim7', to='/'+targetBase(nx,key);
+      ro.short=g+(ro.fig||(sev?'7':''))+to; ro.text=ro.short+(ro.words?' '+ro.words:''); ro.secondary=true;
+    } else if(lt!==undefined){
+      const fig={0:'7',3:'⁶₅',6:'⁴₃',9:'⁴₂'}[(c.bass-lt+12)%12];
+      ro.short='vii°'+fig+'/'+targetBase(nx,key); ro.text=ro.short; ro.secondary=true;
+      // F♯ A C E♭ before G: the root takes the letter under the target's, then thirds
+      const rel=(nc.root-key.tonic+12)%12, sc=key.mode==='major'?MAJ:MIN;
+      let ts=sc.indexOf(rel); if(ts<0&&key.mode==='minor'&&rel===11) ts=6;
+      if(ts>=0) respell(rs[i],key,prefs,Object.fromEntries([6,1,3,5].map((k,j)=>[(lt+3*j-key.tonic+12)%12,(ts+k)%7])));
     }
   });
   romans.forEach((ro,i)=>{
@@ -250,10 +270,10 @@ function chromaticReading(rs,romans,key,prefs){
     // ♭6̂ in the bass with ♯4̂ above it and 1̂, resolving to V: Italian, French (adds 2̂) or German (adds ♭3̂) sixth
     if(toV&&(rs[i].notes[0]-key.tonic+12)%12===8&&has(8)&&has(0)&&has(6)&&[...rel].every(x=>[8,0,6,3,2].includes(x))&&!(has(3)&&has(2))){
       const g=has(3)?'Ger':has(2)?'Fr':'It';
-      ro.text=g+{Ger:'⁶₅',Fr:'⁴₃',It:'⁶'}[g]; ro.aug6=g;
+      ro.text=ro.short=g+{Ger:'⁶₅',Fr:'⁴₃',It:'⁶'}[g]; ro.aug6=g;
       respell(rs[i],key,prefs,{8:5,0:0,6:3,3:2,2:1});
     } else if(c.type.sym==='dim7'&&has(0)&&pv&&nc&&pv.root===key.tonic&&nc.root===key.tonic){
-      ro.text='♯ii°7'; ro.ct=true;
+      ro.text=ro.short='♯ii°7'; ro.ct=true;
       respell(rs[i],key,prefs,{0:0,3:1,6:3,9:5});
     }
   });

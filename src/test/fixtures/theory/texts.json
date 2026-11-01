@@ -109,7 +109,7 @@
  },
  "J17": {
   "desc": "Pedal de tónica bajo V7 (C sostenido)",
-  "text": "# Pattern: J17\n# Tonalidad estimada: C mayor · total 12 tiempos (3 compases)\n# Final: Cadencia auténtica (V → I)\n# Instrumento: Genérico (sin ajuste) · velocity límites 1–127 · usado 100 · sensibilidad 100 % · acentos 100 % · humanizar velocity 100 % · recorte de graves 0/octava bajo C2 · recorte de agudos 0/octava sobre C7\n# Formato: n. acorde | grado (función · tensión 0–1) | notas | MIDI | duración — octavas: científica (C4 = MIDI 60)\n1. C | I (tónica · 0,1) | C2 C3 E3 G3 | 36 48 52 55 | 4 tiempos\n2. G11/C | V11/11 (dominante · 0,73) | C2 B2 D3 F3 G3 | 36 47 50 53 55 | 4 tiempos\n3. C | I (tónica · 0,1) | C2 C3 E3 G3 | 36 48 52 55 | 4 tiempos"
+  "text": "# Pattern: J17\n# Tonalidad estimada: C mayor · total 12 tiempos (3 compases)\n# Final: Cadencia auténtica (V → I)\n# Instrumento: Genérico (sin ajuste) · velocity límites 1–127 · usado 100 · sensibilidad 100 % · acentos 100 % · humanizar velocity 100 % · recorte de graves 0/octava bajo C2 · recorte de agudos 0/octava sobre C7\n# Formato: n. acorde | grado (función · tensión 0–1) | notas | MIDI | duración — octavas: científica (C4 = MIDI 60)\n1. C | I (tónica · 0,1) | C2 C3 E3 G3 | 36 48 52 55 | 4 tiempos\n2. G11/C | V11 con bajo en la 11 (dominante · 0,73) | C2 B2 D3 F3 G3 | 36 47 50 53 55 | 4 tiempos\n3. C | I (tónica · 0,1) | C2 C3 E3 G3 | 36 48 52 55 | 4 tiempos"
  },
  "J18": {
   "desc": "Viaje de ida y vuelta: exportar e importar el texto",
