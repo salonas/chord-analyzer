@@ -1,7 +1,7 @@
 // Text export and import (reimportable plain text).
 import { HIGH, LATIN, LETTERS, LOW, NAT, OCT_CONV, T, barsText, fmtB, numB, sigOf, uid } from './data.js';
 import { isDrum, isMulti, isPure, normProg, progEnd, segStep, segs } from './model.js';
-import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, keyName, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
+import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, keyName, keyText, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
 import { exprSummary, instLabel, instText } from './expression.js';
 import { arpeggioChords, blockMelody, splitHarmony } from './harmony.js';
 import { drumText } from './drums.js';
@@ -90,7 +90,7 @@ function melodyRole(mel,i,info,toneAt,prefs,next,key){
 }
 function harmonyLines(p,prefs,L){
   const Hm=splitHarmony(p);
-  const A=analyzeProgression(Hm.chords.map(c=>({notes:c.notes,...(p.names[sigOf(c.notes)]||{})})),prefs);
+  const A=analyzeProgression(Hm.chords.map(c=>({notes:c.notes,dur:c.b-c.a,...(p.names[sigOf(c.notes)]||{})})),prefs);
   return {Hm,A,write(){
     const nt=m=>noteText(plainSpell(m,prefs,A.key),prefs);
     L.push(tr('# Armonía: n. acorde | grado (función · tensión 0–1) | inicio–fin (tiempos) | voces | bajo','# Harmony: n. chord | degree (function · tension 0–1) | start–end (beats) | voices | bass')+octTail(prefs));
@@ -127,7 +127,7 @@ function progText(p,prefs){
   // plain block chords keep one line per chord (the text reads back from them); anything else splits harmony and melody
   const H=pure?null:harmonyLines(p,prefs,L);
   const A=pure?analyzeProgression(S.map(s=>segStep(p,s)),prefs):H.A;
-  if(pure?S.length:H.Hm.chords.length) L.push(tr(`# Tonalidad estimada: ${keyName(A.key,prefs)}${A.alt?` (o ${keyName(A.alt,prefs)})`:''} · ${totalText(p)}`,`# Estimated key: ${keyName(A.key,prefs)}${A.alt?` (or ${keyName(A.alt,prefs)})`:''} · ${totalText(p)}`));
+  if(pure?S.length:H.Hm.chords.length) L.push(`${tr('# Tonalidad estimada: ','# Estimated key: ')}${keyText(A.key,A.alt,prefs)} · ${totalText(p)}`);
   else if(p.notes.length) L.push(`# ${totalText(p)}`);
   if(A.found&&A.found.length) L.push(`${tr('# Patrones','# Patterns')}: ${A.found.map(f=>foundText(f,A.rs.length)).join('; ')}`);
   if(A.cad) L.push(`${tr('# Final','# Ending')}: ${A.cad}`);

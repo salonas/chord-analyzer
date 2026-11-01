@@ -1,6 +1,6 @@
 // Theory probe: ~418 checks of chord, key, degree, function, cadence, pattern, spelling and text output against
 // accepted readings. The cases are the project's own, not a human-annotated corpus (see docs/teoria-fallos.md).
-import { analyze, analyzeProgression, candSymbol, inversionText, keyName, resolveStep, spellCandidate } from '../analysis.js';
+import { analyze, analyzeProgression, candSymbol, inversionText, keyName, keyText, modeName, resolveStep, spellCandidate } from '../analysis.js';
 import { normProg } from '../model.js';
 import { parseText, progText } from '../text.js';
 
@@ -95,11 +95,12 @@ for (const [id, lv, desc, notes, exp] of invCases) {
 }
 
 // ---------- progression helper ----------
+// a chord may carry its length after a star ('A2 C3 E3*3'); without it every chord lasts the same
 const runProg = chs => {
-  const A = analyzeProgression(chs.map(c => ({ notes: N(c) })), P);
+  const A = analyzeProgression(chs.map(c => { const [n, d] = c.split('*'); return { notes: N(n), ...(d ? { dur: +d } : {}) }; }), P);
   return {
     A,
-    key: keyName(A.key, P), alt: A.alt ? keyName(A.alt, P) : '',
+    key: keyName(A.key, P), alt: A.alt ? keyName(A.alt, P) : '', mode: modeName(A.key), keyText: keyText(A.key, A.alt, P),
     labels: A.rs.map(r => r.label), romans: A.romans.map(r => r ? r.text : '?'), fn: A.fn,
     spelled: A.rs.map(r => r.spelled.map(spellName)), cad: A.cad || '', found: A.found.map(f => f.name),
   };
@@ -171,9 +172,20 @@ prog('F04', 1, 'Un solo acorde menor', ['A2 C3 E3'], { key: 'A menor' });
 prog('F05', 1, 'Pop I–V–vi–IV en Sol', ['G2 B2 D3', 'D3 F#3 A3', 'E3 G3 B3', 'C3 E3 G3'], { key: 'G mayor', found: ['I–V–vi–IV'] });
 prog('F06', 2, 'vi–IV–I–V (relativas ambiguas)', ['A2 C3 E3', 'F2 A2 C3', 'C3 E3 G3', 'G2 B2 D3'], { key: ['A menor', 'C mayor'], alt: ['A menor', 'C mayor'], found: [['vi–IV–I–V', 'i–♭VI–♭III–♭VII']] });
 prog('F07', 2, 'Cadencia andaluza', ['A2 C3 E3', 'G2 B2 D3', 'F2 A2 C3', 'E2 G#2 B2'], { key: 'A menor', found: ['andaluza'], cad: { has: 'Semicadencia' } });
-prog('F08', 2, 'Mixolidio I–♭VII–IV–I en Sol', ['G2 B2 D3', 'F2 A2 C3', 'C3 E3 G3', 'G2 B2 D3'], { key: ['G mayor', 'G mixolidio'], found: ['Mixolidia'] });
-prog('F09', 3, 'Dórico i–IV en Re', ['D3 F3 A3', 'G2 B2 D3', 'D3 F3 A3', 'G2 B2 D3', 'D3 F3 A3'], { key: ['D menor', 'D dórico'] });
-prog('F10', 3, 'Frigio i–♭II en Mi', ['E3 G3 B3', 'F3 A3 C4', 'E3 G3 B3', 'F3 A3 C4', 'E3 G3 B3'], { key: ['E menor', 'E frigio'] });
+prog('F08', 2, 'Mixolidio I–♭VII–IV–I en Sol', ['G2 B2 D3', 'F2 A2 C3', 'C3 E3 G3', 'G2 B2 D3'], { key: ['G mayor', 'G mixolidio'], mode: 'mixolidio', text: 'G mayor (mixolidio)', found: ['Mixolidia'] });
+prog('F09', 3, 'Dórico i–IV en Re', ['D3 F3 A3', 'G2 B2 D3', 'D3 F3 A3', 'G2 B2 D3', 'D3 F3 A3'], { key: ['D menor', 'D dórico'], mode: 'dórico', text: 'D menor (dórico; o C mayor)' });
+prog('F10', 3, 'Frigio i–♭II en Mi', ['E3 G3 B3', 'F3 A3 C4', 'E3 G3 B3', 'F3 A3 C4', 'E3 G3 B3'], { key: ['E menor', 'E frigio'], mode: 'frigio' });
+prog('F19', 2, 'Lidio D–E–D (4ª aumentada, sin 4ª justa)', ['D3 F#3 A3', 'E3 G#3 B3', 'D3 F#3 A3'], { key: 'D mayor', mode: 'lidio' });
+prog('F20', 2, 'Dm – G – C – Dm es dórico: i – IV – ♭VII – i, no V/♭VII', ['D3 F3 A3', 'G2 B2 D3', 'C3 E3 G3', 'D3 F3 A3'], { key: 'D menor', mode: 'dórico', romans: ['i', 'IV', '♭VII', 'i'] });
+prog('F21', 2, 'En contra: ii–V–I en Do sigue siendo Do mayor, sin etiqueta', ['D3 F3 A3', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', mode: '' });
+prog('F22', 1, 'En contra: progresión diatónica en mayor, sin etiqueta', ['C3 E3 G3', 'A2 C3 E3', 'F2 A2 C3', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', mode: '' });
+prog('F23', 1, 'En contra: progresión diatónica en menor, sin etiqueta', ['A2 C3 E3', 'D3 F3 A3', 'E2 G#2 B2', 'A2 C3 E3'], { key: 'A menor', mode: '' });
+prog('F24', 2, 'En contra: Sol mayor con F prestado y D7 → G, sin etiqueta mixolidia', ['G2 B2 D3', 'F2 A2 C3', 'C3 E3 G3', 'D3 F#3 A3 C4', 'G2 B2 D3'], { key: 'G mayor', mode: '' });
+prog('F25', 2, 'En contra: V/V (el F♯ es de la dominante secundaria), Do mayor sin etiqueta lidia', ['C3 E3 G3', 'D3 F#3 A3', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', mode: '' });
+prog('F26', 2, 'Sin dominante que resuelva, empatan: la tónica es el primero (Mi menor frigio, no Do mayor)', ['E3 G3 B3', 'F3 A3 C4', 'E3 G3 B3', 'F3 A3 C4'], { key: 'E menor', mode: 'frigio' });
+prog('F27', 2, 'Sin dominante, el primero cuando empatan: Sol menor y no Si♭ mayor', ['G2 Bb2 D3', 'Ab2 C3 Eb3', 'Bb2 D3 F3'], { key: 'G menor' });
+prog('F28', 2, 'Sin dominante, ni abre y cierra: el que más dura (La menor dura 3 de 6)', ['F2 A2 C3', 'G2 B2 D3', 'A2 C3 E3*3', 'G2 B2 D3'], { key: 'A menor' });
+prog('F29', 2, 'En contra: ♭VI–♭VII–I prestado (el A♭ no es mixolidio), Do mayor sin etiqueta', ['C3 E3 G3', 'Ab2 C3 Eb3', 'Bb2 D3 F3', 'C3 E3 G3'], { key: 'C mayor', mode: '' });
 prog('F11', 3, 'Modulación Do → Sol (dos regiones)', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3 F3', 'C3 E3 G3', 'A2 C3 E3', 'D3 F#3 A3 C4', 'G2 B2 D3', 'D3 F#3 A3 C4', 'G2 B2 D3'], { key: ['G mayor', 'C mayor → G mayor'], regions: true });
 prog('F12', 2, 'Re♭ mayor (nombre de tonalidad)', ['Db3 F3 Ab3', 'Gb2 Bb2 Db3', 'Ab2 C3 Eb3 Gb3', 'Db3 F3 Ab3'], { key: 'Db mayor' });
 prog('F13', 2, 'Sol♯ menor (nombre de tonalidad)', ['G#2 B2 D#3', 'C#3 E3 G#3', 'D#3 F##3 A#3 C#4', 'G#2 B2 D#3'], { key: ['G# menor', 'Ab menor'] });
@@ -211,6 +223,8 @@ for (const c of progCases) {
   const ch = c.checks;
   const head = `${c.desc}: ${o.labels.join(' – ')}`;
   if (ch.key) add('tonalidad', c.id, c.level, head, ch.key, o.key + (o.alt ? ` (alt ${o.alt})` : ''), acc(ch.key, o.key) && !ch.regions, c.ref, ch.regions ? 'la app da una sola tonalidad para todo el pattern' : '');
+  if (ch.mode != null) add('modo', c.id + '-modo', c.level, head, ch.mode || '(sin etiqueta)', o.mode || '(sin etiqueta)', o.mode === ch.mode, c.ref);
+  if (ch.text) add('modo', c.id + '-texto', c.level, head, ch.text, o.keyText, o.keyText === ch.text, c.ref);
   if (ch.alt) add('tonalidad', c.id + '-alt', c.level, head + ' (alternativa visible)', ch.alt, o.alt || '(sin alternativa)', !!o.alt, c.ref);
   if (ch.romans) ch.romans.forEach((e, i) => { if (e == null) return; add('grado', `${c.id}.${i + 1}`, c.level, `${head} · acorde ${i + 1} (${o.labels[i]})`, e, o.romans[i], acc(e, o.romans[i]), c.ref); });
   if (ch.fn) ch.fn.forEach((e, i) => add('función', `${c.id}.${i + 1}`, c.level, `${head} · ${o.romans[i]}`, e, o.fn[i], acc(e, o.fn[i]), c.ref));
@@ -298,6 +312,7 @@ mc('J25', 2, 'Escala sola (C D E F G): notas, no acordes', [], [['C4', 0, 1], ['
 mc('J26', 2, 'Escala en corcheas dentro de un compás: notas, no acordes', [], [['C4', 0, .5], ['D4', .5, .5], ['E4', 1, .5], ['F4', 1.5, .5], ['G4', 2, .5], ['F4', 2.5, .5], ['E4', 3, .5], ['D4', 3.5, .5]], { noChords: true });
 mc('J27', 2, 'Melodía sola con saltos y grados: notas, no acordes', [], [['E4', 0, 1], ['G4', 1, 1], ['F4', 2, 1], ['D4', 3, 1], ['C4', 4, 2], ['E4', 6, 2]], { noChords: true });
 mc('J28', 2, 'Arpegio a medio compás (C y G cada dos tiempos)', [], [['C4', 0, .5], ['E4', .5, .5], ['G4', 1, .5], ['E4', 1.5, .5], ['B3', 2, .5], ['D4', 2.5, .5], ['G4', 3, .5], ['D4', 3.5, .5]], { chords: ['C', 'G/B'] });
+mc('J29', 2, 'Dórico en el texto exportado: el modo va entre paréntesis con la tonalidad', [['D3 F3 A3', 4], ['G2 B2 D3', 4], ['D3 F3 A3', 4], ['G2 B2 D3', 4], ['D3 F3 A3', 4]], [], { key: 'D menor', textHas: ['Tonalidad estimada: D menor (dórico;'] });
 mc('J14', 2, 'Bajo y melodía a dos voces', [], [['C3', 0, 4], ['E4', 0, 1], ['G4', 1, 1], ['C5', 2, 2], ['G2', 4, 4], ['D4', 4, 1], ['B3', 5, 1], ['G3', 6, 2]], { chords: [['C', 'C(no5)'], ['G', 'G(no3)', 'G5', 'G(5)']] });
 mc('J15', 3, 'Melodía con E♯ en Fa♯ mayor (deletreo en el texto)', [['F#3 A#3 C#4', 4], ['B2 D#3 F#3', 4], ['C#3 E#3 G#3 B3', 4], ['F#3 A#3 C#4', 4]], [['A#4', 0, 4], ['B4', 4, 4], ['E#5', 8, 2], ['G#5', 10, 2], ['F#5', 12, 4]], { key: 'F# mayor', textHas: ['E#5'], textNot: ['F5 (77)'] });
 mc('J16', 3, 'Melodía con B♯ (sensible) en Do♯ menor', [['C#3 E3 G#3', 4], ['G#2 B#2 D#3', 4], ['C#3 E3 G#3', 4]], [['E4', 0, 2], ['C#4', 2, 2], ['B#3', 4, 2], ['D#4', 6, 2], ['C#4', 8, 4]], { key: 'C# menor', textHas: ['B#3'], textNot: ['C4 (60)'] });
