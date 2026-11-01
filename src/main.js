@@ -150,8 +150,10 @@ function renderActive(){
   if(st.prefer){ const i=cands.findIndex(c=>c.root===st.prefer.root&&c.type.sym===st.prefer.sym); st.pick=i>=0?i:0; st.prefer=null; }
   if(st.pick>=cands.length) st.pick=0;
   const cur=cands[st.pick]; lastCur=cur;
-  const sp=cur?spellCandidate(cur,notes,st):null;
-  const spelled=sp?sp.notes:notes.map(m=>plainSpell(m,st));
+  // a chord taken from the progression is spelled in the key the lane reads it in (G♯7, not A♭7, in C♯ minor)
+  const key=st.src==='seg'&&R.A?R.A.key:undefined;
+  const sp=cur?spellCandidate(cur,notes,st,key):null;
+  const spelled=sp?sp.notes:notes.map(m=>plainSpell(m,st,key));
   const rootPc=cur?cur.root:(st.lockedRoot!==null?st.lockedRoot:null); R.rootPc=rootPc;
   const S=curSeg(), modified=sigOf(notes)!==st.srcSig;
   let src=tr('Acorde activo · armado a mano','Active chord · built by hand');
@@ -188,7 +190,7 @@ function renderActive(){
 
   $('candCount').textContent=cands.length?tr(`${cands.length} coincidencia${cands.length>1?'s':''}`,`${cands.length} match${cands.length>1?'es':''}`):'';
   $('cands').innerHTML=cands.length?cands.map((c,i)=>{
-    const csp=spellCandidate(c,notes,st), sy=candSymbol(c,csp,st);
+    const csp=spellCandidate(c,notes,st,key), sy=candSymbol(c,csp,st);
     const form=c.type.degs.map(d=>{ const s=csp.byPc[(d.pc+c.root)%12], nm=letterName(s.l,s.a,st); return c.missing.includes(d)?`<s>${esc(d.label)} ${esc(nm)}</s>`:`<span>${esc(d.label)} <i>${esc(nm)}</i></span>`; }).join('');
     const tags=[];
     if(!c.missing.length && !c.slash) tags.push(`<span class="tag exact">${tr('coincidencia exacta','exact match')}</span>`);
