@@ -77,7 +77,7 @@ function harmonyLines(p,prefs,L){
     });
     const melLines=(list,head)=>{
       L.push(head+octTail(prefs));
-      const ci=x=>Hm.chords.indexOf(Hm.chordAt(x.s)), info=list.map(x=>against(x.notes[0],A.rs[ci(x)]));
+      const ci=x=>Hm.chords.indexOf(Hm.chordAt(x.s)), info=list.map(x=>against(x.notes[0],A.rs[ci(x)],plainSpell(x.notes[0],prefs,A.key)));
       const toneAt=j=>info[j]&&info[j].tone;
       list.forEach((x,i)=>{
         const k=ci(x), name=x.notes.map(nt).join('+'), r=A.rs[k], f=info[i];
@@ -85,7 +85,7 @@ function harmonyLines(p,prefs,L){
         L.push(`${name} (${x.notes.join(' ')}${x.notes.length>1?tr(', doblada',', doubled'):''}) | ${numB(x.s)} | ${numB(x.l)} | ${r?chordLabel(r,prefs):'—'} | ${f?f.iv:'—'} | ${melTen(f)} | ${melodyRole(list,i,info,toneAt,prefs,next,A.key)}`);
       });
     };
-    const cols=tr('nota (MIDI) | inicio | duración | sobre | intervalo | tensión 0–1 | rol','note (MIDI) | start | length | over | interval | tension 0–1 | role');
+    const cols=tr('nota (MIDI) | inicio | duración | sobre | intervalo | tensión estimada 0–1 | rol','note (MIDI) | start | length | over | interval | estimated tension 0–1 | role');
     if(Hm.mel.length) melLines(Hm.mel,`${tr('# Melodía','# Melody')}: ${cols}`);
     // a tune that moves with the chords is told apart from them only by being the highest voice: when the tune found
     // covers under half of that voice, the voice is read on its own

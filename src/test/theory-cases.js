@@ -354,6 +354,11 @@ mc('J21', 2, 'Disonancia retenida que sube: no es retardo (B de G sobre C, a C)'
 mc('J17', 2, 'Pedal de tónica bajo V7 (C sostenido)', [['C2 C3 E3 G3', 4], ['C2 B2 D3 F3 G3', 4], ['C2 C3 E3 G3', 4]], [], { chords: ['C', ['G7/C', 'G11/C', 'G7 (pedal C)'], 'C'] });
 mc('J18', 2, 'Viaje de ida y vuelta: exportar e importar el texto', [['C3 E3 G3', 4], ['A2 C3 E3', 4]], [['E5', 0, 1], ['D5', 1, 1], ['C5', 2, 2], ['C5', 4, 4]], { roundtrip: true });
 
+// J30–J32: the tension word of the melody (three levels) and the interval of a note, named by letters
+mc('J30', 2, 'Tensión de la melodía: baja, media y alta sobre C (E, D, F)', [['C3 E3 G3', 4]], [['E4', 0, 1], ['D4', 1, 1], ['F4', 2, 1], ['G4', 3, 1]], { tension: [['E4', '0', 'baja'], ['D4', '1', 'media'], ['F4', '2', 'alta']] });
+mc('J31', 2, 'Blue note sobre C7: E♭ es ♭3, no ♯9', [['C3 E3 G3 Bb3', 4], ['F3 A3 C4 Eb4', 4], ['C3 E3 G3 Bb3', 4]], [['G4', 0, 1], ['Eb4', 1, 1], ['E4', 2, 2], ['C4', 4, 4], ['C4', 8, 4]], { interval: [['G4', '0', '5'], ['E♭4', '1', '♭3'], ['E4', '2', '3']] });
+mc('J32', 3, 'F♯ sobre C es ♯11', [['C3 E3 G3', 4]], [['E4', 0, 1], ['F#4', 1, 1], ['G4', 2, 2]], { interval: [['F♯4', '1', '♯11']] });
+
 for (const c of melCases) {
   const p = pat(c.id, c.chords, c.mel);
   const txt = progText(p, P);
@@ -379,6 +384,9 @@ for (const c of melCases) {
     const none = !ch.melody.length;
     add('melodía+acordes', c.id + '-melodía', c.level, head + ' · melodía detectada', none ? '(ninguna)' : ch.melody.join(' '), mm.join(' ') || '(ninguna)', none ? !mm.length : ch.melody.every(x => mm.some(y => norm(y) === norm(x))), c.ref);
   }
+  const col = (note, start, i) => { const line = txt.split('\n').find(l => norm(l).startsWith(norm(note) + ' (') && l.split('|')[1] && l.split('|')[1].trim() === start); return line ? line.split('|')[i].trim() : '(nota no listada como melodía)'; };
+  if (ch.interval) ch.interval.forEach(([note, start, exp]) => { const got = col(note, start, 4); add('melodía+acordes', `${c.id}-${note}@${start}-intervalo`, c.level, `${head} · intervalo de ${note} en el tiempo ${start}`, exp, got, got === exp, c.ref); });
+  if (ch.tension) ch.tension.forEach(([note, start, exp]) => { const got = col(note, start, 5); add('melodía+acordes', `${c.id}-${note}@${start}-tensión`, c.level, `${head} · tensión de ${note} en el tiempo ${start}`, exp, got, got.startsWith(exp), c.ref); });
   if (ch.role) ch.role.forEach(([note, start, exp]) => {
     const line = txt.split('\n').find(l => norm(l).startsWith(norm(note) + ' (') && l.split('|')[1] && l.split('|')[1].trim() === start);
     const role = line ? line.split('|').pop().trim() : '(nota no listada como melodía)';
