@@ -23,25 +23,34 @@ function undo(){ if(!hist.length) return; fut.push(snapshot()); restore(hist.pop
 function redo(){ if(!fut.length) return; hist.push(snapshot()); restore(fut.pop()); render(); }
 
 // ---------- transport ----------
-const P={bus:null,raf:0,t0:0,from:0,end:0,spt:0,next:null,playing:false};
+const P={bus:null,raf:0,t0:0,from:0,cur:0,end:0,spt:0,next:null,parts:[],playing:false};
 // notes are scheduled ahead on the audio clock; tick() follows with the playhead and queues the next loop pass one beat early
 // the parts that sound: a multitrack pattern plays each unmuted track on its own instrument, any other pattern is one part
 function parts(p){ return isMulti(p)?p.tracks.filter(t=>!t.mute).map(t=>({t,pat:{...trackPat(p,t),notes:p.notes.filter(n=>trackOf(p,n)===t)}})):[{t:null,pat:p}]; }
 function curTrack(){ const p=st.prog; return isMulti(p)?(p.tracks.find(t=>t.id===st.trk)||p.tracks[0]):null; }
-function scheduleFrom(from,t0){ parts(st.prog).forEach(({t,pat})=>schedulePart(pat,t?P.tbus.get(t.id):P.bus,from,t0)); }
-function schedulePart(pat,bus,from,t0){
-  if(!bus) return;
-  const drum=isDrum(pat);
+// Notes are queued a window ahead (LOOK seconds), not all at once: a pattern with thousands of notes would create thousands of
+// voices in the first instant, freezing the page and the audio. Each part's voices are worked out once per playback.
+const LOOK=3;
+function voicesOf(pat){
   // drums go in time order, so a closing hi-hat can cut the open one scheduled before it
   // melodic notes go as voices, so slides and portamento (glide.js) bend them
-  const notes=drum?[...pat.notes].sort((a,b)=>a.s-b.s).map(n=>({m:n.m,s:n.s,e:n.s+n.l,v:n.v||100,bend:[]})):glidePlan(pat,Infinity).voices;
-  const sec=x=>t0+(x-from)*P.spt;
-  notes.forEach(n=>{
-    if(n.e<=from||n.s>=P.end) return;
-    const s0=Math.max(n.s,from), e0=Math.min(n.e,P.end), t=sec(s0), vel=.2*Math.pow(n.v/127,1.6), hold=(e0-s0)*P.spt;
+  const v=isDrum(pat)?pat.notes.map(n=>({m:n.m,s:n.s,e:n.s+n.l,v:n.v||100,bend:[]})):glidePlan(pat,Infinity).voices;
+  return v.slice().sort((a,b)=>a.s-b.s);
+}
+// queues the notes that start in [pass.cur, upto) of a pass ({from,t0,cur}: where it began and when, on the audio clock); the first
+// window of a pass also takes the notes already sounding at its start
+function fill(pass,upto){
+  upto=Math.min(upto,P.end); if(upto<=pass.cur) return;
+  const a=pass.cur, first=a===pass.from, sec=x=>pass.t0+(x-pass.from)*P.spt;
+  P.parts.forEach(({pat,bus,notes})=>notes.forEach(n=>{
+    if(n.s>=upto) return;
+    if(!(n.s>=a||(first&&n.e>a))) return;
+    if(n.e<=a) return;
+    const s0=Math.max(n.s,a), e0=Math.min(n.e,P.end), t=sec(s0), vel=.2*Math.pow(n.v/127,1.6), hold=(e0-s0)*P.spt;
     const bend=n.bend.length?[{t,d:bendAt(n.bend,s0)},...n.bend.filter(b=>b.t>s0&&b.t<e0).map(b=>({t:sec(b.t),d:b.d})),{t:sec(e0),d:bendAt(n.bend,e0)}]:null;
     patVoice(pat,n.m,t,n.v,bus,vel,hold,bend);
-  });
+  }));
+  pass.cur=upto;
 }
 function playProg(){
   stopProg();
@@ -52,10 +61,11 @@ function playProg(){
   // a multitrack pattern has a bus per track (its instrument's volume) under one that stopProg fades
   const c=audio(); P.bus=c.createGain(); P.bus.gain.value=isMulti(st.prog)?1:mixOf(st.prog); P.bus.connect(master);
   P.tbus=new Map(ps.filter(x=>x.t).map(x=>{ const g=c.createGain(); g.gain.value=mixOf(x.pat); g.connect(P.bus); return [x.t.id,g]; }));
+  P.parts=ps.map(x=>({pat:x.pat,bus:x.t?P.tbus.get(x.t.id):P.bus,notes:voicesOf(x.pat)}));
   P.spt=60/(st.proj.bpm||90)/T;
   P.end=Math.max(4*T,Math.ceil(progEnd(st.prog)/(4*T))*4*T);
-  P.from=R.start<P.end?R.start:0; P.t0=c.currentTime+.06; P.next=null; P.playing=true;
-  scheduleFrom(P.from,P.t0);
+  P.from=R.start<P.end?R.start:0; P.t0=c.currentTime+.06; P.cur=P.from; P.next=null; P.playing=true;
+  fill(P,P.from+LOOK/P.spt);
   P.raf=requestAnimationFrame(tick); P.timer=setInterval(pump,250);
   setPlayBtn(true);
 }
@@ -79,10 +89,16 @@ function followLive(pos){
 // a timer still fires there (throttled to about 1 s), so the next pass is queued 2 s ahead
 function pump(){
   if(!P.playing) return;
-  const c=audio(), pos=P.from+(c.currentTime-P.t0)/P.spt;
-  if(st.loop&&!P.next&&(P.end-pos)*P.spt<=2){ const t0n=P.t0+(P.end-P.from)*P.spt; scheduleFrom(0,t0n); P.next={t0:t0n}; }
+  const c=audio(), pos=P.from+(c.currentTime-P.t0)/P.spt, ahead=pos+LOOK/P.spt;
+  // the frame loop calls this too: only queue once half a window has been played
+  const half=LOOK/P.spt/2;
+  if(P.cur<P.end&&ahead-P.cur>=half) fill(P,ahead);
+  if(st.loop&&ahead>P.end){
+    if(!P.next) P.next={from:0,cur:0,t0:P.t0+(P.end-P.from)*P.spt};
+    if(P.cur>=P.end&&(P.next.cur===0||ahead-P.end-P.next.cur>=half)) fill(P.next,ahead-P.end);
+  }
   if(pos>=P.end){
-    if(P.next){ P.from=0; P.t0=P.next.t0; P.next=null; R.el.scrollLeft=0; }
+    if(P.next){ P.from=0; P.t0=P.next.t0; P.cur=P.next.cur; P.next=null; R.el.scrollLeft=0; }
     else stopProg();
   }
 }
