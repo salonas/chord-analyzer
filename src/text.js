@@ -51,18 +51,42 @@ const melTen=f=>f?`${TEN_WORD[f.ten]} (${numText(TEN_VAL[f.ten])})`:'—';
 // a note that is not in its chord but is in the next one, within two beats of the change, and is the last
 // melody note before the change, announces it; an earlier one in that window is just a tension
 const ANTICIPATION=2*T;
+const TOL=Math.round(.05*T); // notes that start within ±0.05 beats start together, as in harmony.js
+const step=x=>x!==null&&x!==0&&Math.abs(x)<=2;
+// a chord tone, a step to one side, a third leap to the other side and a step back to the same tone:
+// the two notes in the middle are one ornament (double neighbor, cambiata)
+function doubleNeighbor(mel,i,toneAt){
+  const at=j=>mel[j]&&mel[j].notes[0];
+  for(const a of [i-1,i-2]){
+    if(a<0||!mel[a+3]||!toneAt(a)||!toneAt(a+3)||toneAt(a+1)||toneAt(a+2)||at(a)!==at(a+3)) continue;
+    const u=at(a+1)-at(a), w=at(a+2)-at(a);
+    if(step(u)&&step(w)&&Math.sign(u)!==Math.sign(w)) return true;
+  }
+  return false;
+}
+// a note held over a chord change that clashes with the new chord and then falls a step to one of its tones:
+// "retardo 4–3 → E4". It is an addition to the role, inside the same column
+function suspension(mel,i,prefs,next,key){
+  const x=mel[i], nx=mel[i+1], m=x.notes[0];
+  if(!next||!next.r||!next.r.c||!nx||x.s>=next.a||x.s+x.l<=next.a+TOL) return '';
+  const held=against(m,next.r), to=against(nx.notes[0],next.r), d=nx.notes[0]-m;
+  if(held.tone||!to||!to.tone||!(d<0&&step(d))||nx.s<x.s+x.l-TOL) return '';
+  return ` · ${tr('retardo','suspension')} ${held.iv}–${to.iv} → ${noteText(plainSpell(nx.notes[0],prefs,key),prefs)}`;
+}
 function melodyRole(mel,i,info,toneAt,prefs,next,key){
   const k=info[i]; if(!k) return '—';
-  if(k.tone) return tr('nota del acorde','chord tone');
+  const sus=suspension(mel,i,prefs,next,key);
+  if(k.tone) return tr('nota del acorde','chord tone')+sus;
   const m=mel[i].notes[0], pv=mel[i-1], nx=mel[i+1], d1=pv?m-pv.notes[0]:null, d2=nx?nx.notes[0]-m:null;
   const toward=next&&next.r&&next.r.c&&mel[i].s<next.a&&mel[i].s>=next.a-ANTICIPATION&&against(m,next.r).tone;
   const ahead=toward&&(!nx||nx.s>=next.a);
-  const step=x=>x!==null&&x!==0&&Math.abs(x)<=2;
-  if(step(d1)&&step(d2)) return Math.sign(d1)===Math.sign(d2)?tr('paso','passing'):tr('bordadura','neighbor');
-  if(step(d2)&&toneAt(i+1)) return `${tr('apoyatura','appoggiatura')} → ${noteText(plainSpell(nx.notes[0],prefs,key),prefs)}`;
-  if(step(d1)) return tr('escapada','escape tone');
+  if(doubleNeighbor(mel,i,toneAt)) return tr('bordadura doble','double neighbor')+sus;
+  if(step(d1)&&step(d2)) return (Math.sign(d1)===Math.sign(d2)?tr('paso','passing'):tr('bordadura','neighbor'))+sus;
+  if(step(d2)&&toneAt(i+1)) return `${tr('apoyatura','appoggiatura')} → ${noteText(plainSpell(nx.notes[0],prefs,key),prefs)}`+sus;
+  // the last note before the change that belongs to the next chord announces it, even when it came by step
   if(ahead) return `${tr('anticipación','anticipation')} → ${next.label}`;
-  return k.ten==='mid'||toward?tr('tensión','tension'):tr('libre','free');
+  if(step(d1)) return tr('escapada','escape tone')+sus;
+  return (k.ten==='mid'||toward?tr('tensión','tension'):tr('libre','free'))+sus;
 }
 function harmonyLines(p,prefs,L){
   const Hm=splitHarmony(p);
