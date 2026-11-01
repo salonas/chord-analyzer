@@ -1,7 +1,8 @@
 // Interface: inspector, keyboard, staff, library, panels and boot.
 import { BLACK, HIGH, INSTRUMENTS, IN_KEYS, LOW, T, TYPES, fmtB, freq, guessInst, instDefaults, intervalName, sigOf, uid } from './data.js';
 import { $, esc, fillRange, saveFile, toast } from './dom.js';
-import { EXAMPLE_NAME, activePat, isBlock, isDrum, isMulti, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs } from './model.js';
+import { EXAMPLE_NAME, activePat, gmOn, isBlock, isDrum, isMulti, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs, trackPat } from './model.js';
+import { gmName } from './gm.js';
 import { fut, hist, lib, persistLib, saveDraft, savePrefs, st } from './state.js';
 import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, inversionText, keyName, letterName, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
 import { EX_KEYS, FEELINGS, exDefaults, exprSummary, expressPattern, instLabel } from './expression.js';
@@ -707,11 +708,13 @@ function renderTracks(p){
   const box=$('trackPanel'); box.hidden=!isMulti(p); $('bToTracks').hidden=isMulti(p); if(!isMulti(p)) return;
   if(box.contains(document.activeElement)&&document.activeElement.tagName==='SELECT') return;
   const cur=curTrack(), opts=$('npInst').innerHTML;
+  // a track whose .mid set a program can also play it from the General MIDI soundfont, the first option
+  const gmOpt=t=>t.prog==null?'':`<option value="gm" title="General MIDI">GM · ${esc(gmName(t.prog))}</option>`;
   $('trackList').innerHTML=p.tracks.map(t=>{ const n=p.notes.filter(x=>x.tr===t.id).length;
-    return `<div class="trk" data-id="${t.id}"><button class="trsel" aria-pressed="${t===cur}" title="${tr('Editar esta pista','Edit this track')}"><span class="pn">${esc(t.name)}</span><span class="pi">${n} ${tr('notas','notes')}</span></button><select class="trinst" aria-label="${tr('Instrumento de','Instrument of')} ${esc(t.name)}">${opts}</select><label class="trm"><input type="checkbox" class="trmute"${t.mute?' checked':''}> ${tr('Silenciar','Mute')}</label><button class="trdel" title="${tr('Quitar esta pista','Remove this track')}" aria-label="${tr('Quitar','Remove')} ${esc(t.name)}"${p.tracks.length<2?' disabled':''}>×</button></div>`; }).join('');
+    return `<div class="trk" data-id="${t.id}"><button class="trsel" aria-pressed="${t===cur}" title="${tr('Editar esta pista','Edit this track')}"><span class="pn">${esc(t.name)}</span><span class="pi">${n} ${tr('notas','notes')}</span></button><select class="trinst" aria-label="${tr('Instrumento de','Instrument of')} ${esc(t.name)}">${gmOpt(t)}${opts}</select><label class="trm"><input type="checkbox" class="trmute"${t.mute?' checked':''}> ${tr('Silenciar','Mute')}</label><button class="trdel" title="${tr('Quitar esta pista','Remove this track')}" aria-label="${tr('Quitar','Remove')} ${esc(t.name)}"${p.tracks.length<2?' disabled':''}>×</button></div>`; }).join('');
   const others=st.proj.patterns.filter(x=>x!==p&&!isMulti(x)&&x.notes.length);
   $('trkFrom').innerHTML=others.map(x=>`<option value="${x.id}">${esc(x.name||tr('Sin nombre','Untitled'))} (${x.notes.length})</option>`).join(''); $('bTrkFrom').disabled=!others.length;
-  p.tracks.forEach(t=>{ const s=$('trackList').querySelector(`.trk[data-id="${t.id}"] .trinst`); if(s) s.value=t.inst.preset in INSTRUMENTS?t.inst.preset:'generico'; });
+  p.tracks.forEach(t=>{ const s=$('trackList').querySelector(`.trk[data-id="${t.id}"] .trinst`); if(s) s.value=gmOn(t)?'gm':t.inst.preset in INSTRUMENTS?t.inst.preset:'generico'; });
 }
 // changing the tracks themselves is not in the undo history (it keeps notes only), so it starts the history over
 function tracksChanged(){ hist.length=0; fut.length=0; saveDraft(); if(P.playing) playProg(); render(); }
@@ -744,7 +747,10 @@ $('trackList').addEventListener('click',e=>{
 });
 $('trackList').addEventListener('change',e=>{
   const row=e.target.closest('.trk'); if(!row) return; const t=st.prog.tracks.find(x=>x.id===row.dataset.id); if(!t) return;
-  if(e.target.classList.contains('trinst')){ t.inst=instDefaults(e.target.value); ensureSounds({name:t.name,inst:t.inst}); }
+  if(e.target.classList.contains('trinst')){
+    if(e.target.value==='gm') delete t.gm; else { t.inst=instDefaults(e.target.value); if(t.prog!=null) t.gm=false; }
+    ensureSounds(trackPat(st.prog,t));
+  }
   else if(e.target.classList.contains('trmute')) t.mute=e.target.checked;
   saveDraft(); if(P.playing) playProg(); render();
 });

@@ -66,14 +66,16 @@ const EXAMPLE=()=>{
     {notes:[50,60,65,69],root:2,sym:'m7',beats:2},{notes:[43,53,59,62],root:7,sym:'7',beats:2}]});
   return normProject({id:uid(),name:tr(...EXAMPLE_NAME),bpm:90,seed:20261027,patterns:[pat],active:pat.id});
 };
-// A multitrack pattern: p.tracks [{id,name,inst,mute}] and n.tr on each note. Playback, sounds and the .mid go track by track;
+// A multitrack pattern: p.tracks [{id,name,inst,mute,prog?,gm?}] and n.tr on each note. prog is the track's General MIDI
+// program from the .mid; it plays the soundfont (gm.js) unless gm is false, when the track plays its inst. Playback, sounds and the .mid go track by track;
 // the chord analysis does not apply (segs gives none), as the tracks would mix into one nonsense chord line.
 const isMulti=p=>!!(p&&p.tracks&&p.tracks.length);
 const trackOf=(p,n)=>p.tracks.find(t=>t.id===n.tr)||p.tracks[0];
 // what the sound code needs of a track, shaped like a pattern
-const trackPat=(p,t)=>({id:t.id,name:t.name,inst:t.inst,bend:p.bend});
+const gmOn=t=>t.prog!=null&&t.gm!==false;
+const trackPat=(p,t)=>({id:t.id,name:t.name,inst:t.inst,bend:p.bend,...(gmOn(t)&&{prog:t.prog})});
 // the pattern that sounds for a preview or a key: the active track of a multitrack pattern, else the pattern
 const soundPat=(p,id)=>isMulti(p)?trackPat(p,p.tracks.find(t=>t.id===id)||p.tracks[0]):p;
 function isDrum(p){ return !!(p&&p.inst&&p.inst.preset==='bateria'); }
 
-export { EXAMPLE, EXAMPLE_NAME, activePat, hash01, isBlock, isDrum, isMulti, isPure, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs, soundPat, trackOf, trackPat };
+export { EXAMPLE, EXAMPLE_NAME, activePat, gmOn, hash01, isBlock, isDrum, isMulti, isPure, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs, soundPat, trackOf, trackPat };

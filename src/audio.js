@@ -1,6 +1,7 @@
 // Web Audio voices.
 import { freq } from './data.js';
 import { DRUMS } from './drums.js';
+import { gmSamples } from './gm.js';
 import { isDrum, soundPat } from './model.js';
 import { st } from './state.js';
 
@@ -93,14 +94,21 @@ function channelFor(p,m){
   return pick&&(m.channels[pick]||synthOf(pick,m))?pick:null;
 }
 const synthOf=(k,m=man)=>!!m&&!!m.synths&&m.synths[k]||null;
-const setOf=p=>channelFor(p,man);
+// a track with a General MIDI program (gm.js) plays its soundfont set, keyed 'gm:<program>'; drums keep the kit
+const gmOf=p=>p&&p.prog!=null&&!isDrum(p)?'gm:'+p.prog:null;
+const setOf=p=>gmOf(p)||channelFor(p,man);
+const GM_RELEASE=.3;
 function loadSet(key){
   if(!sets.has(key)){
     const s={ready:false,data:null}; sets.set(key,s);
-    const c=audio(), get=f=>fetch(BASE+f).then(r=>r.arrayBuffer()).then(b=>c.decodeAudioData(b));
+    const c=audio(), get=u=>fetch(u).then(r=>{ if(!r.ok) throw new Error(r.status); return r.arrayBuffer(); }).then(b=>c.decodeAudioData(b));
     s.load=(key==='drums'
-      ?Promise.all(Object.entries(man.drums).map(async([m,ls])=>[+m,await Promise.all(ls.map(async l=>({v:l.v,buf:await get(l.file)})))])).then(e=>new Map(e))
-      :Promise.all(man.channels[key].samples.map(async x=>({...x,buf:await get(x.file)}))).then(xs=>({pitched:man.channels[key].pitched,release:man.channels[key].release,xs}))
+      ?Promise.all(Object.entries(man.drums).map(async([m,ls])=>[+m,await Promise.all(ls.map(async l=>({v:l.v,buf:await get(BASE+l.file)})))])).then(e=>new Map(e))
+      // a soundfont note that fails to load is left out: its neighbors play it retuned (sampleFor)
+      :key.startsWith('gm:')
+      ?Promise.allSettled(gmSamples(+key.slice(3)).map(async x=>({...x,buf:await get(x.url)}))).then(r=>{
+        const xs=r.filter(x=>x.status==='fulfilled').map(x=>x.value); if(!xs.length) throw new Error('no GM samples'); return {pitched:true,release:GM_RELEASE,xs}; })
+      :Promise.all(man.channels[key].samples.map(async x=>({...x,buf:await get(BASE+x.file)}))).then(xs=>({pitched:man.channels[key].pitched,release:man.channels[key].release,xs}))
     ).then(d=>{ s.data=d; },()=>{ s.data=false; }).then(()=>{ s.ready=true; });
   }
   return sets.get(key).load;
