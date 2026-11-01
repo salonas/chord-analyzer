@@ -20,7 +20,7 @@ Resueltas por el usuario el 1 nov 2026. Cada una fija una regla; si un caso de p
    - mixolidio: 7ª menor.
 
    Los grados siguen relativos a la mayor, con ♭. Se hace después de C3. Casos: F08, F09, F10, uno lidio (D–E) y un ii–V–I en Do que debe seguir siendo Do mayor, no Re dórico.
-4. **Funciones de iii y vi: ambos tónica.** Sin decidir, y por eso sin tocar: el ♭VI en menor sigue como subdominante (`harmonicFunction`, grado 8 en menor).
+4. **Funciones de iii y vi: ambos tónica.** El ♭VI en menor queda como subdominante (`harmonicFunction`, grado 8 en menor).
 5. **G12 (C – D7 – G) es ambiguo.** Se acepta Sol mayor con cadencia auténtica o Do mayor con semicadencia; la app muestra la otra lectura como alternativa.
 
 Sin decidir y sin cambios: la notación de inversiones con extensiones y la tensión, que sigue rotulada "estimación".
