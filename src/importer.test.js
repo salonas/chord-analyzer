@@ -54,6 +54,27 @@ describe('parseMidi channels', () => {
     const r = parseMidi(bytes([...hdr(2), ...trk(on(0, 60)), ...trk(on(1, 64))]));
     expect(r.tracks.length).toBe(2);
   });
+  const pc = (ch, pg) => [0, 0xC0 | ch, pg];
+  it('reads the program of each format 0 channel', () => {
+    const r = parseMidi(bytes([...hdr(1), ...trk([...pc(0, 33), ...pc(1, 48), ...on(0, 40), ...on(1, 64)])]));
+    expect(r.tracks.map(t => t.prog)).toEqual([33, 48]);
+  });
+  it('takes the program of the channel a track mostly uses, and the first one set', () => {
+    const r = parseMidi(bytes([...hdr(1, 1), ...trk([...pc(1, 25), ...pc(0, 0), ...on(1, 60), ...on(0, 50), ...on(1, 64), ...pc(1, 80)])]));
+    expect(r.tracks[0].prog).toBe(25);
+  });
+  it('finds a program set in another track of a format 1 file', () => {
+    const r = parseMidi(bytes([...hdr(2), ...trk(pc(2, 73)), ...trk(on(2, 72))]));
+    expect(r.tracks.map(t => t.prog)).toEqual([73]);
+  });
+  it('gives no program to drums or to a file that sets none', () => {
+    const r = parseMidi(bytes([...hdr(2), ...trk([...pc(9, 5), ...on(9, 36)]), ...trk(on(0, 60))]));
+    expect(r.tracks.map(t => 'prog' in t)).toEqual([false, false]);
+  });
+  it('keeps the program on the tracks of a multitrack pattern', () => {
+    const r = parseMidi(bytes([...hdr(2), ...trk([...pc(0, 33), ...on(0, 40)]), ...trk(on(1, 64))]));
+    expect(multiPattern('Song', r.tracks).tracks.map(t => t.prog)).toEqual([33, undefined]);
+  });
 });
 
 describe('defaultProject', () => {

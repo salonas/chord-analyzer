@@ -10,11 +10,12 @@ function parseMidi(buf){
   if(d.length<14||str(0,4)!=='MThd') throw new Error(tr('no es un archivo MIDI (falta la cabecera MThd)','not a MIDI file (the MThd header is missing)'));
   const hl=dv.getUint32(4), fmt=dv.getUint16(8), ntr=dv.getUint16(10), div=dv.getUint16(12);
   if(div&0x8000) throw new Error(tr('usa tiempo SMPTE, que no está soportado','uses SMPTE time, which is not supported'));
-  let p=8+hl, tempo=null; const tracks=[];
+  // the first program change (0xC0) seen on each channel, in the whole file: a format 1 file may set them in another track
+  let p=8+hl, tempo=null; const tracks=[], progs=[];
   for(let k=0;k<ntr&&p+8<=d.length;k++){
     if(str(p,4)!=='MTrk') break;
     const len=dv.getUint32(p+4); let i=p+8; const end=Math.min(d.length,i+len); p=i+len;
-    let t=0, run=0, name=''; const notes=[], on=new Map();
+    let t=0, run=0, name=''; const notes=[], on=new Map(), own=[];
     const vlq=()=>{ let v=0,b; do{ b=d[i++]; v=(v<<7)|(b&0x7f); }while(b&0x80&&i<end); return v; };
     while(i<end){
       t+=vlq(); let s=d[i];
@@ -27,24 +28,32 @@ function parseMidi(buf){
         const m=d[i++], v=d[i++], key=ch*128+m;
         if(hi===0x90&&v>0){ if(!on.has(key)) on.set(key,[]); on.get(key).push({t,v}); }
         else { const q=on.get(key); if(q&&q.length){ const o=q.shift(); notes.push({m,s:o.t,l:Math.max(1,t-o.t),v:o.v,ch}); } }
-      } else if(hi===0xC0||hi===0xD0) i+=1; else i+=2;
+      } else if(hi===0xC0){ const pg=d[i++]&0x7f; if(own[ch]==null) own[ch]=pg; if(progs[ch]==null) progs[ch]=pg; }
+      else if(hi===0xD0) i+=1; else i+=2;
     }
     // notes still held when the track ends last until its final event
     on.forEach((q,key)=>q.forEach(o=>notes.push({m:key%128,s:o.t,l:Math.max(1,t-o.t),v:o.v,ch:Math.floor(key/128)})));
     // format 0 keeps every channel in its one track: each channel becomes its own track (format 1 tracks stay as written)
     const chs=[...new Set(notes.map(n=>n.ch))].sort((x,y)=>x-y);
-    if(fmt===0&&chs.length>1) chs.forEach(c=>tracks.push({name:name?`${name} · ch ${c+1}`:`ch ${c+1}`,notes:notes.filter(n=>n.ch===c)}));
-    else if(notes.length) tracks.push({name,notes});
+    if(fmt===0&&chs.length>1) chs.forEach(c=>tracks.push({name:name?`${name} · ch ${c+1}`:`ch ${c+1}`,notes:notes.filter(n=>n.ch===c),own}));
+    else if(notes.length) tracks.push({name,notes,own});
   }
+  // each track's General MIDI program: that of the channel most of its notes use, set in the track itself or else
+  // anywhere in the file; none on channel 10 (drums) or when the file sets none
+  tracks.forEach(tk=>{
+    const cnt=[]; tk.notes.forEach(n=>cnt[n.ch]=(cnt[n.ch]||0)+1);
+    const ch=cnt.reduce((b,c,i)=>c>(cnt[b]||0)?i:b,tk.notes[0].ch), pg=tk.own[ch]??progs[ch];
+    delete tk.own; if(ch!==9&&pg!=null) tk.prog=pg;
+  });
   const sc=T/div;
   tracks.forEach(tr=>tr.notes=tr.notes.map(n=>({id:uid(),m:n.m,s:Math.round(n.s*sc),l:Math.max(1,Math.round(n.l*sc)),v:n.v||100,ch:n.ch})));
   return {tracks,tempo};
 }
 // A multitrack .mid as one pattern, so it can be heard whole: a track per MIDI track with its own instrument
-// (guessed from its name; channel 10 is the drum kit), each note tagged with its track
+// (guessed from its name; channel 10 is the drum kit) and its General MIDI program if the file sets one, each note tagged with its track
 function multiPattern(name,tracks){
   const ts=tracks.map((t,i)=>({id:uid(),name:t.name||tr('Pista ','Track ')+(i+1),mute:false,
-    inst:instDefaults(t.notes.every(n=>n.ch===9)?'bateria':guessInst(t.name)||'generico')}));
+    inst:instDefaults(t.notes.every(n=>n.ch===9)?'bateria':guessInst(t.name)||'generico'),...(t.prog!=null&&{prog:t.prog})}));
   const notes=tracks.flatMap((t,i)=>t.notes.map(({ch,...n})=>({...n,tr:ts[i].id})));
   return normProg({id:uid(),name,beats:4,notes,names:{},tracks:ts});
 }
