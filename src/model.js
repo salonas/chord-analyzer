@@ -56,7 +56,7 @@ function segs(p){
   return out;
 }
 function isBlock(p,S){ return [...S.ids].every(id=>{const n=p.notes.find(x=>x.id===id); return n&&n.s===S.a&&n.s+n.l===S.b;}); }
-const segStep=(p,S)=>({notes:S.notes,...(p.names[S.sig]||{})});
+const segStep=(p,S)=>({notes:S.notes,dur:S.b-S.a,...(p.names[S.sig]||{})});
 function isPure(p,S){ return S.length&&S[0].a===0&&p.notes.every(n=>n.v===100&&!n.g)&&S.every((s,i)=>isBlock(p,s)&&(i===0||S[i-1].b===s.a)); }
 
 const EXAMPLE_NAME=['Ejemplo: turnaround en Do','Example: turnaround in C'];

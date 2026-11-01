@@ -13,11 +13,14 @@ const KEY_TONIC={major:[[0,0],[1,-1],[1,0],[2,-1],[2,0],[3,0],[3,1],[4,0],[5,-1]
 // minor takes the raised 7th (harmonic) and the raised 6th (melodic) too; they share the letters of the 7th and the 6th
 const SCALE_STEPS={major:[0,2,4,5,7,9,11],minor:[0,2,3,5,7,8,10,11,9]};
 const keyTonicSpell=(key,prefs)=>prefs.accPref==='sharp'||prefs.accPref==='flat'?null:KEY_TONIC[key.mode][key.tonic];
+// the altered degree that names a mode: pitch class above the tonic -> letters above the tonic's (the dorian 6th is in the minor steps)
+const MODE_STEP={phrygian:[1,1],lydian:[6,3],mixolydian:[10,6]};
 function keySpell(pc,key,prefs){
   if(!key||prefs.accPref==='sharp'||prefs.accPref==='flat') return null;
-  const [tl]=KEY_TONIC[key.mode][key.tonic], steps=SCALE_STEPS[key.mode];
-  const k=steps.findIndex(s=>(key.tonic+s)%12===pc); if(k<0) return null;
-  const l=(tl+(k===7?6:k===8?5:k))%7;
+  const [tl]=KEY_TONIC[key.mode][key.tonic], steps=SCALE_STEPS[key.mode], ms=MODE_STEP[key.modal];
+  const k=steps.findIndex(s=>(key.tonic+s)%12===pc);
+  if(k<0&&!(ms&&(key.tonic+ms[0])%12===pc)) return null;
+  const l=(tl+(k<0?ms[1]:k===7?6:k===8?5:k))%7;
   let a=((pc-NAT[l])%12+12)%12; if(a>6) a-=12;
   return [l,a];
 }
@@ -109,6 +112,36 @@ const EXP={major:{0:['maj'],2:['min'],4:['min'],5:['maj'],7:['maj','dom'],9:['mi
            minor:{0:['min'],2:['dim','hdim'],3:['maj','aug'],5:['min'],7:['min','maj','dom'],8:['maj'],10:['maj','dom'],11:['dim']}};
 // Key scoring is looser than labeling: dominant 7ths on I and IV count as in-key (blues)
 const EXPK={major:{...EXP.major,0:['maj','dom'],5:['maj','dom']},minor:EXP.minor};
+// A mode is a label on major or minor, not a key of its own. It is named by its characteristic note, as long as the note
+// that contradicts it is absent: [mode, characteristic, contradicting] in semitones above the tonic.
+const MODES={minor:[['dorian',9,8],['phrygian',1,2]],major:[['lydian',6,5],['mixolydian',10,11]]};
+const MODE_NAME={dorian:['dórico','Dorian'],phrygian:['frigio','Phrygian'],lydian:['lidio','Lydian'],mixolydian:['mixolidio','Mixolydian']};
+// Chords on the degrees of the mode count as in the key; the degrees of the plain scale the mode changes do not
+const EXP_MODE={dorian:{2:['min'],5:['maj','dom'],8:[],9:['dim','hdim']},
+                phrygian:{1:['maj','dom'],2:[],7:['min','dim','hdim'],10:['min','maj','dom']},
+                lydian:{2:['maj','dom'],5:[],6:['dim','hdim'],11:['min']},
+                mixolydian:{4:['dim','hdim'],7:['min'],10:['maj','dom'],11:[]}};
+const expFor=key=>key.modal?{...EXP[key.mode],...EXP_MODE[key.modal]}:EXP[key.mode];
+// Only where the tonic has no dominant of its own: before one, the raised 4th or lowered 7th is a secondary dominant's, not a mode's
+function modeOf(key,items){
+  if(items.some((it,i)=>i+1<items.length&&items[i+1].root===key.tonic&&leads(it,items[i+1]))) return null;
+  const rel=new Set(items.flatMap(it=>it.pcs).map(p=>(p-key.tonic+12)%12));
+  const hit=MODES[key.mode].filter(([,mark,against])=>rel.has(mark)&&!rel.has(against));
+  return hit.length===1?hit[0][0]:null;
+}
+// A V (or a vii°) of the next chord, followed by it
+const leads=(it,nx)=>!!(it.q&&nx.q)&&(((it.q==='dom'||it.q==='maj')&&(nx.root-it.root+12)%12===5)||((it.q==='dim'||it.q==='hdim')&&(nx.root-it.root+12)%12===1));
+// With no V or vii° resolving to its target anywhere, nothing marks a tonic: the chord that opens and closes, else the one that
+// lasts longest, else the first, weighs on the key. It is a tiebreak, not a verdict: a loop such as V–vi–IV–I still ends on its I.
+const PLAIN_TONIC=3;
+function plainTonic(items){
+  if(items.some((it,i)=>i+1<items.length&&leads(it,items[i+1]))) return -1;
+  const f=items[0], l=items[items.length-1];
+  if(f.q&&l.q&&f.root===l.root) return f.root;
+  const dur=new Map(); items.forEach(it=>{ if(it.q) dur.set(it.root,(dur.get(it.root)||0)+(it.dur||1)); });
+  let best=-1, most=0; dur.forEach((d,r)=>{ if(d>most){most=d;best=r;} });
+  return best;
+}
 function detectKey(items){
   const res=[];
   for(let t=0;t<12;t++) for(const mode of ['major','minor']){
@@ -140,7 +173,13 @@ function detectKey(items){
   }
   return res.sort((a,b)=>b.score-a.score);
 }
+const modeName=k=>k&&k.modal?tr(...MODE_NAME[k.modal]):'';
 const keyName=(k,prefs)=>{const [l,a]=keyTonicSpell(k,prefs)||rootSpell(k.tonic,k.mode==='minor'?'min':'maj',prefs); return letterName(l,a,prefs)+(k.mode==='major'?tr(' mayor',' major'):tr(' menor',' minor'));};
+// «D menor (dórico)», and with an alternate key «D menor (dórico; o C mayor)»
+function keyText(k,alt,prefs){
+  const inner=[modeName(k),alt?tr('o ','or ')+keyName(alt,prefs):''].filter(Boolean).join('; ');
+  return keyName(k,prefs)+(inner?` (${inner})`:'');
+}
 function romanFor(c,key){
   const deg=(c.root-key.tonic+12)%12, q=c.type.q;
   let base=ROMAN[deg];
@@ -160,7 +199,7 @@ function romanFor(c,key){
     else fig='/'+d.label;
   }
   const token=base+(q==='dim'||q==='hdim'?'°':q==='aug'?'+':'');
-  return {deg,base,token,text:base+mark+ext+fig,diatonic:(EXP[key.mode][deg]||[]).includes(q)||(q==='sus'&&!!EXP[key.mode][deg])};
+  return {deg,base,token,text:base+mark+ext+fig,diatonic:(expFor(key)[deg]||[]).includes(q)||(q==='sus'&&!!expFor(key)[deg])};
 }
 const PATTERNS=[
  ['Pop I–V–vi–IV','Pop I–V–vi–IV','I V vi IV'],['Pop vi–IV–I–V','Pop vi–IV–I–V','vi IV I V'],['Años 50 (doo-wop)','50s progression (doo-wop)','I vi IV V'],
@@ -172,7 +211,7 @@ const PATTERNS=[
 ].map(([es,en,p])=>({get name(){return tr(es,en);},seq:p.split(' ')}));
 // A chord's target in a secondary function is written as the diatonic degree it points at: E7 → A7 in C is V7/vi, though A7 is major
 function targetBase(nx,key){
-  const e=EXP[key.mode][nx.deg];
+  const e=expFor(key)[nx.deg];
   if(nx.diatonic||!e) return nx.base;
   const b=ROMAN[nx.deg]; return ['min','dim','hdim'].includes(e[0])?b.toLowerCase():b;
 }
@@ -222,9 +261,11 @@ function chromaticReading(rs,romans,key,prefs){
 function analyzeProgression(steps,prefs){
   // the key comes from the chords' roots and notes, which do not depend on how they are spelled; the spelling then follows the key
   const first=steps.map(s=>resolveStep(s,prefs));
-  const items=first.map(r=>r.c?{root:r.c.root,q:r.c.type.q,pcs:[...new Set(r.notes.map(m=>m%12))]}:{root:r.notes.length?r.notes[0]%12:0,q:null,pcs:[...new Set(r.notes.map(m=>m%12))]});
+  const items=first.map((r,i)=>({root:r.c?r.c.root:r.notes.length?r.notes[0]%12:0,q:r.c?r.c.type.q:null,pcs:[...new Set(r.notes.map(m=>m%12))],dur:steps[i].dur||1}));
   if(!items.length) return {rs:first,romans:[],found:[]};
-  const keys=detectKey(items), key=keys[0], alt=keys.find(k=>k!==key&&key.score-k.score<2);
+  const keys=detectKey(items), plain=plainTonic(items), rank=k=>k.score+(k.tonic===plain?PLAIN_TONIC:0);
+  // the weight of the plain tonic only picks the key; the alternate one still goes by the scores as measured
+  const top=keys.reduce((b,k)=>rank(k)>rank(b)?k:b), alt=keys.find(k=>k!==top&&top.score-k.score<2), modal=modeOf(top,items), key=modal?{...top,modal}:top;
   const rs=steps.map(s=>resolveStep(s,prefs,key));
   const romans=rs.map(r=>r.c?romanFor(r.c,key):null);
   chromaticReading(rs,romans,key,prefs);
@@ -281,4 +322,4 @@ function dissonance(r){
   return Math.min(1,v);
 }
 
-export { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, letterName, noteText, octOff, plainSpell, resolveStep, spellCandidate };
+export { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, letterName, modeName, noteText, octOff, plainSpell, resolveStep, spellCandidate };

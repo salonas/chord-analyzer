@@ -4,7 +4,7 @@ import { $, esc, fillRange, saveFile, toast } from './dom.js';
 import { EXAMPLE_NAME, activePat, gmOn, isBlock, isDrum, isMulti, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs, trackPat } from './model.js';
 import { gmName } from './gm.js';
 import { fut, hist, lib, persistLib, saveDraft, savePrefs, st } from './state.js';
-import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, inversionText, keyName, letterName, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
+import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, inversionText, keyName, keyText, letterName, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
 import { EX_KEYS, FEELINGS, exDefaults, exprSummary, expressPattern, instLabel } from './expression.js';
 import { DRUMS, GROOVES, expressDrums, genGroove } from './drums.js';
 import { libText, parseText, pickInterp, projectText } from './text.js';
@@ -684,7 +684,7 @@ const degText=s=>esc(s).replace(DEG_RUN,(m,a,d)=>`${a}<span class="dg">${d}</spa
 function analysisSheet(A,p){
   const ten=t=>tr(String(t).replace('.',','),String(t));
   const pats=A.found.map((f,k)=>({...f,k:k+1}));
-  const head=`<div class="an-head"><div><p class="plaque">${esc(keyName(A.key,st))}</p>${A.alt?`<span class="lab">${tr('o','or')} ${esc(keyName(A.alt,st))}</span>`:''}</div>
+  const head=`<div class="an-head"><div><p class="plaque">${esc(keyText(A.key,null,st))}</p>${A.alt?`<span class="lab">${tr('o','or')} ${esc(keyName(A.alt,st))}</span>`:''}</div>
     <div><span class="lab">${tr('Final','Ending')}</span><span class="stamp"><span>${A.cad?degText(A.cad):tr('sin cadencia final','no final cadence')}</span></span></div>
     ${p.expr?`<div><span class="lab">${tr('Expresión aplicada','Applied expression')}</span><span class="expr">${esc(exprSummary(p.expr))}</span></div>`:''}<div class="an-pats"><span class="lab">${tr('Patrones reconocidos','Recognized patterns')}</span><div>${pats.length?pats.map(f=>`<span class="tag"><b>${f.k}</b>${degText(f.name)}${f.wrap?tr(' (en bucle)',' (looping)'):''}</span>`).join(''):`<span class="none">${tr('Ninguno de los '+PATTERNS.length+' patrones conocidos.','None of the '+PATTERNS.length+' known patterns.')}</span>`}</div></div></div>`;
   const row=i=>{ const r=A.romans[i], lab=esc(A.rs[i].label), fn=FN_NAME[A.fn[i]];
