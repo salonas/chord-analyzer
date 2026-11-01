@@ -33,4 +33,16 @@ Rama `fix/theory-chromatic-and-functions`, sobre la anterior (C4 y C8: dominante
 
 Rama `fix/theory-cadences-and-alt`, sobre la anterior (C7 y C11: la cadencia escribe los grados como son los acordes, V → i en menor; v → i es modal y no auténtica; el texto exportado da la tonalidad alternativa, «Sol mayor (o Do mayor)»): 409 de 424 (96 %). Pendiente: C6 y C5, modos, C9, C12 y modulación (F11).
 
+### Retomar desde main
+
+Punto de partida: #12, #13 y el PR de C7/C11 fusionados en `main`; en ese estado la sonda da 409 de 424 y quedan 15 fallos:
+
+- C5/C6, melodía: J05 (anticipación leída como escapada), J07 (el retardo no existe como rol), J08 (doble bordadura), J11 y J12 (melodía absorbida en bloques), J13 (arpegio Alberti sin acorde).
+- C9, diccionario: A36 (maj9♯11) y A43 (dominante alterado 7♯5♯9).
+- C12, parseo: I10 (𝄪), I11 (𝄫), I13 (minúsculas) e I19 (H alemana descartada sin aviso).
+- C10: F11 (modulación como una sola tonalidad) y F18 (royal road, patrones con la tonalidad alternativa).
+- Aparte, sin caso: los modos como etiqueta (decisión 3), después de lo anterior.
+
+No empezar C5/C6 hasta que los tres PR estén en `main`. Para C5 aplica la decisión 2 (melodía en bloque); para los modos, la decisión 3.
+
 Regenerar la línea base a propósito, tras revisar cada diferencia: `UPDATE_THEORY=1 npx vitest run src/theory.test.js`.
