@@ -10,13 +10,14 @@ const letterName=(l,a,prefs)=>(prefs.naming==='latin'?LATIN:LETTERS)[l]+accStr(a
 // Every scale degree then takes the next letter from the tonic, so F♯ major has E♯ and C♯ minor has B♯ as its leading tone.
 const KEY_TONIC={major:[[0,0],[1,-1],[1,0],[2,-1],[2,0],[3,0],[3,1],[4,0],[5,-1],[5,0],[6,-1],[6,0]],
                  minor:[[0,0],[0,1],[1,0],[2,-1],[2,0],[3,0],[3,1],[4,0],[4,1],[5,0],[6,-1],[6,0]]};
-const SCALE_STEPS={major:[0,2,4,5,7,9,11],minor:[0,2,3,5,7,8,10,11]};
+// minor takes the raised 7th (harmonic) and the raised 6th (melodic) too; they share the letters of the 7th and the 6th
+const SCALE_STEPS={major:[0,2,4,5,7,9,11],minor:[0,2,3,5,7,8,10,11,9]};
 const keyTonicSpell=(key,prefs)=>prefs.accPref==='sharp'||prefs.accPref==='flat'?null:KEY_TONIC[key.mode][key.tonic];
 function keySpell(pc,key,prefs){
   if(!key||prefs.accPref==='sharp'||prefs.accPref==='flat') return null;
   const [tl]=KEY_TONIC[key.mode][key.tonic], steps=SCALE_STEPS[key.mode];
   const k=steps.findIndex(s=>(key.tonic+s)%12===pc); if(k<0) return null;
-  const l=(tl+(k===7?6:k))%7;
+  const l=(tl+(k===7?6:k===8?5:k))%7;
   let a=((pc-NAT[l])%12+12)%12; if(a>6) a-=12;
   return [l,a];
 }

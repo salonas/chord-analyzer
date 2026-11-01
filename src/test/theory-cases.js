@@ -293,6 +293,7 @@ mc('J13', 3, 'Acorde arpegiado (Alberti) sin bloque', [], [['C4', 0, .5], ['G4',
 mc('J14', 2, 'Bajo y melodía a dos voces', [], [['C3', 0, 4], ['E4', 0, 1], ['G4', 1, 1], ['C5', 2, 2], ['G2', 4, 4], ['D4', 4, 1], ['B3', 5, 1], ['G3', 6, 2]], { chords: [['C', 'C(no5)'], ['G', 'G(no3)', 'G5', 'G(5)']] });
 mc('J15', 3, 'Melodía con E♯ en Fa♯ mayor (deletreo en el texto)', [['F#3 A#3 C#4', 4], ['B2 D#3 F#3', 4], ['C#3 E#3 G#3 B3', 4], ['F#3 A#3 C#4', 4]], [['A#4', 0, 4], ['B4', 4, 4], ['E#5', 8, 2], ['G#5', 10, 2], ['F#5', 12, 4]], { key: 'F# mayor', textHas: ['E#5'], textNot: ['F5 (77)'] });
 mc('J16', 3, 'Melodía con B♯ (sensible) en Do♯ menor', [['C#3 E3 G#3', 4], ['G#2 B#2 D#3', 4], ['C#3 E3 G#3', 4]], [['E4', 0, 2], ['C#4', 2, 2], ['B#3', 4, 2], ['D#4', 6, 2], ['C#4', 8, 4]], { key: 'C# menor', textHas: ['B#3'], textNot: ['C4 (60)'] });
+mc('J19', 3, 'Menor melódica ascendente en Do♯ menor (A♯ y B♯, no B♭)', [['C#3 E3 G#3', 4], ['G#2 B#2 D#3 F#3', 4], ['C#3 E3 G#3', 4]], [['G#4', 0, 1], ['A#4', 1, 1], ['B#4', 2, 1], ['C#5', 3, 1], ['C#5', 4, 4], ['C#5', 8, 4]], { key: 'C# menor', textHas: ['A#4', 'B#4'], textNot: ['B♭4', 'Bb4', 'C5 ('] });
 mc('J17', 2, 'Pedal de tónica bajo V7 (C sostenido)', [['C2 C3 E3 G3', 4], ['C2 B2 D3 F3 G3', 4], ['C2 C3 E3 G3', 4]], [], { chords: ['C', ['G7/C', 'G11/C', 'G7 (pedal C)'], 'C'] });
 mc('J18', 2, 'Viaje de ida y vuelta: exportar e importar el texto', [['C3 E3 G3', 4], ['A2 C3 E3', 4]], [['E5', 0, 1], ['D5', 1, 1], ['C5', 2, 2], ['C5', 4, 4]], { roundtrip: true });
 
