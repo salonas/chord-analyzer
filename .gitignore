@@ -4,3 +4,4 @@ docs/
 page.js
 *.b64
 __pycache__/
+.vitest/
