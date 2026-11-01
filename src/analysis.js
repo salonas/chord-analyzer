@@ -113,8 +113,8 @@ const EXP={major:{0:['maj'],2:['min'],4:['min'],5:['maj'],7:['maj','dom'],9:['mi
 // Key scoring is looser than labeling: dominant 7ths on I and IV count as in-key (blues)
 const EXPK={major:{...EXP.major,0:['maj','dom'],5:['maj','dom']},minor:EXP.minor};
 // A mode is a label on major or minor, not a key of its own. It is named by its characteristic note, as long as the note
-// that contradicts it is absent: [mode, characteristic, contradicting] in semitones above the tonic.
-const MODES={minor:[['dorian',9,8],['phrygian',1,2]],major:[['lydian',6,5],['mixolydian',10,11]]};
+// that contradicts it is absent and every note is on the mode's scale: [mode, characteristic, contradicting, scale] in semitones above the tonic.
+const MODES={minor:[['dorian',9,8,[0,2,3,5,7,9,10]],['phrygian',1,2,[0,1,3,5,7,8,10]]],major:[['lydian',6,5,[0,2,4,6,7,9,11]],['mixolydian',10,11,[0,2,4,5,7,9,10]]]};
 const MODE_NAME={dorian:['dórico','Dorian'],phrygian:['frigio','Phrygian'],lydian:['lidio','Lydian'],mixolydian:['mixolidio','Mixolydian']};
 // Chords on the degrees of the mode count as in the key; the degrees of the plain scale the mode changes do not
 const EXP_MODE={dorian:{2:['min'],5:['maj','dom'],8:[],9:['dim','hdim']},
@@ -126,7 +126,7 @@ const expFor=key=>key.modal?{...EXP[key.mode],...EXP_MODE[key.modal]}:EXP[key.mo
 function modeOf(key,items){
   if(items.some((it,i)=>i+1<items.length&&items[i+1].root===key.tonic&&leads(it,items[i+1]))) return null;
   const rel=new Set(items.flatMap(it=>it.pcs).map(p=>(p-key.tonic+12)%12));
-  const hit=MODES[key.mode].filter(([,mark,against])=>rel.has(mark)&&!rel.has(against));
+  const hit=MODES[key.mode].filter(([,mark,against,scale])=>rel.has(mark)&&!rel.has(against)&&[...rel].every(r=>scale.includes(r)));
   return hit.length===1?hit[0][0]:null;
 }
 // A V (or a vii°) of the next chord, followed by it
