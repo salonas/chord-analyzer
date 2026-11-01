@@ -95,7 +95,7 @@ describe('D minor with a Phrygian ♭II (brimstone-03-pattern-3)', () => {
   });
   it('names the D–F–A chord Dm/F instead of F6 without its fifth', () => {
     expect(A.rs.map(r => r.label)).toEqual(['D5', 'Dm/F', 'A7♭9/C♯', 'E♭7', 'D5']);
-    expect(A.romans.map(r => r.text)).toEqual(['I5', 'i⁶', 'V7♭9/3', '♭II7', 'I5']);
+    expect(A.romans.map(r => r.text)).toEqual(['I5', 'i⁶', 'V7♭9 en 1ª inversión', '♭II7', 'I5']);
   });
   it('spells B♭ and C♯ after the key and writes no double accidental', () => {
     const spelled = A.rs.flatMap(r => r.spelled);

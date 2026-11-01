@@ -189,3 +189,16 @@ describe('English names made by the importer and the example', () => {
     expect([EXAMPLE().name, inEnglish(() => EXAMPLE().name)]).toEqual(['Ejemplo: turnaround en Do', 'Example: turnaround in C']);
   });
 });
+
+describe('inversions with extensions, in English', () => {
+  const degrees = prog => inEnglish(() => analyzeProgression(prog.map(notes => ({ notes })), PREFS).romans.map(r => ({ text: r.text, short: r.short })));
+  const C = [48, 52, 55];
+  it('writes the inversion in words and keeps the strip short', () => {
+    expect(degrees([C, [47, 50, 53, 55, 57], C])[1]).toEqual({ text: 'V9 in 1st inversion', short: 'V9' });
+    expect(degrees([C, [50, 60, 64, 67, 71], C])[1]).toEqual({ text: 'Imaj9 with the bass on the 9', short: 'Imaj9' });
+  });
+  it('keeps the figured bass for seventh chords and the slash for secondary functions', () => {
+    expect(degrees([C, [47, 50, 53, 55], C])[1].text).toBe('V⁶₅');
+    expect(degrees([C, [42, 45, 50], [43, 47, 50], C])[1].text).toBe('V⁶/V');
+  });
+});
