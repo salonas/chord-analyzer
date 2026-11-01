@@ -33,16 +33,21 @@ Rama `fix/theory-chromatic-and-functions`, sobre la anterior (C4 y C8: dominante
 
 Rama `fix/theory-cadences-and-alt`, sobre la anterior (C7 y C11: la cadencia escribe los grados como son los acordes, V → i en menor; v → i es modal y no auténtica; el texto exportado da la tonalidad alternativa, «Sol mayor (o Do mayor)»): 409 de 424 (96 %). Pendiente: C6 y C5, modos, C9, C12 y modulación (F11).
 
+Rama `fix/theory-melody-roles`, desde `main` con #12–#14 fusionados (C5 y C6): 429 de 437 (98 %). Reglas nuevas en `src/text.js` y `src/harmony.js`:
+
+- Roles de melodía: la anticipación se lee antes que la escapada (J05); la doble bordadura marca sus dos notas (J08); el retardo se agrega al rol en la misma columna, «nota del acorde · retardo 4–3 → E4» (J07). Casos en contra: J20 (nota retenida que es del acorde nuevo) y J21 (disonancia retenida que sube).
+- Melodía en bloque con la decisión 2 (J11). J12 es un solo bloque y queda «Cadd9» sin melodía. Casos en contra: J22 (pad abierto C2 G2 E4), J23 (A24, C2 E5 G6) y J24 (voz aguda a una octava justa).
+- Arpegios: una sola voz sin notas simultáneas se agrupa por medio compás o por compás; cada grupo debe moverse solo por saltos y formar acorde de 3 o más clases de altura (J13, J28). Casos en contra: J25 y J26 (escalas) y J27 (melodía sola). J13 acepta ahora «G/B», porque B3 es el bajo del segundo compás.
+
 ### Retomar desde main
 
-Punto de partida: #12, #13 y el PR de C7/C11 fusionados en `main`; en ese estado la sonda da 409 de 424 y quedan 15 fallos:
+Punto de partida: `fix/theory-melody-roles` fusionado en `main`; en ese estado la sonda da 429 de 437 y quedan 8 fallos:
 
-- C5/C6, melodía: J05 (anticipación leída como escapada), J07 (el retardo no existe como rol), J08 (doble bordadura), J11 y J12 (melodía absorbida en bloques), J13 (arpegio Alberti sin acorde).
 - C9, diccionario: A36 (maj9♯11) y A43 (dominante alterado 7♯5♯9).
 - C12, parseo: I10 (𝄪), I11 (𝄫), I13 (minúsculas) e I19 (H alemana descartada sin aviso).
 - C10: F11 (modulación como una sola tonalidad) y F18 (royal road, patrones con la tonalidad alternativa).
-- Aparte, sin caso: los modos como etiqueta (decisión 3), después de lo anterior.
+- Aparte, sin caso: los modos como etiqueta (decisión 3). Siguiente en el orden acordado, antes de C9.
 
-No empezar C5/C6 hasta que los tres PR estén en `main`. Para C5 aplica la decisión 2 (melodía en bloque); para los modos, la decisión 3.
+No empezar lo siguiente hasta que el PR de C5/C6 esté en `main`. Para los modos aplica la decisión 3.
 
 Regenerar la línea base a propósito, tras revisar cada diferencia: `UPDATE_THEORY=1 npx vitest run src/theory.test.js`.
