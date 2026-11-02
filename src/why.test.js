@@ -1,6 +1,7 @@
 import { TYPES } from './data.js';
 import { analyze, analyzeProgression, aug6Iv, aug6Text, bookends, melodyText, ornamentText, rankHelp, resolveStep, scoreDetail } from './analysis.js';
 import { setLang } from './i18n.js';
+import { against } from './roles.js';
 import { PREFS } from './test/helpers.js';
 
 const inEnglish = f => { setLang('en'); try { return f(); } finally { setLang('es'); } };
@@ -137,6 +138,11 @@ describe('augmented sixths by name', () => {
     expect(r.sp.byPc[3]).toMatchObject({ l: 1, a: 1 });
     expect(r.spelled.map(n => aug6Iv(n, r.aug6.lo))).toEqual(['1', '3', '♯6']);
     expect(at1(Fr).r.spelled.map(n => aug6Iv(n, at1(Fr).r.aug6.lo))).toEqual(['1', '3', '♯4', '♯6']);
+  });
+  it('counts as its tones only the notes it is read with: a C is no 5 of an It⁺⁶, and is one of a Ger⁺⁶', () => {
+    expect(against(72, at1(It).r, { l: 0, a: 0 })).toMatchObject({ iv: '5', tone: false });
+    expect(against(72, at1(Ger).r, { l: 0, a: 0 })).toMatchObject({ iv: '5', tone: true });
+    expect(against(75, at1(It).r, { l: 1, a: 1 })).toMatchObject({ iv: '♯6', tone: true });
   });
   it('says in the inspector what the sixth is and where its notes go, in both languages', () => {
     expect(aug6Text(at1(It).r.aug6, PREFS)).toBe('Sexta aumentada italiana: F–D♯ es una 6ª aumentada; las dos notas van a E');

@@ -530,9 +530,11 @@ function chromaticReading(rs,romans,key,prefs){
     if(!ro||!c||ro.diatonic||ro.secondary) return;
     const rel=new Set(rs[i].notes.map(m=>(m-key.tonic+12)%12)), has=x=>rel.has(x);
     const toV=nc&&(nx.deg===7||(nx.deg===0&&nc.slash&&bassDeg(nc).n===5));
-    // ♭6̂ in the bass with ♯4̂ above it and 1̂, resolving to V: Italian, French (adds 2̂) or German (adds ♭3̂) sixth
-    if(toV&&(rs[i].notes[0]-key.tonic+12)%12===8&&has(8)&&has(0)&&has(6)&&[...rel].every(x=>[8,0,6,3,2].includes(x))&&!(has(3)&&has(2))){
-      const g=has(3)?'Ger':has(2)?'Fr':'It';
+    // ♭6̂ in the bass with ♯4̂ above it and 1̂, resolving to V: Italian, French (adds 2̂) or German (adds ♭3̂) sixth. The notes of
+    // the tune that complete the chord count (decision 11): F A D♯ under a C of the tune is a German sixth, not an Italian one
+    const six=new Set([...rel,...(rs[i].mel||[]).map(m=>(m-key.tonic+12)%12)]), in6=x=>six.has(x);
+    if(toV&&(rs[i].notes[0]-key.tonic+12)%12===8&&in6(8)&&in6(0)&&in6(6)&&[...six].every(x=>[8,0,6,3,2].includes(x))&&!(in6(3)&&in6(2))){
+      const g=in6(3)?'Ger':in6(2)?'Fr':'It';
       ro.text=ro.short=g+{Ger:'⁶₅',Fr:'⁴₃',It:'⁶'}[g]; ro.aug6=g;
       respell(rs[i],key,prefs,{8:5,0:0,6:3,3:2,2:1});
       aug6Name(rs[i],rs[i+1],g,key);

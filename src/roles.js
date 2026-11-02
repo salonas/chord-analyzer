@@ -26,14 +26,16 @@ function against(m,r,sp){
   if(!r||!r.c) return null;
   // a degree the voicing leaves out (the 5 of C(no5)) still counts as a chord tone
   const degs=r.c.type.degs, rel=((m-r.c.root)%12+12)%12, d=degs.find(x=>x.pc===rel);
-  // over an augmented sixth the interval is named from the bass by letters: D♯ over F is a ♯6, not the ♭7 of F7
-  if(d) return {iv:r.aug6&&r.aug6.lo&&sp?aug6Iv({midi:m,l:sp.l},r.aug6.lo):d.label,ten:d.n<=7?'low':'mid',tone:d.n<=7};
+  // over an augmented sixth the interval is named from the bass by letters: D♯ over F is a ♯6, not the ♭7 of F7. Its tones are
+  // the notes it is read with, the tune's included (decision 11): the 5 of F7 is no tone of an It⁺⁶ (a C there makes a Ger⁺⁶)
+  const six=r.aug6&&r.aug6.lo&&sp?aug6Iv({midi:m,l:sp.l},r.aug6.lo):null, own=!r.aug6||[...r.notes,...(r.mel||[])].some(y=>(y-m)%12===0);
+  if(d&&own) return {iv:six||d.label,ten:d.n<=7?'low':'mid',tone:d.n<=7};
   // half a step above a chord tone clashes (♭9 over the root, 4 over a major 3rd): an avoid note, the free role. Over a
   // dominant (major 3rd and minor 7th) the ♭9 and the ♭13 are available tensions instead (avail); they still clash, so
   // their tension stays high
   const root=sp&&r.sp&&r.sp.byPc[r.c.root], iv=root?byLetter(rel,((sp.l-root.l)%7+7)%7):null;
   const dom=degs.some(x=>x.pc===4)&&degs.some(x=>x.pc===10);
-  return {iv:iv||OUT_DEG[rel],ten:degs.some(x=>x.pc===(rel+11)%12)?'high':'mid',tone:false,avail:dom&&(rel===1||rel===8)};
+  return {iv:six||iv||OUT_DEG[rel],ten:degs.some(x=>x.pc===(rel+11)%12)?'high':'mid',tone:false,avail:!r.aug6&&dom&&(rel===1||rel===8)};
 }
 // a chord tone, a step to one side, a third leap to the other side and a step back to the same tone:
 // the two notes in the middle are one ornament (double neighbor, cambiata)
