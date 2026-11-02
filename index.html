@@ -280,18 +280,18 @@
           </div>
         </div>
         <div class="hint" style="display:flex;flex-direction:column;gap:6px">
-          <span><b>Cómo se calcula:</b> velocity = base + contraste × sensibilidad × (voces + acento × acentos % + arco + contorno + tensión + apoyaturas + cadencia) + humanizar × humanizar % − recorte de registro. Ese resultado (1–127) se escala al rango del instrumento: con un órgano de 70–112, un 1 queda en 70, un 64 en 91 y un 127 en 112. Así un sentimiento suave no queda aplastado contra el mínimo.</span>
-          <span><b>Instrumento:</b> se guarda en cada pattern (como un canal de FL). Ajusta cuánto del sentimiento recibe ese sonido. Un órgano o un pad suelen pedir poco contraste y casi sin acentos; un piano o una guitarra lo aguantan completo. El recorte resta velocity por cada octava bajo o sobre el punto elegido, para que no se acumulen graves o agudos. Solo tiene efecto si tu soundfont cambia el volumen o el timbre con la velocity.</span>
-          <span><b>Equilibrio de voces:</b> en notas que empiezan juntas, la más aguda (la melodía) +100 %, el bajo +35 % y las internas −50 % del valor.</span>
-          <span><b>Acento del compás:</b> tiempo 1 +100 %, tiempo 3 +50 %, fuera del tiempo −60 %.</span>
-          <span><b>Arco de frase:</b> crescendo, diminuendo o arco a lo largo de la frase elegida; el valor es la diferencia entre el inicio y el final (o el centro).</span>
-          <span><b>Contorno melódico:</b> la melodía suena más fuerte cuanto más sube sobre su altura media (valor por octava).</span>
+          <span><b>Cómo se calcula:</b> cada nota parte de la velocity base. Las reglas de abajo le suman o le restan, y ese cambio se multiplica por el contraste y por la sensibilidad del instrumento. Después se agrega Humanizar y se descuenta el recorte de registro. El resultado, de 1 a 127, se lleva al rango del instrumento. Con un órgano de 70 a 112, un 1 queda en 70, un 64 en 91 y un 127 en 112. Así un sentimiento suave no queda pegado al mínimo.</span>
+          <span><b>Instrumento:</b> cada pattern guarda el suyo, como un canal de FL, y decide cuánto del sentimiento le llega a ese sonido. Un órgano o un pad suenan mejor con poco contraste y casi sin acentos. Un piano o una guitarra lo aguantan completo. El recorte baja la velocity por cada octava que la nota se aleja por debajo o por encima del punto elegido, para que no se amontonen graves ni agudos. Nada de esto se nota si tu soundfont no cambia el volumen o el timbre con la velocity.</span>
+          <span><b>Equilibrio de voces:</b> cuando varias notas empiezan juntas, la más aguda, que suele ser la melodía, suma el 100 % del valor. El bajo suma el 35 % y las voces del medio restan el 50 %.</span>
+          <span><b>Acento del compás:</b> el tiempo 1 suma el 100 % del valor y el tiempo 3 suma el 50 %. Las notas que caen fuera del tiempo restan el 60 %.</span>
+          <span><b>Arco de frase:</b> la velocity sube, baja o hace un arco a lo largo de la frase elegida. El valor es cuánto cambia entre el principio y el final, o entre el principio y el centro si es un arco.</span>
+          <span><b>Contorno melódico:</b> la melodía suena más fuerte mientras más sube sobre su altura promedio. El valor es lo que suma por cada octava.</span>
           <span><b>Tensión armónica:</b> <span id="exTenHelp"></span></span>
-          <span><b>Apoyaturas:</b> una nota de la melodía fuera del acorde que resuelve por grado conjunto, la que el texto exportado llama apoyatura, se acentúa y su resolución se aliviana a la mitad. Las notas de paso, bordaduras, escapadas y anticipaciones bajan un 30 %.</span>
-          <span><b>Llegada de cadencia:</b> suma o resta en el último acorde cuando hay una cadencia reconocida.</span>
-          <span><b>Humanizar:</b> no es azar: sale de la semilla del proyecto, la nota y su posición. Aplicarlo de nuevo da lo mismo; «Nueva semilla» cambia la variación de todo el proyecto.</span>
-          <span><b>Articulación</b> (opcional): acorta cada nota a ese porcentaje de su duración. Cambia el ritmo y puede cambiar cómo se cortan los acordes.</span>
-          <span>Los sentimientos son puntos de partida heurísticos, inspirados en las señales que los estudios de interpretación asocian a cada emoción (volumen, contraste, articulación, tensión). No miden el efecto emocional real; ajústalos a tu oído.</span>
+          <span><b>Apoyaturas:</b> cuando una nota de la melodía no es del acorde y resuelve por grado conjunto, suma el 100 % del valor y la nota a la que resuelve resta el 50 %. Las notas de paso, bordaduras, escapadas y anticipaciones restan el 30 %.</span>
+          <span><b>Llegada de cadencia:</b> si hay una cadencia reconocida, el último acorde suma o resta este valor.</span>
+          <span><b>Humanizar:</b> no es al azar. Sale de la semilla del proyecto, de la nota y de su posición, así que aplicarlo otra vez da lo mismo. Nueva semilla cambia la variación en todo el proyecto.</span>
+          <span><b>Articulación</b> (opcional): acorta cada nota a ese porcentaje de su duración. Eso cambia el ritmo y puede cambiar dónde la app corta cada acorde.</span>
+          <span>Los sentimientos son un punto de partida. Se basan en lo que los estudios de interpretación relacionan con cada emoción, como el volumen, el contraste, la articulación y la tensión. No miden lo que vas a sentir, así que ajústalos de oído.</span>
         </div>
       </div>
     </div>
@@ -378,7 +378,7 @@
     <div id="pitchBody"></div>
     <div class="row"><button class="sbtn main" id="bPitchOk">Entendido</button></div>
   </dialog>
-  <footer>Compás de 4/4, 96 ticks por tiempo. Afinación igual: MIDI 69 = 440 Hz. El nombre de cada octava depende de la convención elegida en Ajustes; el número MIDI y la frecuencia no cambian. Los acordes de bloque se calculan cada vez que cambia el conjunto de notas que suenan. Bajo una melodía, la app separa la melodía, lee el acompañamiento por ataques y por tiempos y deja las notas cortas como adorno; esa lectura, la tonalidad, los patrones y la tensión son una estimación.</footer>
+  <footer>La app trabaja en 4/4, con 96 ticks por tiempo y afinación temperada, en la que la nota MIDI 69 suena a 440 Hz. El nombre de cada octava depende de lo que elijas en Ajustes, pero el número MIDI y la frecuencia no cambian. En los acordes de bloque, cada vez que cambian las notas que suenan empieza un acorde nuevo. Si hay una melodía encima, la app la separa del acompañamiento y trata las notas cortas como adornos. Esa lectura, la tonalidad, los patrones y la tensión son una estimación.</footer>
 </div>
 <div class="toast" id="toast" role="status" hidden></div>
 
