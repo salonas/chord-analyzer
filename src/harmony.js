@@ -8,7 +8,8 @@ const TOL=Math.round(.05*T); // notes that start within ±0.05 beats start toget
 const SHORT=T/2;             // a passing bass lasts half a beat or less
 const isHarm=r=>r==='harm'||r==='inner';
 
-// Each note gets a role: harm (chord), inner (moving inner voice), pass (passing bass) or mel (tune)
+// Each note gets a role: harm (chord), inner (moving inner voice), pass (short bass), bass (longer bass) or mel (tune).
+// The lowest voice under a chord is its bass, never the tune, however long it lasts (THEORY.md, «La voz grave es el bajo»)
 function noteRoles(ns){
   const groups=[];
   for(const n of ns){ const g=groups[groups.length-1]; if(g&&n.s-g.s<=TOL) g.notes.push(n); else groups.push({s:n.s,notes:[n]}); }
@@ -28,7 +29,7 @@ function noteRoles(ns){
   for(const n of ns){
     if(role.has(n.id)) continue;
     const under=ns.filter(o=>o!==n&&isHarm(role.get(o.id))&&o.s<=n.s&&o.s+o.l>n.s);
-    if(under.length&&under.every(o=>o.m>n.m)&&n.l<=SHORT) role.set(n.id,'pass');
+    if(under.length&&under.every(o=>o.m>n.m)) role.set(n.id,n.l<=SHORT?'pass':'bass');
     else if(under.some(o=>o.m<n.m)&&under.some(o=>o.m>n.m)) role.set(n.id,'inner');
     else role.set(n.id,'mel');
   }
@@ -104,16 +105,18 @@ function arpeggioChords(p){
 // pitch class (one voice holds while another moves, or both start and end together), so a tune or a scale on its own,
 // legato too, and two short notes stay notes. A beat short of that joins the chord before it when its
 // notes belong to that chord (the other half of an Alberti figure), or else gathers the next beats, up to a bar, until it
-// makes one. Neighbours with the same reading merge. The notes keep their roles; own holds the ones under the top voice,
+// makes one. Neighbours with the same reading merge, and so does a beat with the same root that only loses its third
+// (the bass struck on the beat holds). own holds the notes under the top voice: they are the accompaniment, not the tune,
 // so that deleting the chord leaves the tune.
 const NAMING={naming:'letters',accPref:'auto',octConv:'sci',midiShift:0};
 function gridChords(ns,a,b){
   const sounding=(x,y)=>ns.filter(n=>n.s<y&&n.s+n.l>x), pcsOf=on=>new Set(on.map(n=>n.m%12));
+  const under=n=>ns.some(o=>o!==n&&o.s<=n.s+TOL&&o.s+o.l>n.s&&o.m>n.m), low=on=>Math.min(...on.filter(under).map(n=>n.m));
   const makes=on=>pcsOf(on).size>=3&&on.some(n=>on.some(o=>o!==n&&o.m%12!==n.m%12&&o.s>=n.s-TOL&&o.s+o.l<=n.s+n.l+TOL));
   const read=(x,y)=>{
     const on=sounding(x,y), notes=[...new Set(on.map(n=>n.m))].sort((u,v)=>u-v);
     const c=resolveStep({notes,dur:y-x,a:x,evs:on.map(n=>({m:n.m,s:n.s,l:n.l}))},NAMING).c;
-    return c?{k:c.root+c.type.sym,pcs:new Set(c.type.degs.map(d=>(d.pc+c.root)%12))}:{k:null,pcs:new Set()};
+    return c?{k:c.root+c.type.sym,root:c.root,no3:!c.type.degs.some(d=>d.pc===3||d.pc===4),low:low(on),pcs:new Set(c.type.degs.map(d=>(d.pc+c.root)%12))}:{k:null,pcs:new Set()};
   };
   const out=[]; let w=null;
   for(let t=Math.floor(a/T)*T;t<b;t+=T){
@@ -123,13 +126,15 @@ function gridChords(ns,a,b){
     w=w||{a:x}; w.b=y;
     if(makes(sounding(w.a,w.b))){
       const r=read(w.a,w.b);
-      if(prev&&prev.b===w.a&&prev.k===r.k) prev.b=w.b; else out.push({a:w.a,b:w.b,...r});
+      // the bass struck on the beat holds over a beat with the same root that only loses its third (G/B – G7(no3)/D – G/B)
+      const hold=prev&&r.root===prev.root&&r.no3&&prev.low<r.low;
+      if(prev&&prev.b===w.a&&(prev.k===r.k||hold)) prev.b=w.b; else out.push({a:w.a,b:w.b,...r});
       w=null;
     } else if(w.b-w.a>=4*T) w=null;
   }
   return out.map(g=>{
     const notes=[...new Set(sounding(g.a,g.b).map(n=>n.m))].sort((u,v)=>u-v);
-    const own=new Set(ns.filter(n=>n.s>=g.a&&n.s<g.b&&ns.some(o=>o!==n&&o.s<=n.s+TOL&&o.s+o.l>n.s&&o.m>n.m)).map(n=>n.id));
+    const own=new Set(ns.filter(n=>n.s>=g.a&&n.s<g.b&&under(n)).map(n=>n.id));
     return {a:g.a,b:g.b,notes,pcs:new Set(notes.map(m=>m%12)),bass:[{m:notes[0],s:g.a}],adds:[],own};
   });
 }
@@ -191,7 +196,9 @@ function splitHarmony(p){
       continue;
     }
     const full=snd.every(o=>o.s>=t-TOL);
-    const fresh=!cur||full||bass.m%12!==cur.bassPc||(!subset(up,cur.up)&&!subset(cur.up,up));
+    // a moving bass (pass, bass) under the held voices is the chord's bass, so the voices' lowest note is not
+    const moving=ns.some(o=>(role.get(o.id)==='pass'||role.get(o.id)==='bass')&&o.s<=t+TOL&&o.s+o.l>t&&o.m<bass.m);
+    const fresh=!cur||full||!moving&&bass.m%12!==cur.bassPc||(!subset(up,cur.up)&&!subset(cur.up,up));
     if(fresh){
       if(cur) cur.b=t;
       cur={a:t,b:null,notes:snd.map(o=>o.m),bassPc:bass.m%12,up,pcs:all,bass:[{m:bass.m,s:t}],adds:[]};
@@ -208,13 +215,15 @@ function splitHarmony(p){
   ns.forEach(n=>{
     const r=role.get(n.id), c=inChord(n.s);
     if(r==='inner'){ if(c&&!c.notes.includes(n.m)&&!c.adds.some(x=>x.m===n.m)) c.adds.push({m:n.m,s:n.s}); else if(!c) role.set(n.id,'mel'); }
-    if(r==='pass'){ if(c) c.bass.push({m:n.m,s:n.s,pass:true}); else role.set(n.id,'mel'); }
+    if(r==='pass'||r==='bass'){ if(c) c.bass.push({m:n.m,s:n.s,...(r==='pass'&&{pass:true})}); else role.set(n.id,'mel'); }
   });
   // after the one-voice arpeggio (arpeggioChords, above) and the struck chords: the stretch before the first chord, or the
   // whole pattern when none started, may be a broken accompaniment
   const first=chords.length?chords[0].a:progEnd(p);
   chords.splice(0,chords.length,...chords.flatMap(c=>staleChord(ns,c,role)));
   if(ns.length&&first>ns[0].s) chords.unshift(...gridChords(ns,ns[0].s,first));
+  // the accompaniment of a broken chord (decisions 9 and 10) is not the tune
+  chords.forEach(c=>c.own&&c.own.forEach(id=>{ if(role.get(id)==='mel') role.set(id,'harm'); }));
   chords.forEach(c=>{
     // a chord with the tune around it: its name may take notes of the tune (readWithMelody); plain blocks (decision 2) and the
     // one-voice arpeggio do not
