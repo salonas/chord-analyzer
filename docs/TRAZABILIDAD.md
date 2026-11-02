@@ -22,7 +22,7 @@ Cierre del proyecto, 2 nov 2026 (sesión B). Cada etiqueta teórica de la interf
 | 17 | Franja: nombre y grado · función | dec. 6 (la franja muestra solo el grado) | sonda; `src/english.test.js` «writes the inversion in words and keeps the strip short» |
 | 18 | Hoja vacía | Reglas: Inspector; dec. 9 | `src/audit.test.js` «row 18» |
 | 19 | Intervalo de la melodía | Reglas: Inspector | `src/audit.test.js` «row 19»; sonda J31, J32 |
-| 20 | Tensión de la melodía, «estimada» | Reglas: Tensión (los niveles, sin regla escrita: ver abajo) | sonda J30; `src/audit.test.js` «closing trace» |
+| 20 | Tensión de la melodía, «estimada» | Reglas: Tensión (los niveles son una convención) | sonda J30; `src/audit.test.js` «closing trace» y «labels fixed at the close» (un test por nivel) |
 | 21 | Rol de la melodía | Reglas: Roles de la melodía; Cierre: rol «libre» | sonda J; `src/audit.test.js` «closing trace» (retardo) y «labels fixed at the close» (libre y tensión) |
 | 22 | Pesos de Expresión en su ayuda | Reglas: Expresión | `src/audit.test.js` «row 22» |
 | 23 | Apoyaturas en Expresión | Reglas: Expresión | `src/expression.test.js` «expressPattern roles» |
@@ -38,8 +38,8 @@ Además, fuera de las 24 filas:
 | Modos | dec. 3; Reglas: Modo | sonda F |
 | Regiones y pivote | dec. 15 | `src/regions.test.js`; sonda J42 |
 | «(doblada)», E(5) | Cierre: «(doblada)»; Reglas: Nombres en el texto exportado | `src/audit.test.js` «labels fixed at the close»; `src/harmony.test.js` «writes a power chord as E(5), never E5» |
-| Bajo «(paso)» | sin regla escrita (ver abajo) | `src/harmony.test.js` «writes four chord lines and no lone note as a chord» |
+| Bajo «(paso)» | Reglas: Bajo de paso (no coincide con el código: ver abajo) | `src/harmony.test.js` «writes four chord lines and no lone note as a chord» |
 
-Sin regla escrita en `THEORY.md`, porque formularla pide mirar el código: cuándo un bajo es «(paso)» y dónde cae la tensión «media» de la melodía, con los valores de los tres niveles. Sus pruebas fijan lo que hace el código hoy, no una regla.
+El bajo «(paso)» tiene regla escrita, pero no coincide con el código (`THEORY.md`, «Pendientes conocidos»): su prueba fija lo que hace el código hoy, no la regla.
 
-La sesión B agregó 15 pruebas; la suite queda en 1093 + 2 saltadas.
+La sesión B agregó 18 pruebas; la suite queda en 1096 + 2 saltadas.

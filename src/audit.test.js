@@ -327,6 +327,25 @@ describe('labels fixed at the close', () => {
     expect(role(C7, 68)).toBe('tensión');
     expect(role(C, 68)).toBe('libre');
   });
+  // the levels of the melody's tension are the convention of an estimate: they measure the clash with the chord, not the role
+  const tension = (chord, m, by = 72) => {
+    const notes = [...chord.map((x, i) => ({ id: 'c' + i, m: x, s: 0, l: 4 * T, v: 100 })), ...[[by, 0, 1], [m, 1, 1], [by, 2, 2]].map(([x, s, l], i) => ({ id: 'm' + i, m: x, s: s * T, l: l * T, v: 100 }))];
+    return progText(normProg({ id: 'p', name: 'p', beats: 4, names: {}, notes }), PREFS).split('\n').find(l => l.includes(`(${m}) | 1 |`)).split(' | ').at(-2);
+  };
+  it('calls a tone of the chord a low tension, 0.15, even when the voicing leaves it out', () => {
+    expect(tension(C, 64)).toBe('baja (0,15)');
+    expect(tension([48, 52], 67)).toBe('baja (0,15)');
+  });
+  it('calls an extension the name has, or a note off the chord that does not clash, a mid tension, 0.5', () => {
+    expect(tension([36, 40, 43, 46, 50], 62)).toBe('media (0,5)');
+    expect(tension(C, 62)).toBe('media (0,5)');
+    expect(tension(C, 71, 76)).toBe('media (0,5)');
+  });
+  it('calls a note half a step above a chord tone a high tension, 0.85, whatever its role', () => {
+    expect(tension(C, 65)).toBe('alta (0,85)');
+    expect(tension(C, 68)).toBe('alta (0,85)');
+    expect(tension([48, 52, 55, 58], 61)).toBe('alta (0,85)');
+  });
   it('says «sin 5» for a seventh chord without its 5th, in the description and in the tags', () => {
     const notes = [48, 52, 58], c = analyze(notes, null)[0], sp = spellCandidate(c, notes, PREFS);
     expect([c.root, c.type.sym]).toEqual([0, '7']);
