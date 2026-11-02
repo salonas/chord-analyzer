@@ -347,13 +347,16 @@ function analyzeProgression(steps,prefs){
   }
   // the patterns are read in the other tonality too, as they would be in the main one: a progression that fits one in the key it
   // was not read in (IV–V–iii–vi in C when A minor was chosen) is still found, and says in which key. The other tonality is the
-  // alternate key when there is one, and always the relative key, the usual ambiguity (the alternate shows only within 2 points)
+  // alternate key when there is one, and always the relative key, the usual ambiguity (the alternate shows only within 2 points).
+  // It is shown only when it spans more chords than the longest pattern of the main key: a loop that is the same in both keys
+  // (G D Em C is also i–♭VI–♭III–♭VII in E minor) adds nothing
+  const longest=Math.max(0,...found.map(f=>((PATTERNS.find(p=>p.name===f.name)||{}).seq||[]).length));
   const rel={tonic:(key.tonic+(key.mode==='major'?9:3))%12,mode:key.mode==='major'?'minor':'major'};
   for(const other of [alt,rel].filter((k,i,a)=>k&&a.findIndex(x=>x&&x.tonic===k.tonic&&x.mode===k.mode)===i)){
     if(other.tonic===key.tonic&&other.mode===key.mode) continue;
     const ar=rs.map(r=>r.c?romanFor(r.c,other):null), at=ar.map(r=>r?r.token:'?');
     for(const p of PATTERNS){
-      const L=p.seq.length; if(L>N||found.some(f=>f.name===p.name||f.name.startsWith(p.name+' ('))) continue;
+      const L=p.seq.length; if(L>N||L<=longest||found.some(f=>f.name===p.name||f.name.startsWith(p.name+' ('))) continue;
       for(let i=0;i<N;i++){
         if(i+L>N&&N<3) break;
         let ok=true; for(let j=0;j<L;j++){ if(at[(i+j)%N]!==p.seq[j]){ok=false;break;} }

@@ -17,8 +17,11 @@ describe('patterns in the other tonality', () => {
     expect(A.found.map(f => f.name)).toContain('Royal road (J-pop) (en C mayor)');
     expect(inEnglish(() => run(royal).found.map(f => f.name))).toContain('Royal road (J-pop) (in C major)');
   });
-  it('reads the loop of G D Em C also from E minor', () => {
-    expect(run([[43, 47, 50], [50, 54, 57], [52, 55, 59], [48, 52, 55]]).found.map(f => f.name)).toContain('Épica i–♭VI–♭III–♭VII (en E menor)');
+  it('shows the other reading only when it spans more chords than the longest pattern of the main key', () => {
+    // G D Em C is I–V–vi–IV (4 chords) in G, and i–♭VI–♭III–♭VII (4 chords) in E minor: the same length, not shown
+    expect(run([[43, 47, 50], [50, 54, 57], [52, 55, 59], [48, 52, 55]]).found.map(f => f.name).join(';')).not.toContain('(en ');
+    // C Am F G is the 50s progression (4) in C, and i–♭VI–♭VII (3 chords) in A minor: shorter, not shown
+    expect(run([[48, 52, 55], [45, 48, 52], [41, 45, 48], [43, 47, 50]]).found.map(f => f.name).join(';')).not.toContain('(en ');
   });
   it('does not repeat a pattern the main key already found', () => {
     const names = run([[48, 52, 55], [53, 57, 60], [43, 47, 50], [48, 52, 55]]).found.map(f => f.name);
