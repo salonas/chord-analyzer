@@ -126,7 +126,7 @@ function bestOverlap(seg, others) {
 // with the key and the context) are one stretch, because the app gave the same harmony on several attacks. It is part of
 // what the end-to-end rows measure (decided 2 Nov 2026), not a change of the app: the lane still shows each attack
 const sameReading = (x, y) => !!x.c && !!y.c && x.c.root === y.c.root && x.c.type.sym === y.c.type.sym && x.c.bass % 12 === y.c.bass % 12;
-function laneStretches(segs, A) {
+export function laneStretches(segs, A) {
   const out = [];
   segs.forEach((s, i) => {
     const g = out[out.length - 1];
