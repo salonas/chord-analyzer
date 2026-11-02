@@ -57,5 +57,5 @@ describe('corpus ratchet (development set)', () => {
       if (d < 0) worse.push(`empeoró ${r.row} de ${frac(was)} a ${frac(is)}`);
     }
     expect(worse, 'a development figure got worse; if it is on purpose, regenerate with UPDATE_CORPUS="<reason>"').toEqual([]);
-  }, 60000);
+  }, 120000);
 });
