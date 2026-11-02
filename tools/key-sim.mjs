@@ -2,12 +2,14 @@
 // with each candidate rule behind a switch, scored as the goal rows (TAVERN tonic and mode by annotated stretch, and end to end;
 // Rock Corpus tonic, accepting either analyst), with the paired Δ by work or song against the copy with no rule. The copy with
 // no rule must give the app's own figures (it checks). The test works and songs are left out. Not part of the suite:
-//   node tools/key-sim.mjs [rule ...]
+//   node tools/key-sim.mjs [--base r1,r2] [rule ...]
+// --test: the test set instead, looked at once at the end of a stage; the «after» (the base plus the rules given) must then be
+// the app, and the «before» is the base
 // with no rule, every rule alone
 import { analyzeProgression, resolveStep } from '../src/analysis.js';
 import { harmonySegs } from '../src/harmony.js';
 import { normProg, segStep } from '../src/model.js';
-import { Tally, bootstrapDiff, isTest, listJson } from '../src/test/corpus-eval.js';
+import { Tally, bootstrapCI, bootstrapDiff, isTest, listJson } from '../src/test/corpus-eval.js';
 
 const P = { naming: 'letters', accPref: 'auto', octConv: 'sci', midiShift: 0 };
 // copied from src/analysis.js
@@ -104,7 +106,9 @@ const at = process.argv.indexOf('--show'), want = at > 0 ? process.argv[at + 1] 
 if (want) process.argv.splice(at, 2);
 const units = [];
 let check = 0;
-for (const p of listJson('tavern').filter(p => !isTest(p.piece))) {
+const ti = process.argv.indexOf('--test'), TEST = ti > 0;
+if (TEST) process.argv.splice(ti, 1);
+for (const p of listJson('tavern').filter(p => isTest(p.piece) === TEST)) {
   const cases = [];
   for (const ph of p.phrases) {
     const exp = { tonic: ph.key.tonic, mode: ph.key.mode };
@@ -118,7 +122,7 @@ for (const p of listJson('tavern').filter(p => !isTest(p.piece))) {
   }
   units.push(cases);
 }
-for (const song of listJson('rock').filter(s => !isTest(s.song))) {
+for (const song of listJson('rock').filter(s => isTest(s.song) === TEST)) {
   const accepted = new Set(Object.values(song.analyses).map(x => x.mainTonic));
   units.push(Object.entries(song.analyses).map(([who, a]) => {
     const steps = a.chords.map(c => ({ notes: c.notes, dur: Math.round(c.dur * 96) }));
@@ -142,17 +146,18 @@ const run = (on, isBase) => units.map(cases => { const T = new Tally(); cases.fo
 }); return T; });
 const sum = (us, row) => us.reduce((o, u) => { const c = u.cats.get(row); if (c) { o.n += c.n; o.ok += c.ok; } return o; }, { n: 0, ok: 0 });
 const pct = c => (100 * c.ok / c.n).toFixed(1);
-const base = run(new Set(baseRules), true);
+const base = run(new Set(baseRules), !TEST);
 if (check) { console.error(`la copia con las reglas de la base (${baseRules.join(' + ') || 'ninguna'}) no da lo que da la app en ${check} casos`); process.exit(1); }
 const asked = process.argv.slice(2), variants = asked.length ? [asked] : RULES.map(r => [r]);
-console.log(`desarrollo; la copia con las reglas de la base (${baseRules.join(' + ') || 'ninguna'}) da lo mismo que la app en todos los casos`);
+if (!TEST) console.log(`desarrollo; la copia con las reglas de la base (${baseRules.join(' + ') || 'ninguna'}) da lo mismo que la app en todos los casos`);
 for (const v of variants) {
   flips.clear();
-  const after = run(new Set([...baseRules, ...v])), d = bootstrapDiff(base, after);
+  const after = run(new Set([...baseRules, ...v]), TEST), d = bootstrapDiff(base, after), cb = bootstrapCI(base), ca = bootstrapCI(after);
+  if (TEST) { if (check) { console.error(`la copia con ${[...baseRules, ...v].join(' + ')} no da lo que da la app en ${check} casos`); process.exit(1); } console.log(`PRUEBA; la copia con ${[...baseRules, ...v].join(' + ')} da lo mismo que la app en todos los casos`); }
   console.log(`\n${v.join(' + ')}`);
   for (const row of [ROW_T, ROW_E, ROW_R]) {
     const b = sum(base, row), a = sum(after, row);
-    console.log(`  ${row}: ${pct(b)} % (${b.ok}/${b.n}) → ${pct(a)} % (${a.ok}/${a.n})   Δ ${(100 * (a.ok / a.n - b.ok / b.n)).toFixed(1)} (${d[row][0]} a ${d[row][1]})`);
+    console.log(`  ${row}: ${pct(b)} % (${b.ok}/${b.n}; ${cb[row].join('–')}) → ${pct(a)} % (${a.ok}/${a.n}; ${ca[row].join('–')})   Δ ${(100 * (a.ok / a.n - b.ok / b.n)).toFixed(1)} (${d[row][0]} a ${d[row][1]})`);
     const f = flips.get(row) || { won: [], lost: [] };
     const ids = xs => (xs.length ? ' (' + xs.slice(0, 8).join(', ') + (xs.length > 8 ? ' …' : '') + ')' : '');
     console.log(`    gana ${f.won.length}${ids(f.won)}; pierde ${f.lost.length}${ids(f.lost)}`);
