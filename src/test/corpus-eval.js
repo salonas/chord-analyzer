@@ -58,6 +58,56 @@ export class Tally {
   rows() { return [...this.cats].map(([cat, c]) => ({ cat, n: c.n, ok: c.ok, pct: c.n ? +(100 * c.ok / c.n).toFixed(1) : null })); }
   top(k) { return [...this.errs.values()].sort((a, b) => b.n - a.n).slice(0, k); }
 }
+export function mergeTallies(list) {
+  const out = new Tally();
+  for (const t of list) {
+    for (const [k, c] of t.cats) { const o = out.cats.get(k) || { n: 0, ok: 0 }; o.n += c.n; o.ok += c.ok; out.cats.set(k, o); }
+    for (const [k, e] of t.errs) { const o = out.errs.get(k); if (o) o.n += e.n; else out.errs.set(k, { ...e }); }
+  }
+  return out;
+}
+// The runs of evalTavern or evalRock on single works or songs, added up: the same numbers as one run over all of them
+export function mergeRuns(runs) {
+  const info = {};
+  for (const k of Object.keys(runs[0] ? runs[0].info : {})) {
+    const vs = runs.map(r => r.info[k]);
+    info[k] = vs[0] instanceof Tally ? mergeTallies(vs) : Array.isArray(vs[0]) ? vs.flat(1) : vs.reduce((s, v) => s + v, 0);
+  }
+  return { T: mergeTallies(runs.map(r => r.T)), info };
+}
+
+// ---------- confidence intervals ----------
+// Percentile bootstrap over whole units (a TAVERN work, a Rock Corpus song): the phrases of a work are not independent, so the
+// unit of resampling is the work. The draws come from a fixed seed, and every category and both sides of a comparison use the
+// same draws. With few units (6 test works) the interval is optimistic: it cannot see the variation of works it has not met.
+const BOOT = 2000;
+function draws(nUnits, B = BOOT, seed = 20261102) {
+  let s = seed >>> 0;
+  const rnd = () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  return Array.from({ length: B }, () => Array.from({ length: nUnits }, () => Math.floor(rnd() * nUnits)));
+}
+const pctile = (xs, q) => { const a = [...xs].sort((x, y) => x - y), i = (a.length - 1) * q, lo = Math.floor(i); return a[lo] + (a[Math.min(lo + 1, a.length - 1)] - a[lo]) * (i - lo); };
+const cats = units => [...new Set(units.flatMap(t => [...t.cats.keys()]))];
+// {category: [low, high]} in percent, one decimal
+export function bootstrapCI(units) {
+  const D = draws(units.length), out = {};
+  for (const cat of cats(units)) {
+    const c = units.map(t => t.cats.get(cat) || { n: 0, ok: 0 });
+    const v = D.map(d => { let n = 0, ok = 0; d.forEach(i => { n += c[i].n; ok += c[i].ok; }); return n ? 100 * ok / n : null; }).filter(x => x !== null);
+    out[cat] = [+pctile(v, .025).toFixed(1), +pctile(v, .975).toFixed(1)];
+  }
+  return out;
+}
+// The same for the difference after − before, unit by unit (paired: each draw takes the same works on both sides)
+export function bootstrapDiff(before, after) {
+  const D = draws(before.length), out = {};
+  for (const cat of cats([...before, ...after])) {
+    const b = before.map(t => t.cats.get(cat) || { n: 0, ok: 0 }), a = after.map(t => t.cats.get(cat) || { n: 0, ok: 0 });
+    const v = D.map(d => { let nb = 0, ob = 0, na = 0, oa = 0; d.forEach(i => { nb += b[i].n; ob += b[i].ok; na += a[i].n; oa += a[i].ok; }); return nb && na ? 100 * (oa / na - ob / nb) : null; }).filter(x => x !== null);
+    out[cat] = [+pctile(v, .025).toFixed(1), +pctile(v, .975).toFixed(1)];
+  }
+  return out;
+}
 
 // ---------- TAVERN ----------
 const stepOf = (notes, a, b) => {
@@ -98,6 +148,8 @@ function scoreStep(T, mode, ph, seg, other, r, rom, keyOk, kern) {
   T.add(mode + ' | acorde: raíz (acepta A o B)', rootAny);
   T.add(mode + ' | acorde: raíz + calidad (solo la lectura propia)', qualOwn);
   T.add(mode + ' | acorde: raíz + calidad (acepta A o B)', qualAny, qualAny ? null : { sig, example: detail });
+  // the whole name: F7♭9 or Cadd11 count above as F7 and C, here they do not
+  T.add(mode + ' | acorde: nombre exacto, sin extensiones (acepta A o B)', !!ch && exps.some(x => ch.root === x.root && ch.sym === expSym(x)));
   T.add(mode + ' | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando', qualAny, null, e.complete);
   // control of the conversion: the notes of the stretch are exactly the pitch classes of the labelled chord
   T.add(mode + ' | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)', qualAny, null, nPc === e.pcs.length && e.complete);
