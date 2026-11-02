@@ -212,12 +212,15 @@ export function evalTavern(pieces, { plain = false } = {}) {
           scoreStep(T, mode, ph, s, bestOverlap(s, theirs), A.rs[j], A.romans[j], keyOk, kern);
         });
       }
-      // ---- end to end: the app's own segmentation ----
-      if (appA) {
+      // ---- end to end: the app's own segmentation. A phrase where the app reads no chord at all counts too: every stretch
+      // of it is uncovered (until 2 Nov 2026 such phrases were left out, which raised the coverage and the end-to-end row) ----
+      {
         const mode = 'de punta a punta';
-        const keyRel = keyRelation(appA.key, expKey), keyOk = keyRel === 'ok';
-        T.add(mode + ' | tonalidad (tónica y modo)', keyOk, keyOk ? null : { sig: `se leyó ${keyRel}`, example: { phrase: ph.id, mode, key: ph.key.token, got: `${pcName(appA.key.tonic)} ${appA.key.mode}` } });
-        T.add(mode + ' | tonalidad (solo la tónica)', appA.key.tonic === expKey.tonic);
+        const keyRel = appA ? keyRelation(appA.key, expKey) : null, keyOk = keyRel === 'ok';
+        if (appA) {
+          T.add(mode + ' | tonalidad (tónica y modo)', keyOk, keyOk ? null : { sig: `se leyó ${keyRel}`, example: { phrase: ph.id, mode, key: ph.key.token, got: `${pcName(appA.key.tonic)} ${appA.key.mode}` } });
+          T.add(mode + ' | tonalidad (solo la tónica)', appA.key.tonic === expKey.tonic);
+        }
         const conv = mine.filter(s => s.exp);
         info.appChordsPerAnalystSeg.push([appSegs.length, mine.length]);
         // boundaries: each analyst boundary against the app's, within an eighth note
