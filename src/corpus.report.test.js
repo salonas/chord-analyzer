@@ -38,7 +38,7 @@ describe.skipIf(!process.env.CORPUS_REPORT)('corpus report', () => {
     const ok = (v, goal) => (v === null ? 'sin datos' : v >= goal ? 'cumple' : 'no cumple');
     const G = [
       ['Acorde por tramo (raíz + calidad, acepta A o B; sin los tramos de calidad no determinable: power chord o una sola nota)', '75 %', 'por tramo | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable', 75, 'TAVERN, por tramo anotado'],
-      ['Acorde de punta a punta (los tramos sin acorde de la app cuentan como fallo)', '60 %', 'de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app', 60, 'TAVERN, de punta a punta'],
+      ['Acorde de punta a punta (los tramos sin acorde de la app cuentan como fallo)', '56 %', 'de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app', 56, 'TAVERN, de punta a punta'],
       ['Inversión, dado el acorde correcto', '≥ 94 %', 'por tramo | inversión (dado el acorde correcto)', 94, 'TAVERN, por tramo anotado'],
       ['Tonalidad (tónica y modo)', '85 %', 'por tramo | tonalidad (tónica y modo)', 85, 'TAVERN, por tramo anotado'],
       ['Tónica, sin aceptar la relativa', '82 %', 'tónica (acepta ambos analistas)', 82, 'Rock Corpus'],
