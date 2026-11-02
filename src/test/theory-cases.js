@@ -282,7 +282,7 @@ for (const c of progCases) {
   const ch = c.checks;
   ALL_ROMANS.push(...o.romans); ALL_TEN.push({ id: c.id, ten: o.ten, ctx: o.ctx });
   const head = `${c.desc}: ${o.labels.join(' – ')}`;
-  if (ch.key) add('tonalidad', c.id, c.level, head, ch.key, o.key + (o.alt ? ` (alt ${o.alt})` : ''), acc(ch.key, o.key) && !ch.regions, c.ref, ch.regions ? 'la app da una sola tonalidad para todo el pattern' : '');
+  if (ch.key) add('tonalidad', c.id, c.level, head, ch.key, o.key + (o.alt ? ` (alt ${o.alt})` : ''), acc(ch.key, o.key) && (!ch.regions || o.pivots.length > 0), c.ref, ch.regions && !o.pivots.length ? 'la app da una sola tonalidad para todo el pattern' : '');
   // regions (F11): the keys in order, joined by « → »; pivot is the number of the chord read in both keys (0, a direct change)
   if (ch.reg) add('tonalidad', c.id + '-regiones', c.level, head + ' · regiones', ch.reg, o.regions, acc(ch.reg, o.regions), c.ref);
   if (ch.pivot != null) add('tonalidad', c.id + '-pivote', c.level, head + ' · acorde pivote', ch.pivot ? `acorde ${ch.pivot}` : '(directa)', o.pivots.length ? (o.pivots[0] ? `acorde ${o.pivots[0]}` : '(directa)') : '(sin cambio)', o.pivots[0] === ch.pivot, c.ref);
@@ -407,6 +407,8 @@ mc('J38', 2, 'C sostenido cuatro tiempos con melodía en corcheas que arpegia ot
 mc('J39', 2, 'Paso cromático en la melodía, G♯ → A: se escribe por la nota a la que sube (decisión 14)', [['C3 E3 G3', 4], ['F3 A3 C4', 4]], [['E4', 0, 1], ['G4', 1, 1], ['G#4', 2, 1], ['A4', 3, 1], ['A4', 4, 4]], { textHas: ['G♯4 (68)'], textNot: ['A♭4 (68)'] });
 mc('J40', 2, 'Nota agregada del carril, G♯3 → A3: se escribe por la nota a la que sube (decisión 14)', [['C3 E3', 4], ['F3 C4', 4]], [['G3', 0, 2], ['G#3', 2, 2], ['A3', 4, 4], ['E5', 0, 4], ['F5', 4, 4]], { textHas: ['+G♯3 en 2'], textNot: ['+A♭3'] });
 mc('J41', 3, 'C natural que sube a C♯ en Re mayor: sigue siendo C, no B♯ (semitono cromático, misma letra)', [['D3 F#3 A3', 4], ['G2 B2 D3', 4], ['A2 C#3 E3 G3', 4], ['D3 F#3 A3', 4]], [['F#4', 0, 2], ['A4', 2, 2], ['B4', 4, 2], ['C5', 6, 2], ['C#5', 8, 4], ['D5', 12, 4]], { key: 'D mayor', textHas: ['C5 (72)'], textNot: ['B♯4'] });
+// F11 in the text export: the key line, the regions with their pivot and cadence, the pivot's degree and the patterns of each region
+mc('J42', 2, 'Modulación Do → Sol en el texto exportado: regiones, pivote y patrones por región', [['C3 E3 G3', 4], ['F3 A3 C4', 4], ['G2 B2 D3 F3', 4], ['C3 E3 G3', 4], ['A2 C3 E3', 4], ['D3 F#3 A3 C4', 4], ['G2 B2 D3', 4], ['D3 F#3 A3 C4', 4], ['G2 B2 D3', 4]], [], { textHas: ['Tonalidad estimada: C mayor → G mayor (modula en el acorde 5)', '# Regiones: acordes 1–4 en C mayor · acordes 5–9 en G mayor (pivote Am: vi en C mayor = ii en G mayor; la confirma D7 → G, V7 → I)', 'vi = ii (pivote)', 'ii–V–I (en G mayor)'] });
 
 for (const c of melCases) {
   const p = pat(c.id, c.chords, c.mel);

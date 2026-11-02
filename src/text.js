@@ -1,7 +1,7 @@
 // Text export and import (reimportable plain text).
 import { HIGH, LATIN, LETTERS, LOW, NAT, OCT_CONV, T, barsText, fmtB, numB, sigOf, uid } from './data.js';
 import { isDrum, isMulti, isPure, normProg, progEnd, segStep, segs, stepTiming } from './model.js';
-import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, keyName, keyText, laneSpell, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
+import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, degreeText, keyName, keyText, laneSpell, noteText, octOff, plainSpell, regionTexts, resolveStep, spellCandidate } from './analysis.js';
 import { exprSummary, instLabel, instText } from './expression.js';
 import { arpeggioChords, blockMelody, splitHarmony } from './harmony.js';
 import { TOL, against, melodyKind, step } from './roles.js';
@@ -26,6 +26,8 @@ function chordLabel(r,prefs){
   return r.label;
 }
 const tenText=(r,x)=>r.c?numText(x):'—';
+// the degree column; a pivot chord (F11) says both keys' degrees: «vi = ii (pivote)»
+const degText=ro=>degreeText(ro)+(ro&&ro.pivotOld?tr(' (pivote)',' (pivot)'):'');
 const numText=x=>tr(String(x).replace('.',','),String(x));
 // a pattern that only closes when the pattern repeats says so: "ii–V (continúa en I al repetir)"
 function foundText(f,N){
@@ -75,7 +77,7 @@ function harmonyLines(p,prefs,L){
     Hm.chords.forEach((c,i)=>{
       const r=A.rs[i], adds=c.adds.map(x=>`+${noteText(lane(x.m,x.s,lenOf(x),r),prefs)} ${tr('en','at')} ${fmtB(x.s)}`).join(' · ');
       const bass=c.bass.map((x,j)=>(j===0?noteText(r.spelled[0],prefs):nt(x.m))+(x.pass?tr(' (paso)',' (passing)'):'')).join(' → ');
-      L.push(`${i+1}. ${chordLabel(r,prefs)} | ${A.romans[i]?A.romans[i].text:'?'} (${FN_NAME[A.fn[i]]} · ${tenText(r,A.ten[i])}) | ${numB(c.a)}–${numB(c.b)} | ${r.spelled.slice(1).map(n=>noteText(n,prefs)).join(' ')||'—'}${adds?` (${adds})`:''} | ${bass}`);
+      L.push(`${i+1}. ${chordLabel(r,prefs)} | ${degText(A.romans[i])} (${FN_NAME[A.fn[i]]} · ${tenText(r,A.ten[i])}) | ${numB(c.a)}–${numB(c.b)} | ${r.spelled.slice(1).map(n=>noteText(n,prefs)).join(' ')||'—'}${adds?` (${adds})`:''} | ${bass}`);
     });
     const melLines=(list,head)=>{
       L.push(head+octTail(prefs));
@@ -105,8 +107,11 @@ function progText(p,prefs){
   const H=pure?null:harmonyLines(p,prefs,L);
   const A=pure?analyzeProgression(S.map(s=>segStep(p,s)),prefs):H.A;
   if(pure?S.length:H.Hm.chords.length){
-    L.push(`${tr('# Tonalidad estimada: ','# Estimated key: ')}${keyText(A.key,A.alt,prefs)} · ${totalText(p)}`);
-    if(A.why) L.push(`${tr('# Por qué la tonalidad','# Why this key')}: ${A.why.text}`);
+    const RT=regionTexts(A,prefs);
+    L.push(`${tr('# Tonalidad estimada: ','# Estimated key: ')}${RT?`${RT.key} (${RT.at})`:keyText(A.key,A.alt,prefs)} · ${totalText(p)}`);
+    if(RT) L.push(`${tr('# Regiones','# Regions')}: ${RT.line}`);
+    if(RT) RT.whys.forEach(w=>L.push(`${tr('# Por qué la tonalidad','# Why this key')}: ${w.text}`));
+    else if(A.why) L.push(`${tr('# Por qué la tonalidad','# Why this key')}: ${A.why.text}`);
   }
   else if(p.notes.length) L.push(`# ${totalText(p)}`);
   if(A.found&&A.found.length) L.push(`${tr('# Patrones','# Patterns')}: ${A.found.map(f=>foundText(f,A.rs.length)).join('; ')}`);
@@ -117,7 +122,7 @@ function progText(p,prefs){
   if(pure){
     L.push(tr('# Formato: n. acorde | grado (función · tensión estimada 0–1: base (función y disonancia) + contexto (llegada, sorpresa, espera)) | notas | MIDI | duración','# Format: n. chord | degree (function · estimated tension 0–1: base (function and dissonance) + context (arrival, surprise, wait)) | notes | MIDI | length')+octTail(prefs));
     const beats=t=>`${fmtB(t)} ${t===T?tr('tiempo','beat'):tr('tiempos','beats')}`;
-    A.rs.forEach((r,i)=>L.push(`${i+1}. ${chordLabel(r,prefs)} | ${A.romans[i]?A.romans[i].text:'?'} (${FN_NAME[A.fn[i]]} · ${tenText(r,A.ten[i])}) | ${r.spelled.map(n=>noteText(n,prefs)).join(' ')} | ${r.notes.join(' ')} | ${beats(S[i].b-S[i].a)}`));
+    A.rs.forEach((r,i)=>L.push(`${i+1}. ${chordLabel(r,prefs)} | ${degText(A.romans[i])} (${FN_NAME[A.fn[i]]} · ${tenText(r,A.ten[i])}) | ${r.spelled.map(n=>noteText(n,prefs)).join(' ')} | ${r.notes.join(' ')} | ${beats(S[i].b-S[i].a)}`));
     return L.join('\n');
   }
   H.write();
