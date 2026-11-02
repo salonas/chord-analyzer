@@ -1,5 +1,5 @@
 // Chord and progression analysis. Display preferences (naming, accPref, octConv) come in `prefs`.
-import { AUTO, FLAT, LATIN, LETTERS, NAT, OCT_CONV, ROMAN, SEVENTHS, SHARP, T, TYPES } from './data.js';
+import { AUTO, FLAT, LATIN, LETTERS, NAT, OCT_CONV, ROMAN, SEVENTHS, SHARP, TYPES } from './data.js';
 import { tr } from './i18n.js';
 
 // ---------- naming ----------
@@ -85,16 +85,15 @@ function spellCandidate(c,notes,prefs,key){
 // ---------- ornaments (non-chord tones) ----------
 // A step that says when its notes sound (evs: [{m,s,l}] in ticks; a: where the step starts) may leave out up to five pitch classes
 // as ornaments, never the bass, when the chord of the rest explains the stretch better. A pitch class weighs its share of the time
-// the notes sound in the step, ×1.5 for a note struck on the beat inside the step and ×2 for the bass; the reading costs its type's
-// points, 3 per tenth of the weight left out and 2 per extension (7th and up) that weighs under 15 %: a seventh that passes
-// does not make the chord a seventh chord. Fixed on the development set of TAVERN (1 Nov 2026); without evs a step reads as before.
-const ORN={beat:1.5,bass:2,drop:3,ext:2,extUnder:.15,maxDrop:5};
-function ornWeights(evs,a,dur,low){
+// the notes sound in the step; the reading costs its type's points, 3 per tenth of the weight left out and 2 per extension (7th and
+// up) that weighs under 15 %: a seventh that passes does not make the chord a seventh chord. Fixed on the development set of
+// TAVERN (1 and 2 Nov 2026: extra weight for the beat and the bass gave the same total and more false drops on exact chords,
+// so it went); without evs a step reads as before.
+const ORN={drop:3,ext:2,extUnder:.15,maxDrop:5};
+function ornWeights(evs,a,dur){
   const W=new Map(), b=a+dur;
   for(const x of evs){
-    let w=(Math.min(x.s+x.l,b)-Math.max(x.s,a))/dur;
-    if(x.s%T===0&&x.s>=a) w*=ORN.beat;
-    if(x.m===low) w*=ORN.bass;
+    const w=(Math.min(x.s+x.l,b)-Math.max(x.s,a))/dur;
     W.set(x.m%12,(W.get(x.m%12)||0)+w);
   }
   const tot=[...W.values()].reduce((s,v)=>s+v,0);
@@ -103,7 +102,7 @@ function ornWeights(evs,a,dur,low){
 }
 function readOrnaments(notes,evs,a,dur){
   const ev=evs.filter(x=>x.s<a+dur&&x.s+x.l>a&&notes.includes(x.m)); if(!ev.length||!(dur>0)) return null;
-  const W=ornWeights(ev,a,dur,notes[0]), bassPc=notes[0]%12, free=[...W.keys()].filter(pc=>pc!==bassPc);
+  const W=ornWeights(ev,a,dur), bassPc=notes[0]%12, free=[...W.keys()].filter(pc=>pc!==bassPc);
   const sets=[[]]; for(const x of free) for(const s of [...sets]) if(s.length<ORN.maxDrop) sets.push([...s,x]);
   let best=null;
   for(const D of sets){
@@ -114,6 +113,13 @@ function readOrnaments(notes,evs,a,dur){
     if(!best||cost<best.cost-1e-9) best={c,cost,D};
   }
   return best;
+}
+// The ornaments a step left out, in words: «Adorno: B3 (dura poco; no cambia el nombre del acorde)»
+function ornamentText(orn,spelled,prefs){
+  if(!orn||!orn.length) return '';
+  const ns=orn.map(m=>noteText(spelled.find(n=>n.midi===m)||plainSpell(m,prefs),prefs)).join(', ');
+  return orn.length>1?tr(`Adornos: ${ns} (duran poco; no cambian el nombre del acorde)`,`Ornaments: ${ns} (short; they do not change the chord's name)`)
+    :tr(`Adorno: ${ns} (dura poco; no cambia el nombre del acorde)`,`Ornament: ${ns} (short; it does not change the chord's name)`);
 }
 function bassDeg(c){return c.type.degs.find(d=>d.pc===(c.bass-c.root+12)%12)}
 function inversionText(c){
@@ -514,4 +520,4 @@ function dissonance(r){
   return Math.min(1,v);
 }
 
-export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, RANK, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, letterName, modeName, noteText, octOff, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp, rankHelp, scoreDetail, keyWhy, bookends, resolvesToTonic };
+export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, RANK, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, letterName, modeName, noteText, octOff, ornamentText, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp, rankHelp, scoreDetail, keyWhy, bookends, resolvesToTonic };
