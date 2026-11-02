@@ -1,6 +1,7 @@
 // Scores the analysis against the external corpus cases in fixtures/theory/corpus/ (TAVERN and Rock Corpus).
 // It measures; it asserts nothing and is not part of the probe's ratchet (passing.json). Run it with
 // CORPUS_REPORT=1 npx vitest run src/corpus.report.test.js
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { analyzeProgression } from '../analysis.js';
 import { harmonySegs } from '../harmony.js';
@@ -15,6 +16,11 @@ const isSeventh = sym => sym.includes('7') || /^(m|maj)?(9|11|13)/.test(sym);
 const EXP_SYM = { maj: '', min: 'm', dim: 'dim', aug: 'aug' };
 const expSym = e => (e.seventh ? ({ maj: 'maj7', min: 'm7', dom: '7', hdim: 'm7♭5', dim: 'dim7' })[e.quality] : EXP_SYM[e.quality]);
 const INV_NAME = ['fundamental', '1ª inversión', '2ª inversión', '3ª inversión', 'bajo en otra nota'];
+
+// Held-out test set: whole works (TAVERN) and whole songs (Rock Corpus), picked by a hash of the name so that the split does not
+// move when cases are added and no phrase of a theme leaks into the other side. About one in five. The rules are tuned on the
+// rest only; the error analysis in the report is read from the rest too.
+export const isTest = name => parseInt(crypto.createHash('sha1').update('chord-analyzer-corpus-v1:' + name).digest('hex').slice(0, 8), 16) % 5 === 0;
 
 export function readJson(rel) { return JSON.parse(fs.readFileSync(new URL(rel, DIR), 'utf8')); }
 export function listJson(sub) {

@@ -9,9 +9,13 @@ Esta licencia cubre solo esta carpeta (los casos convertidos). No se extiende al
 ## Obra original
 
 - Nombre: TAVERN, «Theme And Variation Encodings with Roman Numerals» (nombre tal como aparece en su README).
+- Autores: Johanna Devaney, Claire Arthur, Nathaniel Condit-Schultz y Kirsten Nisula.
+- Cita: Devaney, J., Arthur, C., Condit-Schultz, N. y Nisula, K. (2015). «Theme And Variation Encodings with Roman Numerals (TAVERN):
+  A New Data Set for Symbolic Music Analysis». *Proceedings of the 16th International Society for Music Information Retrieval
+  Conference (ISMIR)*, pp. 728–734. (Autores y cita dados por Joaquín; el README del repositorio no los nombra.)
 - Origen: https://github.com/jcdevaney/TAVERN, commit `7cc65dc5365603a92376af50ac71491bea7a16ae`.
 - Contenido: 27 temas con variaciones para piano de Mozart y Beethoven, codificados en Humdrum, con análisis en numerales romanos
-  de dos anotadores (A y B). El README del repositorio no nombra a los autores; la autoría y la cita de la obra están en ese repositorio.
+  de dos anotadores (A y B).
 - Licencia del original: CC BY-SA 4.0, según el archivo `LICENSE` del repositorio.
 
 ## Qué se cambió

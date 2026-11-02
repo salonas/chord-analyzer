@@ -121,7 +121,23 @@ Línea base sobre corpus externos (2026-11-01, rama `feat/external-corpus`; deta
 - Función: no comparable (TAVERN la etiqueta por frase). Cadencia: sin corpus. Modulación: 0 de 61 canciones del Rock Corpus; la app no informa cambios de tonalidad (TAVERN no aporta casos: 5 frases con más de una tonalidad).
 - Lo que más falla: leer «sin acorde» cuando el tramo trae notas de adorno (3221 de 21 984 tramos con 5 o más clases de altura), leer maj7, maj9 o maj11 donde el corpus tiene una tríada, y la tónica una quinta abajo en el Rock Corpus (17 análisis, p. ej. `back_in_black`).
 
-Falta fijar las metas por categoría sobre esta línea base, con Joaquín: no se proponen metas ni arreglos todavía. Después de eso y de F11 siguen comparar al oído el volumen GM con las muestras de la plantilla (`LEVEL` en `src/audio.js`).
+Conjunto de prueba: nunca se usa para ajustar reglas. Se separan obras completas de TAVERN (6 de 27: B066, B075, B080, Opus76, K354 y K573; 290 de 1101 frases) y canciones completas del Rock Corpus (40 de 198; 78 de 382 análisis) por un hash fijo de su nombre (`split.json`, regla en `src/test/corpus-eval.js`). Las reglas se ajustan y los errores se analizan solo con el desarrollo; las metas se miden en la prueba. Con tan pocas obras y canciones, una diferencia de unos 5 puntos en la prueba es ruido: el Rock Corpus tiene 78 análisis y solo 15 con cambio de tonalidad.
+
+Metas acordadas con Joaquín (2026-11-01), medidas en el conjunto de prueba, con lo que da hoy:
+
+| Medida | Meta | Hoy (prueba) |
+|---|---|---|
+| Acorde por tramo anotado (raíz + calidad, acepta A o B) | 80 % | 49,4 % |
+| Acorde de punta a punta (los tramos sin acorde de la app cuentan como fallo) | 70 % | 39,0 % |
+| Inversión, dado el acorde correcto | ≥ 94 % | 95,0 % (ya cumple) |
+| Tonalidad de TAVERN (tónica y modo) | 85 % | 72,4 % |
+| Tónica del Rock Corpus, sin aceptar la relativa | 82 % | 69,2 % |
+| Enarmonía (tramo con todas las notas bien) | 95 % | 91,0 % |
+| Modulación: canciones del Rock Corpus con cambio de tonalidad que la app informa | la mitad | 0 de 15 |
+
+Cómo se leyeron las metas ambiguas: «acorde de punta a punta» es la versión que cuenta como fallo los tramos sin acorde de la app; «enarmonía» es por tramo completo, no nota a nota; «inversión» se mide por tramo anotado (de punta a punta da 92,2 %); la modulación cuenta las canciones donde el corpus cambia de tonalidad. Función y cadencia no tienen meta: sin corpus comparable.
+
+Después de eso y de F11 siguen comparar al oído el volumen GM con las muestras de la plantilla (`LEVEL` en `src/audio.js`).
 
 Regenerar los casos y el reporte: `README.md` de la carpeta `corpus` (`python -I tools/corpus_tavern.py` y `tools/corpus_rock.py`; `CORPUS_REPORT=1 npx vitest run src/corpus.report.test.js`).
 
