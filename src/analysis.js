@@ -139,9 +139,10 @@ function candSymbol(c,sp,prefs){
 function resolveStep(step,prefs,key){
   const notes=[...step.notes].sort((a,b)=>a-b);
   const cands=analyze(notes,null);
-  // a chord the user named keeps its name; otherwise the timing of the notes, when the step has it, may leave some out
+  // a chord the user named keeps its name; otherwise the timing of the notes, when the step has it, may leave some out.
+  // The reading without the ornaments is kept either way (orn when it names the step, ornAlt when the user named another)
   const named=cands.find(x=>x.root===step.root&&x.type.sym===step.sym);
-  const o=!named&&step.evs?readOrnaments(notes,step.evs,step.a||0,step.dur):null;
+  const o=step.evs?readOrnaments(notes,step.evs,step.a||0,step.dur):null;
   const c=named||(o&&o.c)||cands[0]||null;
   const sp=c?spellCandidate(c,notes,prefs,key):null;
   const spelled=sp?sp.notes:notes.map(m=>plainSpell(m,prefs,key));
@@ -150,8 +151,8 @@ function resolveStep(step,prefs,key){
   else if(notes.length===1) label=noteText(spelled[0],prefs);
   else if(notes.length===2) label=letterName(spelled[0].l,spelled[0].a,prefs)+'–'+letterName(spelled[1].l,spelled[1].a,prefs);
   else label=notes.length?'?':'—';
-  const orn=o&&o.c===c?notes.filter(m=>o.D.includes(m%12)):[];
-  return {notes,c,sp,spelled,label,...(orn.length&&{orn})};
+  const drop=o?notes.filter(m=>o.D.includes(m%12)):[];
+  return {notes,c,sp,spelled,label,...(drop.length&&(o.c===c?{orn:drop}:{ornAlt:drop}))};
 }
 
 // ---------- progression analysis ----------

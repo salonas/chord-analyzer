@@ -2,7 +2,7 @@ import { TYPES } from './data.js';
 import { analyze, resolveStep, spellCandidate } from './analysis.js';
 import { RULES } from './expression.js';
 import { HTML_EN, setLang } from './i18n.js';
-import { LIMITS, MUDDY, candTags, chordWarnings, emptySheetText, intervalText, spellActive, warningText } from './panel.js';
+import { LIMITS, MUDDY, activeCands, candTags, chordWarnings, emptySheetText, intervalText, spellActive, warningText } from './panel.js';
 import { against } from './roles.js';
 import { harmonySegs } from './harmony.js';
 import { normProg } from './model.js';
@@ -185,5 +185,30 @@ describe('row 18: what the empty sheet says about chords', () => {
     for (const w of ['tres notas a la vez', 'dos si las dos duran un tiempo o más', 'arpegio']) expect(es).toContain(w);
     const en = inEnglish(emptySheetText);
     for (const w of ['three notes at once', 'two if both last a beat or more', 'arpeggio']) expect(en).toContain(w);
+  });
+});
+
+// The ornament rule orders the names of a lane chord, it does not take any away: C goes first, Cmaj7 stays as an alternative
+describe('row 6: the names of a lane chord with an ornament', () => {
+  const notes = [48, 52, 55, 59];
+  const names = cs => cs.map(c => { const sp = spellCandidate(c, notes, PREFS); return [c.root, c.type.sym, candTags(c, sp, null, PREFS).map(t => t.text)]; });
+  it('puts the reading without the ornament first, tagged with it, and keeps every reading with all the notes below', () => {
+    const cs = activeCands(notes, null, [59]);
+    expect(names(cs)).toEqual([[0, '', ['Adorno: B3', 'bajo = fundamental']], ...names(analyze(notes, null))]);
+    expect(names(cs)[1]).toEqual([0, 'maj7', ['coincidencia exacta', 'bajo = fundamental', 'también CΔ7']]);
+    expect(inEnglish(() => names(cs)[0][2])).toEqual(['Ornament: B3', 'bass is the root']);
+  });
+  it('names two ornaments in the plural', () => {
+    const ns = [48, 55, 62, 64, 65], cs = activeCands(ns, null, [62, 65]);
+    expect(candTags(cs[0], spellCandidate(cs[0], ns, PREFS), null, PREFS)[0].text).toBe('Adornos: D4, F4');
+  });
+  it('keeps the reading without the ornament, last, once the user names the chord Cmaj7', () => {
+    const r = resolveStep({ notes, dur: 384, a: 0, evs: notes.map(m => ({ m, s: 0, l: m === 59 ? 24 : 384 })), root: 0, sym: 'maj7' }, PREFS);
+    expect([r.label, r.orn, r.ornAlt]).toEqual(['Cmaj7', undefined, [59]]);
+    expect(names(activeCands(notes, null, r.ornAlt, true))).toEqual([...names(analyze(notes, null)), [0, '', ['Adorno: B3', 'bajo = fundamental']]]);
+  });
+  it('is the plain list without ornaments or with a chosen root', () => {
+    expect(activeCands(notes, null, [])).toEqual(analyze(notes, null));
+    expect(activeCands(notes, 0, [59])).toEqual(analyze(notes, 0));
   });
 });
