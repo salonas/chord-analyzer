@@ -30,6 +30,12 @@ describe('regions', () => {
     expect(E.line).toBe('chords 1–4 in C major · chords 5–9 in G major (pivot Am: vi in C major = ii in G major; confirmed by D7 → G, V7 → I)');
     expect(E.sheet).toEqual(['Modulates at chord 5 (Am: vi in C major = ii in G major); confirmed by D7 → G (V7 → I).']);
   });
+  // C F G7 C | Am D7 G Em D7 G | Em A7 D Bm A7 D: Am is in C and G before D7; Em is in G and D before A7
+  it('names every chord where it modulates when it changes more than once', () => {
+    const CGD = [...F11.slice(0, 7), [40, 43, 47], [50, 54, 57, 60], [43, 47, 50], [40, 43, 47], [45, 49, 52, 55], [50, 54, 57], [47, 50, 54], [45, 49, 52, 55], [50, 54, 57]];
+    expect(regionTexts(run(CGD), PREFS).at).toBe('modula en los acordes 5 y 11');
+    expect(inEnglish(() => regionTexts(run(CGD), PREFS).at)).toBe('modulates at chords 5 and 11');
+  });
   it('says a direct change has no pivot', () => {
     const T = regionTexts(run(F34), PREFS);
     expect(T.sheet).toEqual(['Modula en el acorde 5, sin acorde pivote (modulación directa); la confirma A7 → D (V7 → I).']);

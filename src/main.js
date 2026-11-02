@@ -4,8 +4,8 @@ import { $, esc, fillRange, saveFile, toast } from './dom.js';
 import { EXAMPLE_NAME, activePat, gmOn, isBlock, isDrum, isMulti, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs, trackPat } from './model.js';
 import { gmName } from './gm.js';
 import { fut, hist, lib, persistLib, saveDraft, savePrefs, st } from './state.js';
-import { activeCands, candTags, chordWarnings, emptySheetText, intervalText, spellActive, warningText } from './panel.js';
-import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, degreeText, inversionText, keyName, keyText, letterName, melodyText, noteText, octOff, ornamentText, pivotTitle, plainSpell, rankHelp, regionTexts, resolveStep, scoreDetail, spellCandidate, tenDetail, tensionHelp } from './analysis.js';
+import { activeCands, candTags, chordDesc, chordWarnings, emptySheetText, endingText, intervalText, sheetHint, spellActive, warningText } from './panel.js';
+import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, degreeText, keyName, keyText, letterName, melodyText, noteText, octOff, ornamentText, pivotTitle, plainSpell, rankHelp, regionTexts, resolveStep, scoreDetail, spellCandidate, tenDetail, tensionHelp } from './analysis.js';
 import { EX_KEYS, FEELINGS, exDefaults, exprSummary, expressPattern, instLabel } from './expression.js';
 import { DRUMS, GROOVES, expressDrums, genGroove } from './drums.js';
 import { libText, parseText, pickInterp, projectText } from './text.js';
@@ -169,8 +169,7 @@ function renderActive(){
   if(cur){
     const sy=candSymbol(cur,sp,st);
     nameEl.innerHTML=esc(sy.main)+(sy.slash?`<span class="slash">${esc(sy.slash)}</span>`:'');
-    const inv=inversionText(cur);
-    descEl.textContent=`${sp.rootName} ${cur.type.name}${inv?' · '+inv:''}${cur.missing.length?tr(' · sin ',' · no ')+cur.missing.map(d=>d.label).join(', '):''}${cur.orn?' · '+ornamentText(cur.orn,spelled,st):''}${cur.mel?' · '+melodyText(cur.mel,sp,st):''}`;
+    descEl.textContent=chordDesc(cur,sp,spelled,st);
   } else if(notes.length===1){
     nameEl.textContent=noteText(spelled[0],st); descEl.textContent=tr('Una sola nota.','A single note.');
   } else if(notes.length===2){
@@ -677,7 +676,7 @@ function analysisSheet(A,p){
   const keyHead=RT?`<p class="plaque">${esc(RT.key)}</p>${RT.sheet.map(x=>`<span class="lab">${degText(x)}</span>`).join('')}${RT.whys.map(w=>`<span class="lab why" title="${esc(w.title)}">${esc(w.text)}</span>`).join('')}`
     :`<p class="plaque">${esc(keyText(A.key,null,st))}</p>${A.alt?`<span class="lab">${tr('o','or')} ${esc(keyName(A.alt,st))}</span>`:''}${A.why?`<span class="lab why" title="${esc(A.why.title)}">${esc(A.why.text)}</span>`:''}`;
   const head=`<div class="an-head"><div>${keyHead}</div>
-    <div><span class="lab">${tr('Final','Ending')}</span><span class="stamp"><span>${A.cad?degText(A.cad):tr('sin cadencia final','no final cadence')}</span></span></div>
+    <div><span class="lab">${tr('Final','Ending')}</span><span class="stamp"><span>${degText(endingText(A.cad))}</span></span></div>
     ${p.expr?`<div><span class="lab">${tr('Expresión aplicada','Applied expression')}</span><span class="expr">${esc(exprSummary(p.expr))}</span></div>`:''}<div class="an-pats"><span class="lab">${tr('Patrones reconocidos','Recognized patterns')}</span><div>${pats.length?pats.map(f=>`<span class="tag"><b>${f.k}</b>${degText(f.name)}${f.wrap?tr(' (en bucle)',' (looping)'):''}</span>`).join(''):`<span class="none">${tr('Ninguno de los '+PATTERNS.length+' patrones conocidos.','None of the '+PATTERNS.length+' known patterns.')}</span>`}</div></div></div>`;
   const row=i=>{ const r=A.romans[i], lab=esc(A.rs[i].label), fn=FN_NAME[A.fn[i]];
     return `<div class="an-row"><span class="n">${i+1}</span><span class="main"${r&&r.pivotOld?` title="${esc(pivotTitle(r,st))}"`:''}>${r?esc(degreeText(r)):lab}</span><span class="sub" title="${r?`${lab} · `:''}${fn} ${ten(A.ten[i])}${A.tenCtx[i]?` · ${tenDetail(A,i)}`:''}${A.rs[i].orn?` · ${esc(ornamentText(A.rs[i].orn,A.rs[i].spelled,st))}`:''}${A.rs[i].mel?` · ${esc(melodyText(A.rs[i].mel,A.rs[i].sp,st))}`:''}"><span class="fn">${r?`<span class="sym">${lab}</span> · `:''}${fn}</span> <span class="ten">${ten(A.ten[i])}</span></span></div>`; };
@@ -695,7 +694,7 @@ function analysisSheet(A,p){
     rows+='</div>'; i=b+1;
   }
   return `<div class="an">${head}<div class="an-rows"><span class="lines" aria-hidden="true">${'<b></b>'.repeat(N+2)}</span>${rows}</div>
-    <div class="hint">${tr('Grado; al lado, el acorde, su función y su tensión estimada (0 a 1). Las llaves numeradas del margen unen los grados de cada patrón reconocido; una llave abierta sigue en el otro extremo (patrón en bucle).','Degree; next to it, the chord, its function and its estimated tension (0 to 1). The numbered brackets in the margin join the degrees of each recognized pattern; an open bracket continues at the other end (looping pattern).')}</div></div>`;
+    <div class="hint">${sheetHint()}</div></div>`;
 }
 // The tracks of a multitrack pattern: pick the one you edit (the others stay as outlines), change its instrument, mute it
 function renderTracks(p){

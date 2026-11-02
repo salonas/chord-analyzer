@@ -90,6 +90,12 @@ describe('row 10: the reasons of the key', () => {
     expect(why([Gx, Fx, Cx, Gx]).reasons.at(-1)).toBe('mixolidio: aparece F natural (7ª menor) y todas las notas están en la escala');
     expect(inEnglish(() => why([D, Gm, D, Gm, D]).reasons.at(-1))).toBe('Dorian: B natural (major 6th) appears and every note is in the scale');
   });
+  // decision 13: more than two chords, starting on the tonic and ending on the major chord a fifth above
+  it('says that it starts on the tonic and ends on its V (half cadence), worth 4 points', () => {
+    expect(why([C, F, G]).reasons).toContain('empieza en la tónica y termina en su V (semicadencia)');
+    expect(why([C, F, G]).title).toContain('empieza en la tónica y termina en su V (semicadencia) +4');
+    expect(inEnglish(() => why([C, F, G]).reasons)).toContain('starts on the tonic and ends on its V (half cadence)');
+  });
   it('names the alternative key when it almost ties, and not otherwise', () => {
     expect(why([C, G]).text).toBe('C mayor, casi empatada con G mayor: empieza en la tónica · todos los acordes son de la escala');
     expect(inEnglish(() => why([C, G]).text)).toBe('C major, nearly tied with G major: starts on the tonic · every chord is in the scale');

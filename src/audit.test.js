@@ -1,8 +1,9 @@
-import { TYPES } from './data.js';
-import { analyze, resolveStep, spellCandidate } from './analysis.js';
+import { T, TYPES } from './data.js';
+import { analyze, analyzeProgression, resolveStep, spellCandidate } from './analysis.js';
+import { progText } from './text.js';
 import { RULES } from './expression.js';
 import { HTML_EN, setLang } from './i18n.js';
-import { LIMITS, MUDDY, activeCands, candTags, chordWarnings, emptySheetText, intervalText, spellActive, warningText } from './panel.js';
+import { LIMITS, MUDDY, activeCands, candTags, chordDesc, chordWarnings, emptySheetText, endingText, intervalText, sheetHint, spellActive, warningText } from './panel.js';
 import { against } from './roles.js';
 import { harmonySegs } from './harmony.js';
 import { normProg } from './model.js';
@@ -221,5 +222,95 @@ describe('row 6: the names of a lane chord with an ornament', () => {
   it('is the plain list without ornaments or with a chosen root', () => {
     expect(activeCands(notes, null, [])).toEqual(analyze(notes, null));
     expect(activeCands(notes, 0, [59])).toEqual(analyze(notes, 0));
+  });
+});
+
+// Closing trace (2 Nov 2026): labels of the sheet and the text export whose words THEORY.md fixes and that had no test of their own
+describe('closing trace: the words THEORY.md fixes', () => {
+  const run = chords => analyzeProgression(chords.map(notes => ({ notes })), PREFS);
+  const pattern = (chords, mel = []) => {
+    const notes = []; let t = 0;
+    chords.forEach(([ns, b]) => { ns.forEach(m => notes.push({ id: 'n' + notes.length, m, s: t, l: b * T, v: 100 })); t += b * T; });
+    mel.forEach(([m, s, l]) => notes.push({ id: 'n' + notes.length, m, s: s * T, l: l * T, v: 100 }));
+    return normProg({ id: 'p', name: 'p', beats: 4, names: {}, notes });
+  };
+  // the minor v has no leading tone: v → i is modal, not authentic, and the cadence writes the degrees as the chords are
+  it('calls v → i in minor a modal cadence', () => {
+    const cad = run([[45, 48, 52], [50, 53, 57], [52, 55, 59], [45, 48, 52]]).cad;
+    expect(cad).toContain('modal');
+    expect(cad).not.toContain('auténtica');
+    expect(cad).toContain('(v → i)');
+  });
+  // decision 7: the degree column of the text says the tension is an estimate and what it is made of, with chords alone and under a tune
+  const TEN_HEAD = 'tensión estimada 0–1: base (función y disonancia) + contexto (llegada, sorpresa, espera)';
+  it('heads the degree column with the estimated tension and its parts', () => {
+    const blocks = progText(pattern([[[48, 52, 55], 4], [[43, 47, 50, 53], 4]]), PREFS).split('\n');
+    expect(blocks.find(l => l.startsWith('# Formato:'))).toContain(TEN_HEAD);
+    const tune = progText(pattern([[[48, 52, 55], 4], [[43, 47, 50, 53], 4]], [[76, 0, 2], [74, 2, 2], [71, 4, 4]]), PREFS).split('\n');
+    expect(tune.find(l => l.startsWith('# Armonía:'))).toContain(TEN_HEAD);
+  });
+  // row 20: the column of the melody's tension says it is an estimate
+  it('heads the tension column of the melody as an estimate', () => {
+    const t = progText(pattern([[[48, 52, 55], 4]], [[64, 0, 1], [62, 1, 1], [65, 2, 1], [67, 3, 1]]), PREFS).split('\n');
+    expect(t.find(l => l.startsWith('# Melodía:'))).toContain('| tensión estimada 0–1 |');
+  });
+  // J07: the suspension is added to the role, in the same column, «nota del acorde · retardo 4–3 → E4»
+  it('adds the suspension to the role of the held note', () => {
+    const t = progText(pattern([[[43, 47, 50, 53], 2], [[48, 52, 55], 2]], [[67, 0, 1], [65, 1, 2], [64, 3, 1]]), PREFS).split('\n');
+    expect(t.find(l => l.startsWith('F4 (65) |'))).toMatch(/\| nota del acorde · retardo 4–3 → E4$/);
+  });
+  // row 10 and decision 15: the text gives the reasons of the key in one line, or one line per region
+  it('writes why this key, one line per region when it modulates', () => {
+    const one = progText(pattern([[[48, 52, 55], 4], [[53, 57, 60], 4], [[43, 47, 50, 53], 4], [[48, 52, 55], 4]]), PREFS).split('\n');
+    expect(one.filter(l => l.startsWith('# Por qué la tonalidad: '))).toEqual(['# Por qué la tonalidad: C mayor: un V resuelve a la tónica · empieza y termina en la tónica · todos los acordes son de la escala']);
+    const F11 = [[48, 52, 55], [53, 57, 60], [43, 47, 50, 53], [48, 52, 55], [45, 48, 52], [50, 54, 57, 60], [43, 47, 50], [50, 54, 57, 60], [43, 47, 50]];
+    const two = progText(pattern(F11.map(ns => [ns, 4])), PREFS).split('\n').filter(l => l.startsWith('# Por qué la tonalidad: '));
+    expect(two.map(l => l.slice(0, l.indexOf(':', 25) + 1))).toEqual(['# Por qué la tonalidad: C mayor (acordes 1–4):', '# Por qué la tonalidad: G mayor (acordes 5–9):']);
+  });
+  // row 24: the footer names the reading under a tune and the tension among the estimates (approved on 2 Nov 2026)
+  it('names the reading under a tune and the tension in the footer among the estimates, in both languages', () => {
+    const es = indexTexts().find(t => t.includes('son una estimación'));
+    expect(es).toContain('Bajo una melodía, la app separa la melodía, lee el acompañamiento por ataques y por tiempos y deja las notas cortas como adorno; esa lectura, la tonalidad, los patrones y la tensión son una estimación.');
+    expect(HTML_EN[es]).toContain('Under a tune, the app sets the tune apart, reads the accompaniment by attacks and by beats and leaves short notes as ornaments; that reading, the key, the patterns and the tension are an estimate.');
+  });
+  // row 16: the help under the sheet calls the tension an estimate (decision 7)
+  it('calls the tension of the sheet an estimate in its help, in both languages', () => {
+    expect(sheetHint()).toContain('su tensión estimada (0 a 1)');
+    expect(inEnglish(sheetHint)).toContain('its estimated tension (0 to 1)');
+  });
+});
+
+// Labels whose rule was written in THEORY.md at the close («Etiquetas fijadas al cierre»), from the theory first and then
+// checked against the code
+describe('labels fixed at the close', () => {
+  const run = chords => analyzeProgression(chords.map(notes => ({ notes })), PREFS);
+  const C = [48, 52, 55], Am = [45, 48, 52], Dm = [50, 53, 57], G = [43, 47, 50], F = [41, 45, 48];
+  const blocks = chords => progText(normProg({ id: 'p', name: 'p', beats: 4, names: {}, notes: chords.flatMap((ns, i) => ns.map((m, j) => ({ id: `n${i}-${j}`, m, s: i * 4 * T, l: 4 * T, v: 100 }))) }), PREFS).split('\n');
+  it('says there is no final cadence with one chord, or when the last two form no cadence, and writes no # Final line', () => {
+    for (const p of [[C], [C, Am], [C, F, Dm, C]]) {
+      expect(endingText(run(p).cad)).toBe('sin cadencia final');
+      expect(blocks(p).some(l => l.startsWith('# Final:'))).toBe(false);
+    }
+    expect(inEnglish(() => endingText(run([C, Am]).cad))).toBe('no final cadence');
+    expect(endingText(run([C, F, [43, 47, 50, 53], C]).cad)).toContain('auténtica');
+  });
+  it('writes a pattern that closes only when the pattern repeats with what it has and what comes on the repeat', () => {
+    expect(blocks([G, Am, F, C]).find(l => l.startsWith('# Patrones:'))).toContain('I (continúa en V–vi–IV al repetir)');
+    // I–V–vi–IV is whole inside C G Am F and keeps its name; vi–IV–I–V only closes on the repeat
+    const pats = blocks([C, G, Am, F]).find(l => l.startsWith('# Patrones:'));
+    expect(pats).toContain('Pop I–V–vi–IV');
+    expect(pats).not.toContain('I–V–vi (continúa');
+    expect(pats).toContain('vi–IV (continúa en I–V al repetir)');
+  });
+  it('writes one pitch class in several octaves as a doubled note, and a lone note without the word', () => {
+    expect(blocks([[48, 60]]).find(l => l.startsWith('1. '))).toMatch(/^1\. nota: C3\+C4 \(doblada\) \|/);
+    expect(blocks([[48]]).find(l => l.startsWith('1. '))).toMatch(/^1\. nota: C3 \|/);
+  });
+  it('says «sin 5» for a seventh chord without its 5th, in the description and in the tags', () => {
+    const notes = [48, 52, 58], c = analyze(notes, null)[0], sp = spellCandidate(c, notes, PREFS);
+    expect([c.root, c.type.sym]).toEqual([0, '7']);
+    expect(chordDesc(c, sp, sp.notes, PREFS)).toBe('C séptima de dominante · sin 5');
+    expect(candTags(c, sp, null, PREFS).map(t => t.text)).toContain('sin 5');
+    expect(inEnglish(() => chordDesc(c, sp, sp.notes, PREFS))).toBe('C dominant seventh · no 5');
   });
 });
