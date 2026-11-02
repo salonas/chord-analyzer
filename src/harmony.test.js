@@ -27,6 +27,16 @@ describe('splitHarmony', () => {
     const d = splitHarmony(pattern('48 0 1|60 0 1|64 .5 .5'));
     expect([d.chords.length, d.mel.map(m => m.notes)]).toEqual([0, [[48, 60], [64]]]);
   });
+  // a broken accompaniment under a tune: read beat by beat where no chord has started
+  it('reads an Alberti bass under a held tune as chords, and the chord owns the bass notes, not the tune', () => {
+    const d = splitHarmony(pattern('48 0 .5|55 .5 .5|52 1 .5|55 1.5 .5|76 0 2|79 2 2|48 2 .5|55 2.5 .5|52 3 .5|55 3.5 .5'));
+    expect(d.chords.map(c => [beats(c.a), beats(c.b), c.notes])).toEqual([[0, 4, [48, 52, 55, 76, 79]]]);
+    const S = harmonySegs(pattern('48 0 .5|55 .5 .5|52 1 .5|55 1.5 .5|76 0 2|79 2 2|48 2 .5|55 2.5 .5|52 3 .5|55 3.5 .5'));
+    expect([...S[0].ids].sort()).toEqual(['n0', 'n1', 'n2', 'n3', 'n6', 'n7', 'n8', 'n9']);
+  });
+  it('leaves a fast legato scale as notes, even with three pitch classes in a beat', () => {
+    expect(splitHarmony(pattern('60 0 .3|62 .25 .3|64 .5 .3|65 .75 .3|67 1 .3|69 1.25 .3|71 1.5 .3|72 1.75 .3')).chords).toEqual([]);
+  });
   it('a note in octaves plus its fifth is a power chord, even when the fifth moves on first', () => {
     const d = splitHarmony(pattern('38 0 4|50 0 4|62 0 4|69 0 3|72 1.5 1.5|70 3 1'));
     expect(d.chords.map(c => [beats(c.a), beats(c.b), c.notes])).toEqual([[0, 4, [38, 50, 62, 69]]]);
