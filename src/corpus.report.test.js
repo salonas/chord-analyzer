@@ -1,7 +1,7 @@
 // Writes the accuracy report on the external corpus cases. It only runs on request, measures and asserts nothing:
 //   CORPUS_REPORT=1 npx vitest run src/corpus.report.test.js
 import fs from 'node:fs';
-import { bootstrapCI, evalRock, evalTavern, isTest, listJson, mergeRuns } from './test/corpus-eval.js';
+import { bootstrapCI, bootstrapDiff, evalRock, evalTavern, isTest, listJson, mergeRuns } from './test/corpus-eval.js';
 
 const OUT = new URL('./test/fixtures/theory/corpus/', import.meta.url);
 const ciText = (ci, name) => (ci && ci[name] ? `, IC 95 % ${ci[name][0]}–${ci[name][1]}` : '');
@@ -21,6 +21,12 @@ describe.skipIf(!process.env.CORPUS_REPORT)('corpus report', () => {
     const tT = tavTest.T.rows(), tD = tavDev.T.rows(), tA = tav.T.rows(), rT = rockTest.T.rows(), rD = rockDev.T.rows(), rA = rock.T.rows();
     const ciOf = runs => bootstrapCI(runs.map(r => r.T));
     const CI = { tT: ciOf(side(tavU, true)), tD: ciOf(side(tavU, false)), rT: ciOf(side(rockU, true)), rD: ciOf(side(rockU, false)) };
+    // before the ornament rule: the same steps without the timing of their notes, work by work, for a paired difference
+    const plainU = pieces.map(p => ({ test: isTest(p.piece), run: evalTavern([p], { plain: true }) }));
+    const cmp = t => { const b = side(plainU, t).map(r => r.T), a = side(tavU, t).map(r => r.T); return { b: mergeRuns(side(plainU, t)).T.rows(), a: mergeRuns(side(tavU, t)).T.rows(), d: bootstrapDiff(b, a) }; };
+    const CMP = { dev: cmp(false), test: cmp(true) };
+    const CMP_ROWS = ['por tramo | acorde: raíz + calidad (acepta A o B)', 'por tramo | acorde: nombre exacto, sin extensiones (acepta A o B)', 'por tramo | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)', 'por tramo | tonalidad (tónica y modo)', 'por tramo | inversión (dado el acorde correcto)', 'por tramo | enarmonía (tramo con todas las notas bien)', 'de punta a punta | acorde: raíz + calidad (acepta A o B)', 'de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app', 'de punta a punta | tonalidad (tónica y modo)'];
+    const cmpCells = (C, cat) => { const b = num(C.b, cat), a = num(C.a, cat), d = C.d[cat]; return `${b} % | ${a} % | ${d ? `${(a - b).toFixed(1)} (${d[0]} a ${d[1]})` : 'sin datos'}`; };
     const tavSkipped = JSON.parse(fs.readFileSync(new URL('tavern/skipped.json', OUT), 'utf8'));
     const rockSkipped = JSON.parse(fs.readFileSync(new URL('rock/skipped.json', OUT), 'utf8'));
     const both = (rows1, rows2, mode, name) => `${cell(rows1, `${mode} | ${name}`, CI.tT)}<br>${cell(rows2, `${mode} | ${name}`, CI.tD)}`;
@@ -56,6 +62,14 @@ Se separan obras completas (TAVERN) y canciones completas (Rock Corpus), una de 
 | Medida | Meta | Hoy (prueba) | IC 95 % | Estado | Corpus |
 |---|---|---|---|---|---|
 ${G.map(([n, m, v, goal, c, ci]) => `| ${n} | ${m} | ${v === null ? 'sin datos' : v + ' %'} | ${ci ? `${ci[0]}–${ci[1]} %` : 'sin datos'} | ${ok(v, goal)} | ${c} |`).join('\n')}
+
+## Antes y después de la regla de notas de adorno
+
+«Antes» es la misma evaluación con los pasos sin el inicio y la duración de sus notas, como leía la app hasta el 2026-11-01; «después», con ellos (la regla de \`THEORY.md\`). Δ en puntos, con su IC 95 % pareado: cada remuestreo toma las mismas obras en los dos lados. La regla se fijó mirando solo desarrollo; la prueba se miró una vez, al final.
+
+| Medida | Desarrollo antes | Desarrollo después | Δ desarrollo | Prueba antes | Prueba después | Δ prueba |
+|---|---|---|---|---|---|---|
+${CMP_ROWS.map(cat => `| ${cat.replace(' | ', ' — ')} | ${cmpCells(CMP.dev, cat)} | ${cmpCells(CMP.test, cat)} |`).join('\n')}
 
 ## Resumen por categoría
 

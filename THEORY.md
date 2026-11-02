@@ -27,6 +27,8 @@ Resueltas por el usuario el 1 nov 2026. Cada una fija una regla; si un caso de p
 
 7. **Tensión: base + contexto, sigue como estimación.** Decidido el 1 nov 2026 (`inversiones-tension-ui.md`, sección 2). La base no cambia (mitad función, mitad disonancia). Se suma un ajuste que depende del acorde anterior, siguiendo a Meyer (1956): **llegada** −0,15 (el anterior es D y este es su destino esperado y no es D), **sorpresa** +0,15 (el anterior es D y este ni es su destino ni es D) y **espera** +0,05 por cada D seguido, hasta +0,10. Las tres reglas solo aplican a dominantes con sensible: V, V7, vii°, las secundarias (V/x, vii°/x), el 6/4 cadencial y el sustituto tritonal. El ♭VII de la menor natural y el v menor mantienen su función D, pero no reciben ajuste de contexto ni lo dan a lo que les sigue (decisión del 1 nov 2026). El total se recorta a 0–1. Los pesos son una elección razonada, no una medición: la tensión sigue rotulada «estimada» en todas partes.
 
+8. **Notas de adorno por duración.** Decidido el 1 nov 2026 y ajustado el 2 nov 2026, mirando solo el desarrollo de TAVERN. Un paso que trae el inicio y la duración de sus notas (`a`, `evs`) puede dejar fuera del nombre hasta 5 clases de altura, nunca el bajo. Cada clase pesa su parte del tiempo que suenan las notas del paso. Una lectura cuesta los puntos de su tipo, 3 por cada décima de peso que deja fuera y 2 por cada extensión (7ª o más) que pesa menos de 15 %; gana la de menor costo. Sin `evs`, el paso se lee como antes, y un acorde que el usuario nombró conserva su nombre. Pasan `evs` la franja de acordes (`segStep`), el texto exportado y los roles de melodía (`stepTiming`); el panel del acorde activo y la hoja de análisis dicen «Adorno: B3 (dura poco; no cambia el nombre del acorde)». Los pesos extra por tiempo (×1,5) y por bajo (×2) se probaron y se quitaron el 2 nov 2026: mismo total en desarrollo (67,4 % contra 67,6 %) y mejor control con notas exactas (96,9 % contra 94,8 %). Casos: O01–O05, J33 y J34.
+
 Sin decidir y sin cambios: nada de lo de `inversiones-tension-ui.md` queda sin decidir; los pesos de la tensión se medirán cuando exista el corpus externo.
 
 ## Estado
@@ -106,39 +108,48 @@ Rama `feat/close-gaps`, desde `main` con los cinco pasos fusionados (C9, C12, F1
 - **Cadencia ♭VII → i.** En menor dice «Cadencia ♭VII → i» (EN «♭VII → i cadence»); en mayor sigue «backdoor / mixolidia». Caso G14: Dm G C Dm.
 - Pruebas: `src/gaps.test.js` (una por regla) y los casos A46–A49 y G14 de la sonda; la fila de tipos de `audit.test.js` incluye los seis nombres nuevos. `analysis.json` no cambia respecto a `main`; `text.json` solo recibe `unread: []` en lo leído; `theory/texts.json` no cambia respecto a `main`.
 
+Rama `feat/ornament-tones`, desde `main` (`d9cd779`): 569 de 570; las 7 comprobaciones nuevas (O01–O05, J33 y J34) pasan y no cae ninguna. La regla de la decisión 8 está en `src/analysis.js` (`readOrnaments`, `ornamentText`) y `stepTiming` en `src/model.js`. El reporte del corpus agrega intervalos de confianza del 95 % por bootstrap de obras o canciones, la fila «nombre exacto, sin extensiones» y la tabla antes y después de la regla. `tools/ornament-sim.test.js` guarda la simulación de desarrollo (corre solo con `ORNAMENT_SIM`).
+
 ### Retomar desde main
 
-Punto de partida: los cinco pasos de `inversiones-tension-ui.md` y `feat/close-gaps` fusionados en `main`; la sonda da 562 de 563 y queda un solo fallo:
+Punto de partida: `feat/ornament-tones` fusionada en `main`; la sonda da 569 de 570 y queda un solo fallo:
 
 - C10: F11 (una modulación se lee como una sola tonalidad; hay que decidir cómo se parte la progresión en regiones). Es de otro tamaño: no es un ajuste de pesos.
 
-Línea base sobre corpus externos (2026-11-01, rama `feat/external-corpus`; detalle, método y los 10 errores más frecuentes en `src/test/fixtures/theory/corpus/REPORT.md`). Fuentes: TAVERN (CC BY-SA 4.0; 27 obras, 1101 frases, dos anotadores) y Rock Corpus RS 200 (CC BY 4.0; 382 análisis). Los casos no entran al ratchet (`passing.json`) y no se cambió ninguna regla. Cifras de TAVERN por tramo anotado / de punta a punta:
+Corpus externos (detalle, método, intervalos y errores más frecuentes en `src/test/fixtures/theory/corpus/REPORT.md`). Fuentes: TAVERN (CC BY-SA 4.0; 27 obras, 1101 frases, dos anotadores) y Rock Corpus RS 200 (CC BY 4.0; 382 análisis). Los casos no entran al ratchet (`passing.json`).
 
-- Acorde (raíz + calidad, acepta A o B): 50,9 % / 49,6 %; contando como fallo los tramos sin acorde de la app, 50,9 % / 37,6 %. Con las notas exactas del acorde (control de la conversión): 97,3 % / 78,6 %. Entre sí, los dos anotadores coinciden en 92 %.
-- Inversión, dado el acorde correcto: 94,5 % / 90,7 %.
-- Tonalidad (tónica y modo): 73,1 % / 70,3 %. Rock Corpus, solo la tónica: 72,3 % (83,2 % si se acepta la relativa).
-- Enarmonía (tramo con todas las notas bien): 91,4 % / 98,5 % (la segunda solo cuenta los tramos que la app cubre con un acorde).
-- Función: no comparable (TAVERN la etiqueta por frase). Cadencia: sin corpus. Modulación: 0 de 61 canciones del Rock Corpus; la app no informa cambios de tonalidad (TAVERN no aporta casos: 5 frases con más de una tonalidad).
-- Lo que más falla: leer «sin acorde» cuando el tramo trae notas de adorno (3221 de 21 984 tramos con 5 o más clases de altura), leer maj7, maj9 o maj11 donde el corpus tiene una tríada, y la tónica una quinta abajo en el Rock Corpus (17 análisis, p. ej. `back_in_black`).
+Cifras del 2 nov 2026, antes → después de la regla de notas de adorno. Desarrollo = 21 obras de TAVERN; prueba = 6 obras, mirada una sola vez, al final. Entre paréntesis, el intervalo de confianza del 95 % (bootstrap por obra); Δ en puntos, pareado por obra.
 
-Conjunto de prueba: nunca se usa para ajustar reglas. Se separan obras completas de TAVERN (6 de 27: B066, B075, B080, Opus76, K354 y K573; 290 de 1101 frases) y canciones completas del Rock Corpus (40 de 198; 78 de 382 análisis) por un hash fijo de su nombre (`split.json`, regla en `src/test/corpus-eval.js`). Las reglas se ajustan y los errores se analizan solo con el desarrollo; las metas se miden en la prueba. Con tan pocas obras y canciones, una diferencia de unos 5 puntos en la prueba es ruido: el Rock Corpus tiene 78 análisis y solo 15 con cambio de tonalidad.
+- Acorde por tramo anotado (raíz + calidad, acepta A o B): desarrollo 51,3 % → 67,4 % (Δ +16,1; 13,6 a 19,0); prueba 49,4 % → 67,0 % (63,2–72,2; Δ +17,6; 13,9 a 21,3).
+- Acorde por tramo, nombre exacto sin extensiones: desarrollo 39,0 % → 52,8 %; prueba 35,8 % → 50,6 %.
+- Control (tramos cuyas notas son exactamente las del acorde): desarrollo 97,6 % → 96,9 %; prueba 96,5 % → 95,9 %.
+- Acorde de punta a punta, contando como fallo los tramos sin acorde de la app: desarrollo 37,2 % → 37,3 %; prueba 39,0 % → 39,0 % (31,8–45,5). **No cambió:** la app ya separa la melodía (`splitHarmony`), así que cada acorde de `harmonySegs` trae solo las notas que suenan al empezar y la regla casi no encuentra adornos que descartar (en desarrollo acierta 10 tramos más de 15 095). La app cubre con un acorde el 74,8 % de los tramos del analista (desarrollo).
+- Inversión, dado el acorde correcto (por tramo): desarrollo 94,3 % → 95,1 %; prueba 95,0 % → 95,4 %.
+- Tonalidad de TAVERN (tónica y modo, por tramo): desarrollo 73,4 % → 78,0 %; prueba 72,4 % → 77,1 % (66,2–88,2). Rock Corpus, solo la tónica: 69,2 % en prueba (55,1–82,3), sin cambio.
+- Enarmonía (tramo con todas las notas bien, por tramo): desarrollo 91,5 % → 91,0 %; prueba 91,0 % → 91,0 %.
+- Función: no comparable (TAVERN la etiqueta por frase). Cadencia: sin corpus. Modulación: 0 de 61 canciones del Rock Corpus; la app no informa cambios de tonalidad.
+- Lo que más falla ahora (desarrollo, por tramo): la enarmonía de notas alteradas (G♯ escrito A♭, 542 veces; C♯ escrito D♭, 523), maj7 donde el corpus tiene una tríada mayor (379), tramos de una sola clase de altura sin acorde (323) y raíz equivocada con una nota ajena al acorde (302 y 178).
+
+Conjunto de prueba: nunca se usa para ajustar reglas. Se separan obras completas de TAVERN (6 de 27: B066, B075, B080, Opus76, K354 y K573; 290 de 1101 frases) y canciones completas del Rock Corpus (40 de 198; 78 de 382 análisis) por un hash fijo de su nombre (`split.json`, regla en `src/test/corpus-eval.js`). Las reglas se ajustan y los errores se analizan solo con el desarrollo; las metas se miden en la prueba. Con 6 obras, el intervalo del acorde por tramo en la prueba abarca unos 9 puntos y el de la tonalidad unos 22; aun así es optimista, porque no ve la variación de obras que no conoce.
 
 Metas acordadas con Joaquín (2026-11-01), medidas en el conjunto de prueba, con lo que da hoy:
 
-| Medida | Meta | Hoy (prueba) |
+| Medida | Meta | Hoy (prueba, IC 95 %) |
 |---|---|---|
-| Acorde por tramo anotado (raíz + calidad, acepta A o B) | 80 % | 49,4 % |
-| Acorde de punta a punta (los tramos sin acorde de la app cuentan como fallo) | 70 % | 39,0 % |
-| Inversión, dado el acorde correcto | ≥ 94 % | 95,0 % (ya cumple) |
-| Tonalidad de TAVERN (tónica y modo) | 85 % | 72,4 % |
-| Tónica del Rock Corpus, sin aceptar la relativa | 82 % | 69,2 % |
-| Enarmonía (tramo con todas las notas bien) | 95 % | 91,0 % |
+| Acorde por tramo anotado (raíz + calidad, acepta A o B) | 80 % | 67,0 % (63,2–72,2) |
+| Acorde de punta a punta (los tramos sin acorde de la app cuentan como fallo) | 70 % | 39,0 % (31,8–45,5) |
+| Inversión, dado el acorde correcto | ≥ 94 % | 95,4 % (92,7–97,2; ya cumple) |
+| Tonalidad de TAVERN (tónica y modo) | 85 % | 77,1 % (66,2–88,2) |
+| Tónica del Rock Corpus, sin aceptar la relativa | 82 % | 69,2 % (55,1–82,3) |
+| Enarmonía (tramo con todas las notas bien) | 95 % | 91,0 % (88,1–94,7) |
 | Modulación: canciones del Rock Corpus con cambio de tonalidad que la app informa | la mitad | 0 de 15 |
 
-Cómo se leyeron las metas ambiguas: «acorde de punta a punta» es la versión que cuenta como fallo los tramos sin acorde de la app; «enarmonía» es por tramo completo, no nota a nota; «inversión» se mide por tramo anotado (de punta a punta da 92,2 %); la modulación cuenta las canciones donde el corpus cambia de tonalidad. Función y cadencia no tienen meta: sin corpus comparable.
+Cómo se leyeron las metas ambiguas: «acorde de punta a punta» es la versión que cuenta como fallo los tramos sin acorde de la app; «enarmonía» es por tramo completo, no nota a nota; «inversión» se mide por tramo anotado; la modulación cuenta las canciones donde el corpus cambia de tonalidad. Función y cadencia no tienen meta: sin corpus comparable.
+
+Lo siguiente para el acorde: la **segmentación** de punta a punta (cobertura del 74,8 % en desarrollo) y la **raíz por contexto** (los fallos de raíz equivocada y las notas sueltas piden mirar los acordes vecinos). La regla de notas de adorno sola llega a ~67 % por tramo. Queda medida, y fuera de esta rama, la variante en que el análisis de la app ve todas las notas que suenan durante el acorde, melodía incluida: con los pesos anteriores daba +3,0 puntos de punta a punta en desarrollo (49,7 % → 52,7 %), pero cambia qué notas forman el acorde en la app y bajaba la enarmonía de punta a punta de 98,3 % a 84,7 %.
 
 Después de eso y de F11 siguen comparar al oído el volumen GM con las muestras de la plantilla (`LEVEL` en `src/audio.js`).
 
-Regenerar los casos y el reporte: `README.md` de la carpeta `corpus` (`python -I tools/corpus_tavern.py` y `tools/corpus_rock.py`; `CORPUS_REPORT=1 npx vitest run src/corpus.report.test.js`).
+Regenerar los casos y el reporte: `README.md` de la carpeta `corpus` (`python -I tools/corpus_tavern.py` y `tools/corpus_rock.py`; `CORPUS_REPORT=1 npx vitest run src/corpus.report.test.js`). El reporte imprime las cifras de prueba: regenerarlo es mirarlas.
 
 Regenerar la línea base a propósito, tras revisar cada diferencia: `UPDATE_THEORY=1 npx vitest run src/theory.test.js`.
