@@ -155,6 +155,12 @@ function scoreStep(T, mode, ph, seg, other, r, rom, keyOk, kern) {
   // control of the conversion: the notes of the stretch are exactly the pitch classes of the labelled chord
   T.add(mode + ' | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)', qualAny, null, nPc === e.pcs.length && e.complete);
   T.add(mode + ' | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde', qualAny, null, !e.complete);
+  // what sounds does not tell the quality: a power chord on the expected root, or a single pitch class that is the expected root.
+  // The app says what sounds (F5, or no chord) and does not guess the third from the key (decision of 2 Nov 2026), so these
+  // stretches get a row of their own and a version of the chord row without them
+  const undet = !qualAny && (ch ? ch.sym === '5' && rootAny : nPc === 1 && exps.some(x => x.root === r.notes[0] % 12));
+  T.add(mode + ' | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)', undet);
+  T.add(mode + ' | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable', qualAny, null, !undet);
   // inversion
   const invOk = !!ch && exps.some(x => x.inv === ch.inv);
   T.add(mode + ' | inversión (cruda)', invOk);
@@ -172,7 +178,7 @@ function scoreStep(T, mode, ph, seg, other, r, rom, keyOk, kern) {
     if (!ok) allOk = false;
   }
   T.add(mode + ' | enarmonía (tramo con todas las notas bien)', allOk);
-  return qualAny;
+  return { hit: qualAny, undet };
 }
 
 export function evalTavern(pieces, { plain = false } = {}) {
@@ -233,9 +239,11 @@ export function evalTavern(pieces, { plain = false } = {}) {
           const k = appSegs.reduce((b, c, i) => (overlap(s, c) > (b < 0 ? 0 : overlap(s, appSegs[b])) ? i : b), -1);
           const covered = k >= 0 && overlap(s, appSegs[k]) * 2 >= s.b - s.a;
           T.add(mode + ' | tramo del analista cubierto por un acorde de la app (≥ la mitad)', covered, null);
-          if (!covered) { T.add(mode + ' | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app', false); continue; }
-          const hit = scoreStep(T, mode, ph, s, bestOverlap(s, theirs), appA.rs[k], appA.romans[k], keyOk, kern);
-          T.add(mode + ' | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app', hit);
+          const all = mode + ' | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app';
+          if (!covered) { T.add(all, false); T.add(all + ', sin contar los de calidad no determinable', false); continue; }
+          const { hit, undet } = scoreStep(T, mode, ph, s, bestOverlap(s, theirs), appA.rs[k], appA.romans[k], keyOk, kern);
+          T.add(all, hit);
+          T.add(all + ', sin contar los de calidad no determinable', hit, null, !undet);
         }
       }
     }
