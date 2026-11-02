@@ -124,128 +124,128 @@
    {
     "cat": "de punta a punta | segmentación: cortes del analista que la app también corta (±48 ticks)",
     "n": 5204,
-    "ok": 4748,
-    "pct": 91.2
+    "ok": 4720,
+    "pct": 90.7
    },
    {
     "cat": "de punta a punta | segmentación: cortes de la app que el analista también corta (±48 ticks)",
-    "n": 8840,
-    "ok": 5911,
-    "pct": 66.9
+    "n": 7746,
+    "ok": 5605,
+    "pct": 72.4
    },
    {
     "cat": "de punta a punta | tramo del analista cubierto por un acorde de la app (≥ la mitad)",
     "n": 5586,
-    "ok": 4782,
-    "pct": 85.6
+    "ok": 5004,
+    "pct": 89.6
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app",
     "n": 5586,
-    "ok": 2775,
-    "pct": 49.7
+    "ok": 2976,
+    "pct": 53.3
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app, sin contar los de calidad no determinable",
-    "n": 5554,
-    "ok": 2775,
-    "pct": 50
+    "n": 5550,
+    "ok": 2976,
+    "pct": 53.6
    },
    {
     "cat": "de punta a punta | acorde: raíz (solo la lectura propia)",
-    "n": 4782,
-    "ok": 3166,
-    "pct": 66.2
+    "n": 5004,
+    "ok": 3371,
+    "pct": 67.4
    },
    {
     "cat": "de punta a punta | acorde: raíz (acepta A o B)",
-    "n": 4782,
-    "ok": 3239,
-    "pct": 67.7
+    "n": 5004,
+    "ok": 3445,
+    "pct": 68.8
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (solo la lectura propia)",
-    "n": 4782,
-    "ok": 2635,
-    "pct": 55.1
+    "n": 5004,
+    "ok": 2831,
+    "pct": 56.6
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
-    "n": 4782,
-    "ok": 2775,
-    "pct": 58
+    "n": 5004,
+    "ok": 2976,
+    "pct": 59.5
    },
    {
     "cat": "de punta a punta | acorde: nombre exacto, sin extensiones (acepta A o B)",
-    "n": 4782,
-    "ok": 2298,
-    "pct": 48.1
+    "n": 5004,
+    "ok": 2485,
+    "pct": 49.7
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde",
-    "n": 1298,
-    "ok": 529,
-    "pct": 40.8
+    "n": 1320,
+    "ok": 546,
+    "pct": 41.4
    },
    {
     "cat": "de punta a punta | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)",
-    "n": 4782,
-    "ok": 32,
+    "n": 5004,
+    "ok": 36,
     "pct": 0.7
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable",
-    "n": 4750,
-    "ok": 2775,
-    "pct": 58.4
+    "n": 4968,
+    "ok": 2976,
+    "pct": 59.9
    },
    {
     "cat": "de punta a punta | inversión (cruda)",
-    "n": 4782,
-    "ok": 3400,
-    "pct": 71.1
+    "n": 5004,
+    "ok": 3599,
+    "pct": 71.9
    },
    {
     "cat": "de punta a punta | inversión (dado el acorde correcto)",
-    "n": 2775,
-    "ok": 2503,
-    "pct": 90.2
+    "n": 2976,
+    "ok": 2693,
+    "pct": 90.5
    },
    {
     "cat": "de punta a punta | grado (crudo)",
-    "n": 4782,
-    "ok": 2452,
-    "pct": 51.3
+    "n": 5004,
+    "ok": 2610,
+    "pct": 52.2
    },
    {
     "cat": "de punta a punta | grado (dada la tonalidad correcta)",
-    "n": 3258,
-    "ok": 2313,
-    "pct": 71
+    "n": 3414,
+    "ok": 2457,
+    "pct": 72
    },
    {
     "cat": "de punta a punta | enarmonía (nota a nota)",
-    "n": 20041,
-    "ok": 19808,
-    "pct": 98.8
+    "n": 20747,
+    "ok": 20514,
+    "pct": 98.9
    },
    {
     "cat": "de punta a punta | enarmonía (tramo con todas las notas bien)",
-    "n": 4782,
-    "ok": 4598,
-    "pct": 96.2
+    "n": 5004,
+    "ok": 4820,
+    "pct": 96.3
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando",
-    "n": 3484,
-    "ok": 2246,
-    "pct": 64.5
+    "n": 3684,
+    "ok": 2430,
+    "pct": 66
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)",
-    "n": 1584,
-    "ok": 1323,
-    "pct": 83.5
+    "n": 1694,
+    "ok": 1429,
+    "pct": 84.4
    }
   ],
   "rock": [
@@ -406,122 +406,122 @@
    {
     "cat": "de punta a punta | segmentación: cortes del analista que la app también corta (±48 ticks)",
     "n": 15266,
-    "ok": 13515,
-    "pct": 88.5
+    "ok": 13430,
+    "pct": 88
    },
    {
     "cat": "de punta a punta | segmentación: cortes de la app que el analista también corta (±48 ticks)",
-    "n": 23176,
-    "ok": 16316,
-    "pct": 70.4
+    "n": 21132,
+    "ok": 15539,
+    "pct": 73.5
    },
    {
     "cat": "de punta a punta | tramo del analista cubierto por un acorde de la app (≥ la mitad)",
     "n": 16404,
-    "ok": 14376,
-    "pct": 87.6
+    "ok": 14785,
+    "pct": 90.1
    },
    {
     "cat": "de punta a punta | acorde: raíz (solo la lectura propia)",
-    "n": 14376,
-    "ok": 10014,
-    "pct": 69.7
+    "n": 14785,
+    "ok": 10357,
+    "pct": 70.1
    },
    {
     "cat": "de punta a punta | acorde: raíz (acepta A o B)",
-    "n": 14376,
-    "ok": 10171,
-    "pct": 70.7
+    "n": 14785,
+    "ok": 10515,
+    "pct": 71.1
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (solo la lectura propia)",
-    "n": 14376,
-    "ok": 8472,
-    "pct": 58.9
+    "n": 14785,
+    "ok": 8782,
+    "pct": 59.4
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
-    "n": 14376,
-    "ok": 8728,
-    "pct": 60.7
+    "n": 14785,
+    "ok": 9043,
+    "pct": 61.2
    },
    {
     "cat": "de punta a punta | acorde: nombre exacto, sin extensiones (acepta A o B)",
-    "n": 14376,
-    "ok": 7544,
-    "pct": 52.5
+    "n": 14785,
+    "ok": 7839,
+    "pct": 53
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando",
-    "n": 10431,
-    "ok": 7105,
-    "pct": 68.1
+    "n": 10815,
+    "ok": 7405,
+    "pct": 68.5
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)",
-    "n": 4978,
-    "ok": 4197,
-    "pct": 84.3
+    "n": 5204,
+    "ok": 4408,
+    "pct": 84.7
    },
    {
     "cat": "de punta a punta | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)",
-    "n": 14376,
-    "ok": 198,
+    "n": 14785,
+    "ok": 206,
     "pct": 1.4
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable",
-    "n": 14178,
-    "ok": 8728,
-    "pct": 61.6
+    "n": 14579,
+    "ok": 9043,
+    "pct": 62
    },
    {
     "cat": "de punta a punta | inversión (cruda)",
-    "n": 14376,
-    "ok": 10392,
-    "pct": 72.3
+    "n": 14785,
+    "ok": 10714,
+    "pct": 72.5
    },
    {
     "cat": "de punta a punta | inversión (dado el acorde correcto)",
-    "n": 8728,
-    "ok": 7931,
-    "pct": 90.9
+    "n": 9043,
+    "ok": 8214,
+    "pct": 90.8
    },
    {
     "cat": "de punta a punta | grado (crudo)",
-    "n": 14376,
-    "ok": 8431,
+    "n": 14785,
+    "ok": 8668,
     "pct": 58.6
    },
    {
     "cat": "de punta a punta | grado (dada la tonalidad correcta)",
-    "n": 11160,
-    "ok": 8122,
-    "pct": 72.8
+    "n": 11440,
+    "ok": 8349,
+    "pct": 73
    },
    {
     "cat": "de punta a punta | enarmonía (nota a nota)",
-    "n": 59048,
-    "ok": 58302,
-    "pct": 98.7
+    "n": 60481,
+    "ok": 59725,
+    "pct": 98.8
    },
    {
     "cat": "de punta a punta | enarmonía (tramo con todas las notas bien)",
-    "n": 14376,
-    "ok": 13823,
+    "n": 14785,
+    "ok": 14224,
     "pct": 96.2
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app",
     "n": 16404,
-    "ok": 8728,
-    "pct": 53.2
+    "ok": 9043,
+    "pct": 55.1
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app, sin contar los de calidad no determinable",
-    "n": 16206,
-    "ok": 8728,
-    "pct": 53.9
+    "n": 16198,
+    "ok": 9043,
+    "pct": 55.8
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde",
@@ -531,9 +531,9 @@
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde",
-    "n": 3945,
-    "ok": 1623,
-    "pct": 41.1
+    "n": 3970,
+    "ok": 1638,
+    "pct": 41.3
    }
   ],
   "rock": [
@@ -659,88 +659,88 @@
      87
     ],
     "de punta a punta | segmentación: cortes del analista que la app también corta (±48 ticks)": [
-     89.5,
-     93.3
+     89.1,
+     92.6
     ],
     "de punta a punta | segmentación: cortes de la app que el analista también corta (±48 ticks)": [
-     52,
-     78.7
+     57.4,
+     84
     ],
     "de punta a punta | tramo del analista cubierto por un acorde de la app (≥ la mitad)": [
-     75.5,
-     90.3
+     82.5,
+     93.2
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app": [
-     42.9,
-     56.3
+     47.3,
+     60.2
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app, sin contar los de calidad no determinable": [
-     43.1,
-     56.6
+     47.7,
+     60.7
     ],
     "de punta a punta | acorde: raíz (solo la lectura propia)": [
-     60.6,
-     72
+     62.1,
+     73.3
     ],
     "de punta a punta | acorde: raíz (acepta A o B)": [
-     61.3,
-     73.7
+     62.6,
+     74.9
     ],
     "de punta a punta | acorde: raíz + calidad (solo la lectura propia)": [
-     50.3,
-     63.9
+     51.3,
+     66.1
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B)": [
-     52,
-     66
+     53.4,
+     68.2
     ],
     "de punta a punta | acorde: nombre exacto, sin extensiones (acepta A o B)": [
-     41.5,
-     58.3
+     42.5,
+     60.5
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde": [
-     34.1,
-     47.9
+     34.6,
+     49.4
     ],
     "de punta a punta | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)": [
-     0.1,
+     0.3,
      1.1
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable": [
-     52.2,
-     66.6
+     53.6,
+     68.7
     ],
     "de punta a punta | inversión (cruda)": [
-     65.7,
-     76.7
+     66.6,
+     77.9
     ],
     "de punta a punta | inversión (dado el acorde correcto)": [
      86.8,
-     93.5
+     94
     ],
     "de punta a punta | grado (crudo)": [
-     42.1,
-     66.5
+     42.4,
+     67.5
     ],
     "de punta a punta | grado (dada la tonalidad correcta)": [
-     64.2,
-     77.3
+     65.6,
+     78.4
     ],
     "de punta a punta | enarmonía (nota a nota)": [
      98.6,
      99.2
     ],
     "de punta a punta | enarmonía (tramo con todas las notas bien)": [
-     95.1,
-     97.2
+     95.3,
+     97.4
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando": [
-     58.4,
-     71.8
+     59.9,
+     73.6
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)": [
-     78.5,
-     88.7
+     79.5,
+     89.6
     ]
    },
    "rock": {
@@ -849,92 +849,92 @@
      82
     ],
     "de punta a punta | segmentación: cortes del analista que la app también corta (±48 ticks)": [
-     86.2,
-     91
+     85.6,
+     90.4
     ],
     "de punta a punta | segmentación: cortes de la app que el analista también corta (±48 ticks)": [
-     65.2,
-     75.7
+     68.7,
+     78.7
     ],
     "de punta a punta | tramo del analista cubierto por un acorde de la app (≥ la mitad)": [
-     84.4,
-     90.2
+     87.2,
+     92.3
     ],
     "de punta a punta | acorde: raíz (solo la lectura propia)": [
-     67.2,
-     72.2
+     67.7,
+     72.5
     ],
     "de punta a punta | acorde: raíz (acepta A o B)": [
-     68.5,
-     73.2
+     68.9,
+     73.4
     ],
     "de punta a punta | acorde: raíz + calidad (solo la lectura propia)": [
-     56.5,
-     61.3
+     57,
+     61.7
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B)": [
-     58.4,
-     63.3
+     58.9,
+     63.6
     ],
     "de punta a punta | acorde: nombre exacto, sin extensiones (acepta A o B)": [
-     49.6,
-     55.3
+     50.2,
+     55.9
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando": [
-     65.6,
-     70.6
+     66,
+     70.9
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)": [
-     82,
-     86.6
+     82.5,
+     86.9
     ],
     "de punta a punta | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)": [
      0.8,
-     2.1
+     2
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable": [
-     59.1,
-     64.2
+     59.8,
+     64.5
     ],
     "de punta a punta | inversión (cruda)": [
-     70.5,
-     74.1
+     70.7,
+     74.3
     ],
     "de punta a punta | inversión (dado el acorde correcto)": [
-     89.5,
+     89.4,
      92.3
     ],
     "de punta a punta | grado (crudo)": [
-     54.9,
-     62.1
+     54.5,
+     62.2
     ],
     "de punta a punta | grado (dada la tonalidad correcta)": [
-     70.3,
-     75.2
+     70.5,
+     75.4
     ],
     "de punta a punta | enarmonía (nota a nota)": [
      98.2,
      99.1
     ],
     "de punta a punta | enarmonía (tramo con todas las notas bien)": [
-     95.3,
+     95.4,
      96.9
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app": [
-     50.2,
-     55.8
+     52.6,
+     57.5
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app, sin contar los de calidad no determinable": [
-     50.9,
-     56.5
+     53.3,
+     58.2
     ],
     "por tramo | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde": [
      40.4,
      48.9
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde": [
-     37.9,
-     44
+     38,
+     44.1
     ]
    },
    "rock": {
@@ -1084,122 +1084,122 @@
    {
     "cat": "de punta a punta | segmentación: cortes del analista que la app también corta (±48 ticks)",
     "n": 20470,
-    "ok": 18263,
-    "pct": 89.2
+    "ok": 18150,
+    "pct": 88.7
    },
    {
     "cat": "de punta a punta | segmentación: cortes de la app que el analista también corta (±48 ticks)",
-    "n": 32016,
-    "ok": 22227,
-    "pct": 69.4
+    "n": 28878,
+    "ok": 21144,
+    "pct": 73.2
    },
    {
     "cat": "de punta a punta | tramo del analista cubierto por un acorde de la app (≥ la mitad)",
     "n": 21990,
-    "ok": 19158,
-    "pct": 87.1
+    "ok": 19789,
+    "pct": 90
    },
    {
     "cat": "de punta a punta | acorde: raíz (solo la lectura propia)",
-    "n": 19158,
-    "ok": 13180,
-    "pct": 68.8
+    "n": 19789,
+    "ok": 13728,
+    "pct": 69.4
    },
    {
     "cat": "de punta a punta | acorde: raíz (acepta A o B)",
-    "n": 19158,
-    "ok": 13410,
-    "pct": 70
+    "n": 19789,
+    "ok": 13960,
+    "pct": 70.5
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (solo la lectura propia)",
-    "n": 19158,
-    "ok": 11107,
-    "pct": 58
+    "n": 19789,
+    "ok": 11613,
+    "pct": 58.7
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
-    "n": 19158,
-    "ok": 11503,
-    "pct": 60
+    "n": 19789,
+    "ok": 12019,
+    "pct": 60.7
    },
    {
     "cat": "de punta a punta | acorde: nombre exacto, sin extensiones (acepta A o B)",
-    "n": 19158,
-    "ok": 9842,
-    "pct": 51.4
+    "n": 19789,
+    "ok": 10324,
+    "pct": 52.2
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando",
-    "n": 13915,
-    "ok": 9351,
-    "pct": 67.2
+    "n": 14499,
+    "ok": 9835,
+    "pct": 67.8
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)",
-    "n": 6562,
-    "ok": 5520,
-    "pct": 84.1
+    "n": 6898,
+    "ok": 5837,
+    "pct": 84.6
    },
    {
     "cat": "de punta a punta | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)",
-    "n": 19158,
-    "ok": 230,
+    "n": 19789,
+    "ok": 242,
     "pct": 1.2
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable",
-    "n": 18928,
-    "ok": 11503,
-    "pct": 60.8
+    "n": 19547,
+    "ok": 12019,
+    "pct": 61.5
    },
    {
     "cat": "de punta a punta | inversión (cruda)",
-    "n": 19158,
-    "ok": 13792,
-    "pct": 72
+    "n": 19789,
+    "ok": 14313,
+    "pct": 72.3
    },
    {
     "cat": "de punta a punta | inversión (dado el acorde correcto)",
-    "n": 11503,
-    "ok": 10434,
+    "n": 12019,
+    "ok": 10907,
     "pct": 90.7
    },
    {
     "cat": "de punta a punta | grado (crudo)",
-    "n": 19158,
-    "ok": 10883,
-    "pct": 56.8
+    "n": 19789,
+    "ok": 11278,
+    "pct": 57
    },
    {
     "cat": "de punta a punta | grado (dada la tonalidad correcta)",
-    "n": 14418,
-    "ok": 10435,
-    "pct": 72.4
+    "n": 14854,
+    "ok": 10806,
+    "pct": 72.7
    },
    {
     "cat": "de punta a punta | enarmonía (nota a nota)",
-    "n": 79089,
-    "ok": 78110,
+    "n": 81228,
+    "ok": 80239,
     "pct": 98.8
    },
    {
     "cat": "de punta a punta | enarmonía (tramo con todas las notas bien)",
-    "n": 19158,
-    "ok": 18421,
+    "n": 19789,
+    "ok": 19044,
     "pct": 96.2
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app",
     "n": 21990,
-    "ok": 11503,
-    "pct": 52.3
+    "ok": 12019,
+    "pct": 54.7
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app, sin contar los de calidad no determinable",
-    "n": 21760,
-    "ok": 11503,
-    "pct": 52.9
+    "n": 21748,
+    "ok": 12019,
+    "pct": 55.3
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde",
@@ -1209,9 +1209,9 @@
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde",
-    "n": 5243,
-    "ok": 2152,
-    "pct": 41
+    "n": 5290,
+    "ok": 2184,
+    "pct": 41.3
    }
   ],
   "rock": [
@@ -1286,10 +1286,10 @@
   {
    "measure": "Acorde de punta a punta (los tramos sin acorde de la app cuentan como fallo)",
    "goal": "60 %",
-   "test": 49.7,
+   "test": 53.3,
    "ci95": [
-    42.9,
-    56.3
+    47.3,
+    60.2
    ]
   },
   {
@@ -1477,35 +1477,35 @@
   {
    "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
    "sig": "raíz equivocada: mayor leído con raíz en su 3ª (m)",
-   "n": 391,
+   "n": 413,
    "example": {
-    "phrase": "B063_02_02b",
+    "phrase": "B063_02_01a",
     "mode": "de punta a punta",
-    "label": "Ib/III",
+    "label": "Vb",
     "key": "c",
-    "notes": "G (55) Bb (58)",
-    "expected": "E♭/1ª inversión",
-    "got": "Gm"
+    "notes": "B (59) D (62)",
+    "expected": "G/1ª inversión",
+    "got": "Bm"
    }
   },
   {
    "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
    "sig": "raíz bien; esperado 7, la app leyó mayor",
-   "n": 347,
+   "n": 366,
    "example": {
-    "phrase": "B064_03_03c",
+    "phrase": "B063_09_01a",
     "mode": "de punta a punta",
     "label": "V7",
-    "key": "f",
-    "notes": "C (36) E (64) G (67)",
-    "expected": "C7",
-    "got": "C"
+    "key": "C",
+    "notes": "G (43) B (47) D (50) G (55)",
+    "expected": "G7",
+    "got": "G"
    }
   },
   {
    "cat": "de punta a punta | inversión (dado el acorde correcto)",
    "sig": "con el acorde bien: esperado fundamental, la app dio 1ª inversión",
-   "n": 253,
+   "n": 268,
    "example": {
     "phrase": "B063_00_01a",
     "mode": "de punta a punta",
@@ -1544,7 +1544,7 @@
   {
    "cat": "de punta a punta | inversión (dado el acorde correcto)",
    "sig": "con el acorde bien: esperado fundamental, la app dio 2ª inversión",
-   "n": 176,
+   "n": 180,
    "example": {
     "phrase": "B064_02_01a",
     "mode": "de punta a punta",
@@ -1572,7 +1572,7 @@
   {
    "cat": "de punta a punta | inversión (dado el acorde correcto)",
    "sig": "con el acorde bien: esperado 1ª inversión, la app dio fundamental",
-   "n": 152,
+   "n": 156,
    "example": {
     "phrase": "B064_02_01a",
     "mode": "de punta a punta",
@@ -1599,7 +1599,7 @@
   {
    "cat": "de punta a punta | enarmonía (nota a nota)",
    "sig": "G# escrito Ab",
-   "n": 141,
+   "n": 143,
    "example": {
     "phrase": "B064_05_01a",
     "label": "I",

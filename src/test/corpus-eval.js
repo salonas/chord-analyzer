@@ -122,6 +122,19 @@ function bestOverlap(seg, others) {
   for (const o of others) { const v = overlap(seg, o); if (v > bo) { bo = v; best = o; } }
   return best;
 }
+// The app's chords as the analyst cuts: neighbours that the app reads the same (root, type and bass, as the lane shows them,
+// with the key and the context) are one stretch, because the app gave the same harmony on several attacks. It is part of
+// what the end-to-end rows measure (decided 2 Nov 2026), not a change of the app: the lane still shows each attack
+const sameReading = (x, y) => !!x.c && !!y.c && x.c.root === y.c.root && x.c.type.sym === y.c.type.sym && x.c.bass % 12 === y.c.bass % 12;
+export function laneStretches(segs, A) {
+  const out = [];
+  segs.forEach((s, i) => {
+    const g = out[out.length - 1];
+    if (g && s.a - g.b <= 5 && sameReading(A.rs[g.parts[g.parts.length - 1]], A.rs[i])) { g.b = s.b; g.parts.push(i); }
+    else out.push({ a: s.a, b: s.b, parts: [i] });
+  });
+  return out;
+}
 const sameChord = (e, o) => o && o.exp && e.root === o.exp.root && e.quality === o.exp.quality && e.seventh === o.exp.seventh;
 
 // Scores one step against the expected data of its segment (and the other annotator's reading of the same stretch).
@@ -191,6 +204,7 @@ export function evalTavern(pieces, { plain = false } = {}) {
     const pat = normProg({ id: 'x', name: ph.id, beats: Math.max(1, Math.ceil(ph.end / 96)), notes: ph.notes.map((n, i) => ({ id: 'n' + i, m: n[0], s: n[1], l: n[2], v: 100 })), names: {} });
     const appSegs = harmonySegs(pat);
     const appA = appSegs.length ? analyzeProgression(appSegs.map(S => segStep(pat, S)).map(st => (plain ? { notes: st.notes, dur: st.dur } : st)), P) : null;
+    const lane = appA ? laneStretches(appSegs, appA) : [];
     const expKey = { tonic: ph.key.tonic, mode: ph.key.mode };
     for (const who of ['A', 'B']) {
       const mine = ph.segs[who], theirs = ph.segs[who === 'A' ? 'B' : 'A'];
@@ -228,16 +242,18 @@ export function evalTavern(pieces, { plain = false } = {}) {
           T.add(mode + ' | tonalidad (solo la tónica)', appA.key.tonic === expKey.tonic);
         }
         const conv = mine.filter(s => s.exp);
-        info.appChordsPerAnalystSeg.push([appSegs.length, mine.length]);
+        info.appChordsPerAnalystSeg.push([lane.length, mine.length]);
         // boundaries: each analyst boundary against the app's, within an eighth note
         const bounds = a => [...new Set(a.flatMap(s => [s.a]).slice(1))];
-        const ab = bounds(mine), pb = bounds(appSegs);
+        const ab = bounds(mine), pb = bounds(lane);
         ab.forEach(t => T.add(mode + ' | segmentación: cortes del analista que la app también corta (±48 ticks)', pb.some(x => Math.abs(x - t) <= 48), null));
         pb.forEach(t => T.add(mode + ' | segmentación: cortes de la app que el analista también corta (±48 ticks)', ab.some(x => Math.abs(x - t) <= 48), null));
         for (const s of conv) {
-          // the app chord that covers most of the analyst's stretch, if it covers at least half
-          const k = appSegs.reduce((b, c, i) => (overlap(s, c) > (b < 0 ? 0 : overlap(s, appSegs[b])) ? i : b), -1);
-          const covered = k >= 0 && overlap(s, appSegs[k]) * 2 >= s.b - s.a;
+          // the app stretch that covers most of the analyst's stretch, if it covers at least half; it is scored on its piece
+          // that overlaps the analyst's stretch most (all its pieces have the same chord and bass)
+          const g = lane.reduce((b, c, i) => (overlap(s, c) > (b < 0 ? 0 : overlap(s, lane[b])) ? i : b), -1);
+          const covered = g >= 0 && overlap(s, lane[g]) * 2 >= s.b - s.a;
+          const k = covered ? lane[g].parts.reduce((b, i) => (overlap(s, appSegs[i]) > overlap(s, appSegs[b]) ? i : b)) : -1;
           T.add(mode + ' | tramo del analista cubierto por un acorde de la app (≥ la mitad)', covered, null);
           const all = mode + ' | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app';
           if (!covered) { T.add(all, false); T.add(all + ', sin contar los de calidad no determinable', false); continue; }
