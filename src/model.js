@@ -58,8 +58,13 @@ function segs(p){
 function isBlock(p,S){ return [...S.ids].every(id=>{const n=p.notes.find(x=>x.id===id); return n&&n.s===S.a&&n.s+n.l===S.b;}); }
 // a: where a step starts; evs: when each of its notes sounds, so that the analysis can tell an ornament from a chord tone.
 // Every caller that reads the chords of a pattern passes it, so the chord lane, the text export and the melody roles agree
-const stepTiming=(p,a,b,notes)=>({a,evs:p.notes.filter(n=>notes.includes(n.m)&&n.s<b&&n.s+n.l>a).map(n=>({m:n.m,s:n.s,l:n.l}))});
-const segStep=(p,S)=>({notes:S.notes,dur:S.b-S.a,...stepTiming(p,S.a,S.b,S.notes),...(p.names[S.sig]||{})});
+// all: every note that sounds in the step, the tune too, for a chord read under a tune (withMel), so that the tune may
+// complete its name (readWithMelody); the step still shows and spells its own notes
+const stepTiming=(p,a,b,notes,withMel)=>{
+  const on=p.notes.filter(n=>n.s<b&&n.s+n.l>a), ev=n=>({m:n.m,s:n.s,l:n.l});
+  return {a,evs:on.filter(n=>notes.includes(n.m)).map(ev),...(withMel&&{all:on.map(ev)})};
+};
+const segStep=(p,S)=>({notes:S.notes,dur:S.b-S.a,...stepTiming(p,S.a,S.b,S.notes,S.withMel),...(p.names[S.sig]||{})});
 function isPure(p,S){ return S.length&&S[0].a===0&&p.notes.every(n=>n.v===100&&!n.g)&&S.every((s,i)=>isBlock(p,s)&&(i===0||S[i-1].b===s.a)); }
 
 const EXAMPLE_NAME=['Ejemplo: turnaround en Do','Example: turnaround in C'];

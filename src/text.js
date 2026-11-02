@@ -65,7 +65,7 @@ function melodyRole(mel,i,info,toneAt,prefs,next,key){
 }
 function harmonyLines(p,prefs,L){
   const Hm=splitHarmony(p);
-  const A=analyzeProgression(Hm.chords.map(c=>({notes:c.notes,dur:c.b-c.a,...stepTiming(p,c.a,c.b,c.notes),...(p.names[sigOf(c.notes)]||{})})),prefs);
+  const A=analyzeProgression(Hm.chords.map(c=>({notes:c.notes,dur:c.b-c.a,...stepTiming(p,c.a,c.b,c.notes,c.withMel),...(p.names[sigOf(c.notes)]||{})})),prefs);
   return {Hm,A,write(){
     const nt=m=>noteText(plainSpell(m,prefs,A.key),prefs);
     L.push(tr('# Armonía: n. acorde | grado (función · tensión estimada 0–1: base (función y disonancia) + contexto (llegada, sorpresa, espera)) | inicio–fin (tiempos) | voces | bajo','# Harmony: n. chord | degree (function · estimated tension 0–1: base (function and dissonance) + context (arrival, surprise, wait)) | start–end (beats) | voices | bass')+octTail(prefs));

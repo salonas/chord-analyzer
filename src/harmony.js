@@ -216,6 +216,9 @@ function splitHarmony(p){
   chords.splice(0,chords.length,...chords.flatMap(c=>staleChord(ns,c,role)));
   if(ns.length&&first>ns[0].s) chords.unshift(...gridChords(ns,ns[0].s,first));
   chords.forEach(c=>{
+    // a chord with the tune around it: its name may take notes of the tune (readWithMelody); plain blocks (decision 2) and the
+    // one-voice arpeggio do not
+    c.withMel=true;
     c.bass.sort((x,y)=>x.s-y.s);
     c.bass=c.bass.filter((x,i,a)=>i===0||x.pass||a[i-1].pass||x.m!==a[i-1].m);
     c.adds.sort((x,y)=>x.s-y.s||x.m-y.m);
@@ -233,7 +236,7 @@ function splitHarmony(p){
 // ids are the chord's own notes (not the tune), so deleting a chord leaves the melody
 function harmonySegs(p){
   const H=splitHarmony(p);
-  return H.chords.map(c=>({a:c.a,b:c.b,notes:c.notes,sig:sigOf(c.notes),
+  return H.chords.map(c=>({a:c.a,b:c.b,notes:c.notes,sig:sigOf(c.notes),...(c.withMel&&{withMel:true}),
     ids:c.own||new Set(p.notes.filter(n=>H.role.get(n.id)!=='mel'&&n.s>=c.a-TOL&&n.s<c.b-TOL).map(n=>n.id))}));
 }
 

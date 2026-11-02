@@ -210,6 +210,14 @@ describe('row 6: the names of a lane chord with an ornament', () => {
     expect([r.label, r.orn, r.ornAlt]).toEqual(['Cmaj7', undefined, [59]]);
     expect(names(activeCands(notes, null, r.ornAlt, true))).toEqual([...names(analyze(notes, null)), [0, '', ['Adorno: B3', 'bajo = fundamental']]]);
   });
+  it('puts a lane reading that takes a note of the tune first, tagged with it', () => {
+    const ns = [48, 64], r = resolveStep({ notes: ns, dur: 384, a: 0, evs: ns.map(m => ({ m, s: 0, l: 384 })), all: [48, 64, 67].map(m => ({ m, s: 0, l: 384 })) }, PREFS);
+    const cs = activeCands(ns, null, [], false, r.c), tags = c => candTags(c, spellCandidate(c, ns, PREFS), null, PREFS).map(t => t.text);
+    expect([cs[0].root, cs[0].type.sym, tags(cs[0])]).toEqual([0, '', ['Con la melodía: G', 'bajo = fundamental']]);
+    expect(inEnglish(() => tags(cs[0]))).toEqual(['With the melody: G', 'bass is the root']);
+    expect([cs[1].root, cs[1].type.sym, tags(cs[1])]).toEqual([0, '', ['bajo = fundamental', 'sin 5']]);
+    expect(activeCands(ns, 0, [], false, r.c)).toEqual(analyze(ns, 0));
+  });
   it('is the plain list without ornaments or with a chosen root', () => {
     expect(activeCands(notes, null, [])).toEqual(analyze(notes, null));
     expect(activeCands(notes, 0, [59])).toEqual(analyze(notes, 0));
