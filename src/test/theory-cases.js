@@ -80,6 +80,21 @@ for (const [id, lv, desc, notes, exp] of chordCases) {
   add('acorde', id, lv, `${desc}: ${notes}`, exp, r.label, acc(exp, r.label), '', 'alternativas: ' + alts.join(', '));
 }
 
+// ---------- A'. chords whose notes say when they sound: the ornament rule (THEORY.md, 1 Nov 2026) ----------
+// each note is [name, start, length] in beats inside a four-beat step; without the timing the same notes read as before
+const ornCases = [
+  ['O01', 2, 'Nota de paso F entre E y G sobre C', [['C3', 0, 4], ['E3', 0, 4], ['G3', 0, 4], ['E4', 0, 1], ['F4', 1, 1], ['G4', 2, 2]], 'C'],
+  ['O02', 2, 'Bordadura D sobre C', [['C3', 0, 4], ['G3', 0, 4], ['E4', 0, 1], ['D4', 1, .5], ['E4', 1.5, 2.5]], 'C'],
+  ['O03', 2, 'Apoyatura F en el pulso, resuelve a E', [['C3', 0, 4], ['G3', 0, 4], ['F4', 0, 1], ['E4', 1, 3]], 'C'],
+  ['O04', 2, 'Séptima de paso breve al final: no hace Cmaj7', [['C3', 0, 4], ['E3', 0, 4], ['G3', 0, 4], ['B3', 3.5, .5]], 'C'],
+  ['O05', 1, 'Séptima que dura todo el tramo: sigue siendo Cmaj7', [['C3', 0, 4], ['E3', 0, 4], ['G3', 0, 4], ['B3', 0, 4]], 'Cmaj7'],
+];
+for (const [id, lv, desc, evs, exp] of ornCases) {
+  const notes = [...new Set(evs.map(e => midiOf(e[0])))].sort((a, b) => a - b);
+  const r = resolveStep({ notes, dur: 4 * T, a: 0, evs: evs.map(([x, s, l]) => ({ m: midiOf(x), s: s * T, l: l * T })) }, P);
+  add('acorde', id, lv, `${desc}: ${evs.map(([x, s, l]) => `${x}@${s}+${l}`).join(' ')}`, exp, r.label, acc(exp, r.label), 'regla de notas de adorno (THEORY.md)');
+}
+
 // ---------- B. inversions ----------
 const invCases = [
   ['B01', 1, 'C/E', 'E3 G3 C4', '1ª inversión'],
@@ -364,6 +379,9 @@ mc('J18', 2, 'Viaje de ida y vuelta: exportar e importar el texto', [['C3 E3 G3'
 mc('J30', 2, 'Tensión de la melodía: baja, media y alta sobre C (E, D, F)', [['C3 E3 G3', 4]], [['E4', 0, 1], ['D4', 1, 1], ['F4', 2, 1], ['G4', 3, 1]], { tension: [['E4', '0', 'baja'], ['D4', '1', 'media'], ['F4', '2', 'alta']] });
 mc('J31', 2, 'Blue note sobre C7: E♭ es ♭3, no ♯9', [['C3 E3 G3 Bb3', 4], ['F3 A3 C4 Eb4', 4], ['C3 E3 G3 Bb3', 4]], [['G4', 0, 1], ['Eb4', 1, 1], ['E4', 2, 2], ['C4', 4, 4], ['C4', 8, 4]], { interval: [['G4', '0', '5'], ['E♭4', '1', '♭3'], ['E4', '2', '3']] });
 mc('J32', 3, 'F♯ sobre C es ♯11', [['C3 E3 G3', 4]], [['E4', 0, 1], ['F#4', 1, 1], ['G4', 2, 2]], { interval: [['F♯4', '1', '♯11']] });
+// the ornament rule through the app's own chords: a 7th struck with the chord for a sixteenth does not make it a seventh chord
+mc('J33', 2, 'B3 breve atacado con C (adorno): el acorde es C', [['C3 E3 G3', 4]], [['B3', 0, .25]], { chords: ['C'] });
+mc('J34', 1, 'B3 que dura lo mismo que C: el acorde es Cmaj7', [['C3 E3 G3 B3', 4]], [], { chords: ['Cmaj7'] });
 
 for (const c of melCases) {
   const p = pat(c.id, c.chords, c.mel);

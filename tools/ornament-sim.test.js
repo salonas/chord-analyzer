@@ -67,6 +67,9 @@ describe.skipIf(!process.env.ORNAMENT_SIM)('ornament simulation', () => it('dev 
     'λ2 ext<15% κ2': { lambda: 2, beat: 1.5, bass: 2, theta: .15, kappa: 2 },
     'λ3 ext<15% κ2 max5': { lambda: 3, beat: 1.5, bass: 2, theta: .15, kappa: 2, maxDrop: 5 },
     'λ2 ext<20% κ2 max5': { lambda: 2, beat: 1.5, bass: 2, theta: .20, kappa: 2, maxDrop: 5 },
+    'λ3 ext<15% κ2 max5, sin pesos de pulso ni bajo': { lambda: 3, theta: .15, kappa: 2, maxDrop: 5 },
+    'λ3 ext<15% κ2 max5, solo bajo ×2': { lambda: 3, bass: 2, theta: .15, kappa: 2, maxDrop: 5 },
+    'λ3 ext<15% κ2 max5, solo pulso ×1,5': { lambda: 3, beat: 1.5, theta: .15, kappa: 2, maxDrop: 5 },
   };
   const acc = Object.fromEntries(Object.keys(variants).map(k => [k, { n: 0, ok: 0, exact: [0, 0], orn: [0, 0] }]));
   const cats = new Map();

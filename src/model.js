@@ -56,7 +56,10 @@ function segs(p){
   return out;
 }
 function isBlock(p,S){ return [...S.ids].every(id=>{const n=p.notes.find(x=>x.id===id); return n&&n.s===S.a&&n.s+n.l===S.b;}); }
-const segStep=(p,S)=>({notes:S.notes,dur:S.b-S.a,...(p.names[S.sig]||{})});
+// a: where a step starts; evs: when each of its notes sounds, so that the analysis can tell an ornament from a chord tone.
+// Every caller that reads the chords of a pattern passes it, so the chord lane, the text export and the melody roles agree
+const stepTiming=(p,a,b,notes)=>({a,evs:p.notes.filter(n=>notes.includes(n.m)&&n.s<b&&n.s+n.l>a).map(n=>({m:n.m,s:n.s,l:n.l}))});
+const segStep=(p,S)=>({notes:S.notes,dur:S.b-S.a,...stepTiming(p,S.a,S.b,S.notes),...(p.names[S.sig]||{})});
 function isPure(p,S){ return S.length&&S[0].a===0&&p.notes.every(n=>n.v===100&&!n.g)&&S.every((s,i)=>isBlock(p,s)&&(i===0||S[i-1].b===s.a)); }
 
 const EXAMPLE_NAME=['Ejemplo: turnaround en Do','Example: turnaround in C'];
@@ -78,4 +81,4 @@ const trackPat=(p,t)=>({id:t.id,name:t.name,inst:t.inst,bend:p.bend,...(gmOn(t)&
 const soundPat=(p,id)=>isMulti(p)?trackPat(p,p.tracks.find(t=>t.id===id)||p.tracks[0]):p;
 function isDrum(p){ return !!(p&&p.inst&&p.inst.preset==='bateria'); }
 
-export { EXAMPLE, EXAMPLE_NAME, activePat, gmOn, hash01, isBlock, isDrum, isMulti, isPure, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs, soundPat, trackOf, trackPat };
+export { EXAMPLE, EXAMPLE_NAME, activePat, gmOn, hash01, isBlock, isDrum, isMulti, isPure, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs, soundPat, stepTiming, trackOf, trackPat };

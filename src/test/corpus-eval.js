@@ -110,9 +110,10 @@ export function bootstrapDiff(before, after) {
 }
 
 // ---------- TAVERN ----------
-const stepOf = (notes, a, b) => {
-  const ms = [...new Set(notes.filter(n => n[1] < b && n[1] + n[2] > a).map(n => n[0]))].sort((x, y) => x - y);
-  return ms.length ? { notes: ms, dur: b - a } : null;
+// with plain, the steps carry no timing and the analysis reads them as it did before the ornament rule (the «before» of a comparison)
+const stepOf = (notes, a, b, plain) => {
+  const on = notes.filter(n => n[1] < b && n[1] + n[2] > a), ms = [...new Set(on.map(n => n[0]))].sort((x, y) => x - y);
+  return ms.length ? { notes: ms, dur: b - a, ...(!plain && { a, evs: on.map(n => ({ m: n[0], s: n[1], l: n[2] })) }) } : null;
 };
 const kernNames = notes => { const m = new Map(); notes.forEach(n => { if (!m.has(n[0])) m.set(n[0], new Set()); m.get(n[0]).add(n[3]); }); return m; };
 const overlap = (x, y) => Math.max(0, Math.min(x.b, y.b) - Math.max(x.a, y.a));
@@ -174,7 +175,7 @@ function scoreStep(T, mode, ph, seg, other, r, rom, keyOk, kern) {
   return qualAny;
 }
 
-export function evalTavern(pieces) {
+export function evalTavern(pieces, { plain = false } = {}) {
   const T = new Tally(), info = { phrases: 0, segsConverted: 0, segsSkipped: 0, complete: 0, incompleteSegs: 0, appChordsPerAnalystSeg: [], agreement: new Tally() };
   const kernOf = ph => { const m = kernNames(ph.notes); return midis => { const out = new Map(); midis.forEach(x => out.set(x, m.get(x) || new Set())); return out; }; };
   for (const piece of pieces) for (const ph of piece.phrases) {
@@ -183,7 +184,7 @@ export function evalTavern(pieces) {
     // pattern for the app's own segmentation
     const pat = normProg({ id: 'x', name: ph.id, beats: Math.max(1, Math.ceil(ph.end / 96)), notes: ph.notes.map((n, i) => ({ id: 'n' + i, m: n[0], s: n[1], l: n[2], v: 100 })), names: {} });
     const appSegs = harmonySegs(pat);
-    const appA = appSegs.length ? analyzeProgression(appSegs.map(S => segStep(pat, S)), P) : null;
+    const appA = appSegs.length ? analyzeProgression(appSegs.map(S => segStep(pat, S)).map(st => (plain ? { notes: st.notes, dur: st.dur } : st)), P) : null;
     const expKey = { tonic: ph.key.tonic, mode: ph.key.mode };
     for (const who of ['A', 'B']) {
       const mine = ph.segs[who], theirs = ph.segs[who === 'A' ? 'B' : 'A'];
@@ -198,7 +199,7 @@ export function evalTavern(pieces) {
       }
       // ---- by annotated stretch: the app gets the notes of each stretch ----
       const steps = [], idx = [];
-      mine.forEach((s, i) => { const st = stepOf(ph.notes, s.a, s.b); if (st) { idx.push(i); steps.push(st); } });
+      mine.forEach((s, i) => { const st = stepOf(ph.notes, s.a, s.b, plain); if (st) { idx.push(i); steps.push(st); } });
       if (steps.length) {
         const A = analyzeProgression(steps, P);
         const keyRel = keyRelation(A.key, expKey), keyOk = keyRel === 'ok';
