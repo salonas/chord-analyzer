@@ -38,8 +38,8 @@ Además, fuera de las 24 filas:
 | Modos | dec. 3; Reglas: Modo | sonda F |
 | Regiones y pivote | dec. 15 | `src/regions.test.js`; sonda J42 |
 | «(doblada)», E(5) | Cierre: «(doblada)»; Reglas: Nombres en el texto exportado | `src/audit.test.js` «labels fixed at the close»; `src/harmony.test.js` «writes a power chord as E(5), never E5» |
-| Bajo «(paso)» | Reglas: Bajo de paso (no coincide con el código: ver abajo) | `src/harmony.test.js` «writes four chord lines and no lone note as a chord» |
+| Bajo «(breve)» | Reglas: «(breve)» | `src/harmony.test.js` «writes four chord lines and no lone note as a chord» y «short bass notes» |
 
-El bajo «(paso)» tiene regla escrita, pero no coincide con el código (`THEORY.md`, «Pendientes conocidos»): su prueba fija lo que hace el código hoy, no la regla.
+El bajo «(breve)» describe lo que el código detecta y no afirma función; la regla de una nota de paso de verdad queda como mejora futura (`THEORY.md`, «Pendientes conocidos»).
 
-La sesión B agregó 18 pruebas; la suite queda en 1096 + 2 saltadas.
+La sesión B agregó 19 pruebas; la suite queda en 1097 + 2 saltadas.

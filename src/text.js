@@ -76,7 +76,9 @@ function harmonyLines(p,prefs,L){
     if(!Hm.chords.length) L.push(tr('— sin acordes','— no chords'));
     Hm.chords.forEach((c,i)=>{
       const r=A.rs[i], adds=c.adds.map(x=>`+${noteText(lane(x.m,x.s,lenOf(x),r),prefs)} ${tr('en','at')} ${fmtB(x.s)}`).join(' · ');
-      const bass=c.bass.map((x,j)=>(j===0?noteText(r.spelled[0],prefs):nt(x.m))+(x.pass?tr(' (paso)',' (passing)'):'')).join(' → ');
+      // «(breve)»: a bass note that does not start with the chord, sounds under all its notes and lasts half a beat or less
+      // (the role 'pass' of harmony.js); it claims no function, so it is not called a passing tone
+      const bass=c.bass.map((x,j)=>(j===0?noteText(r.spelled[0],prefs):nt(x.m))+(x.pass?tr(' (breve)',' (short)'):'')).join(' → ');
       L.push(`${i+1}. ${chordLabel(r,prefs)} | ${degText(A.romans[i])} (${FN_NAME[A.fn[i]]} · ${tenText(r,A.ten[i])}) | ${numB(c.a)}–${numB(c.b)} | ${r.spelled.slice(1).map(n=>noteText(n,prefs)).join(' ')||'—'}${adds?` (${adds})`:''} | ${bass}`);
     });
     const melLines=(list,head)=>{
@@ -190,7 +192,7 @@ function parseNoteLine(line,off){
   const v=parts[4]?Math.min(127,Math.max(1,Math.round(+parts[4])||100)):100, g=glideOf(parts[6])||glideOf(parts[5]);
   return g?{id:uid(),m,s,l,v,g}:{id:uid(),m,s,l,v};
 }
-// "1. Cmaj7 | Imaj7 (…) | 0–4 | B4 E5 G5 (+A5 at 2.5) | C4 → D4 (passing)": the chord as it starts, for its name
+// "1. Cmaj7 | Imaj7 (…) | 0–4 | B4 E5 G5 (+A5 at 2.5) | C4 → D4 (short)": the chord as it starts, for its name
 function parseHarmonyLine(line,off){
   const parts=line.replace(/^\s*\d+[.)]\s*/,'').split('|').map(x=>x.trim()); if(parts.length<5) return null;
   const bass=parseNotes(parts[4],off)[0], voices=parseNotes(parts[3].split('(')[0],off);
