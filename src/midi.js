@@ -9,8 +9,8 @@ import { flScript } from './flscript.js';
 import { pitchClip } from './flpitch.js';
 
 // ---------- MIDI export (format 0, 96 PPQ) wrapped in a stored zip ----------
-const SUPSUB={'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','𝄫':'bb'};
-const ascii=s=>String(s).replace(/[\u2070\u00B9\u00B2\u00B3\u2074-\u2079\u2080-\u2089]|\u{1D12B}/gu,c=>SUPSUB[c]||'').replace(/♯/g,'#').replace(/♭/g,'b').replace(/Δ/g,'maj').replace(/ø/g,'m7b5').replace(/°/g,'dim').normalize('NFD').replace(/\p{M}/gu,'').replace(/[^\x20-\x7e]/g,'?');
+const SUPSUB={'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','𝄫':'bb','⁺':'+'};
+const ascii=s=>String(s).replace(/[\u2070\u00B9\u00B2\u00B3\u2074-\u207A\u2080-\u2089]|\u{1D12B}/gu,c=>SUPSUB[c]||'').replace(/♯/g,'#').replace(/♭/g,'b').replace(/Δ/g,'maj').replace(/ø/g,'m7b5').replace(/°/g,'dim').normalize('NFD').replace(/\p{M}/gu,'').replace(/[^\x20-\x7e]/g,'?');
 function vlq(n){ const b=[n&0x7f]; while((n>>>=7)) b.unshift((n&0x7f)|0x80); return b; }
 // A multitrack pattern as a format 1 file: a conductor track (tempo, 4/4), then one track per pattern track on its own
 // channel (the kit on 10); muted tracks go too, as the file is for the DAW. Slides and portamentos are not written.

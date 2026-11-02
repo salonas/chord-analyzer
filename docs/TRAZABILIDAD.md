@@ -38,6 +38,7 @@ Además, fuera de las 24 filas:
 | Modos | dec. 3; Reglas: Modo | sonda F |
 | Regiones y pivote | dec. 15 | `src/regions.test.js`; sonda J42 |
 | «(doblada)», E(5) | Cierre: «(doblada)»; Reglas: Nombres en el texto exportado | `src/audit.test.js` «labels fixed at the close»; `src/harmony.test.js` «writes a power chord as E(5), never E5» |
+| Sexta aumentada (It⁺⁶, Fr⁺⁶, Ger⁺⁶) | Reglas: Sexta aumentada | `src/why.test.js` «augmented sixths by name»; `src/midi.test.js` (marca It+6); sonda J46 |
 | Bajo «(breve)» | Reglas: «(breve)» | `src/harmony.test.js` «writes four chord lines and no lone note as a chord» y «short bass notes» |
 
 El bajo «(breve)» describe lo que el código detecta y no afirma función; la regla de una nota de paso de verdad, sin implementar, está en `THEORY.md`, «Reglas de las etiquetas» (nota de paso en el bajo).

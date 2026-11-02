@@ -1,7 +1,7 @@
 // What each melody note is against the chord under it. text.js writes it as words; expression.js shapes the velocity by it,
 // so the export and the expression call the same note by the same name.
 import { T, sigOf } from './data.js';
-import { analyzeProgression } from './analysis.js';
+import { analyzeProgression, aug6Iv } from './analysis.js';
 import { stepTiming } from './model.js';
 import { splitHarmony } from './harmony.js';
 
@@ -26,7 +26,8 @@ function against(m,r,sp){
   if(!r||!r.c) return null;
   // a degree the voicing leaves out (the 5 of C(no5)) still counts as a chord tone
   const degs=r.c.type.degs, rel=((m-r.c.root)%12+12)%12, d=degs.find(x=>x.pc===rel);
-  if(d) return {iv:d.label,ten:d.n<=7?'low':'mid',tone:d.n<=7};
+  // over an augmented sixth the interval is named from the bass by letters: D♯ over F is a ♯6, not the ♭7 of F7
+  if(d) return {iv:r.aug6&&r.aug6.lo&&sp?aug6Iv({midi:m,l:sp.l},r.aug6.lo):d.label,ten:d.n<=7?'low':'mid',tone:d.n<=7};
   // half a step above a chord tone clashes (♭9 over the root, 4 over a major 3rd): an avoid note, the free role. Over a
   // dominant (major 3rd and minor 7th) the ♭9 and the ♭13 are available tensions instead (avail); they still clash, so
   // their tension stays high

@@ -19,8 +19,9 @@ function projHeader(pr,prefs,only){
 // "total 12 beats (3 bars)", in 4/4
 const totalText=p=>{ const t=progEnd(p); return tr(`total ${fmtB(t)} tiempos`,`total ${fmtB(t)} beats`)+barsText(t); };
 const velUsed=p=>{ const v=p.notes.map(n=>n.v||100); return v.length?[Math.min(...v),Math.max(...v)]:null; };
-// chord names never carry an octave: a power chord is E(5), a lone note is "note: E4"
+// chord names never carry an octave: a power chord is E(5), a lone note is "note: E4"; an augmented sixth goes by its kind (It⁺⁶)
 function chordLabel(r,prefs){
+  if(r.aug6) return r.label;
   if(r.c){ const sy=candSymbol(r.c,r.sp,prefs); return (r.c.type.sym==='5'?sy.main.replace(/5$/,'(5)'):sy.main)+sy.slash; }
   if(r.notes.length&&new Set(r.notes.map(m=>m%12)).size===1) return `${tr('nota','note')}: ${r.spelled.map(n=>noteText(n,prefs)).join('+')}${r.notes.length>1?tr(' (doblada)',' (doubled)'):''}`;
   return r.label;

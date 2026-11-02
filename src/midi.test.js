@@ -23,6 +23,14 @@ describe('midiFile', () => {
       expect(r.skipped).toBe(c.skipped);
     });
   }
+  // an augmented sixth's marker goes by its kind, in ASCII as every marker (manual test, P4)
+  it('writes the marker of an augmented sixth as It+6', () => {
+    const chords = [[45, 48, 52], [41, 45, 51], [40, 44, 47], [45, 48, 52]];
+    const p = { ...clone(turnaround.patterns[0]), notes: chords.flatMap((ms, i) => ms.map((m, j) => ({ id: `a${i}${j}`, m, s: i * 384, l: 384, v: 100 }))) };
+    const b = Buffer.from(midiFile(p, 90, PREFS).bytes), marks = [];
+    for (let i = 0; i < b.length - 2; i++) if (b[i] === 0xff && b[i + 1] === 0x06) marks.push(b.subarray(i + 3, i + 3 + b[i + 2]).toString('latin1'));
+    expect(marks).toEqual(['Am', 'It+6', 'E', 'Am']);
+  });
   it('drum pattern without chord markers', () => {
     const c = fx.midi.default.drums, r = midiFile(clone(c.input), c.bpm, PREFS);
     expect(hex(r.bytes)).toBe(c.hex);

@@ -1,5 +1,5 @@
 import { TYPES } from './data.js';
-import { analyze, analyzeProgression, bookends, melodyText, ornamentText, rankHelp, resolveStep, scoreDetail } from './analysis.js';
+import { analyze, analyzeProgression, aug6Iv, aug6Text, bookends, melodyText, ornamentText, rankHelp, resolveStep, scoreDetail } from './analysis.js';
 import { setLang } from './i18n.js';
 import { PREFS } from './test/helpers.js';
 
@@ -120,6 +120,29 @@ describe('row 10: the reasons of the key', () => {
     const items = [C, F, G7, Am].map(notes => ({ root: analyze(notes, null)[0].root, q: analyze(notes, null)[0].type.q }));
     expect(bookends(items, 9, 'minor').last).toBe(false);
     expect(bookends(items, 9, 'minor').first).toBe(false);
+  });
+});
+
+// An augmented sixth goes by its kind (It⁺⁶), keeps its figure as a degree and spells its notes from the bass (manual test, P4)
+describe('augmented sixths by name', () => {
+  const Am = [45, 48, 52], E = [40, 44, 47], It = [41, 45, 51], Fr = [41, 45, 47, 51], Ger = [41, 45, 48, 51];
+  const at1 = x => { const A = run([Am, x, E, Am]); return { r: A.rs[1], ro: A.romans[1] }; };
+  it('names It⁺⁶, Fr⁺⁶ and Ger⁺⁶ and keeps the figure of the degree', () => {
+    expect([It, Fr, Ger].map(x => at1(x).r.label)).toEqual(['It⁺⁶', 'Fr⁺⁶', 'Ger⁺⁶']);
+    expect([It, Fr, Ger].map(x => at1(x).ro.short)).toEqual(['It⁶', 'Fr⁴₃', 'Ger⁶₅']);
+  });
+  it('spells the sixth from the bass, D♯ over F, for the chord and for the melody', () => {
+    const { r } = at1(It);
+    expect(r.spelled.map(n => n.l + ':' + n.a)).toEqual(['3:0', '5:0', '1:1']);
+    expect(r.sp.byPc[3]).toMatchObject({ l: 1, a: 1 });
+    expect(r.spelled.map(n => aug6Iv(n, r.aug6.lo))).toEqual(['1', '3', '♯6']);
+    expect(at1(Fr).r.spelled.map(n => aug6Iv(n, at1(Fr).r.aug6.lo))).toEqual(['1', '3', '♯4', '♯6']);
+  });
+  it('says in the inspector what the sixth is and where its notes go, in both languages', () => {
+    expect(aug6Text(at1(It).r.aug6, PREFS)).toBe('Sexta aumentada italiana: F–D♯ es una 6ª aumentada; las dos notas van a E');
+    expect(inEnglish(() => aug6Text(at1(It).r.aug6, PREFS))).toBe('Italian augmented sixth: F–D♯ is an augmented sixth; both notes go to E');
+    expect(aug6Text(at1(Fr).r.aug6, PREFS)).toBe('Sexta aumentada francesa: F–D♯ es una 6ª aumentada; las dos notas van a E');
+    expect(inEnglish(() => aug6Text(at1(Ger).r.aug6, PREFS))).toBe('German augmented sixth: F–D♯ is an augmented sixth; both notes go to E');
   });
 });
 

@@ -5,7 +5,7 @@ import { EXAMPLE_NAME, activePat, gmOn, isBlock, isDrum, isMulti, newPattern, ne
 import { gmName } from './gm.js';
 import { fut, hist, lib, persistLib, saveDraft, savePrefs, st } from './state.js';
 import { activeCands, candTags, chordDesc, chordWarnings, emptySheetText, endingText, intervalText, sheetHint, spellActive, warningText } from './panel.js';
-import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, degreeText, keyName, keyText, letterName, melodyText, noteText, octOff, ornamentText, pivotTitle, plainSpell, rankHelp, regionTexts, resolveStep, scoreDetail, spellCandidate, tenDetail, tensionHelp } from './analysis.js';
+import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, degreeText, keyName, keyText, letterName, melodyText, noteText, octOff, ornamentText, aug6Iv, aug6Text, pivotTitle, plainSpell, rankHelp, regionTexts, resolveStep, scoreDetail, spellCandidate, tenDetail, tensionHelp } from './analysis.js';
 import { EX_KEYS, FEELINGS, exDefaults, exprSummary, expressPattern, instLabel } from './expression.js';
 import { DRUMS, GROOVES, expressDrums, genGroove } from './drums.js';
 import { libText, parseText, pickInterp, projectText } from './text.js';
@@ -155,7 +155,11 @@ function renderActive(){
   const cur=cands[st.pick]; lastCur=cur;
   // a chord taken from the progression is spelled in the key the lane reads it in (G♯7, not A♭7, in C♯ minor)
   const key=st.src==='seg'&&R.A?R.A.key:undefined;
-  const {sp,spelled}=spellActive(notes,cur,st,key);
+  const {sp,spelled:sp0}=spellActive(notes,cur,st,key);
+  // an augmented sixth taken from the lane keeps its name and its letters (D♯, not E♭) while its reading is the one in use
+  const aug=r0&&r0.aug6&&cur&&r0.c&&cur.root===r0.c.root&&cur.type.sym===r0.c.type.sym?r0:null;
+  const own=n=>{ const x=aug.spelled.find(y=>y.midi===n.midi); return x?{...x,deg:x.deg&&{...x.deg,label:aug6Iv(x,aug.aug6.lo)}}:n; };
+  const spelled=aug?sp0.map(own):sp0;
   const rootPc=cur?cur.root:(st.lockedRoot!==null?st.lockedRoot:null); R.rootPc=rootPc;
   const S=curSeg(), modified=sigOf(notes)!==st.srcSig;
   let src=tr('Acorde activo · armado a mano','Active chord · built by hand');
@@ -168,8 +172,8 @@ function renderActive(){
   const nameEl=$('chordName'), descEl=$('chordDesc');
   if(cur){
     const sy=candSymbol(cur,sp,st);
-    nameEl.innerHTML=esc(sy.main)+(sy.slash?`<span class="slash">${esc(sy.slash)}</span>`:'');
-    descEl.textContent=chordDesc(cur,sp,spelled,st);
+    nameEl.innerHTML=aug?esc(aug.label):esc(sy.main)+(sy.slash?`<span class="slash">${esc(sy.slash)}</span>`:'');
+    descEl.textContent=aug?aug6Text(aug.aug6,st):chordDesc(cur,sp,spelled,st);
   } else if(notes.length===1){
     nameEl.textContent=noteText(spelled[0],st); descEl.textContent=tr('Una sola nota.','A single note.');
   } else if(notes.length===2){
