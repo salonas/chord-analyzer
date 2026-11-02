@@ -391,6 +391,10 @@ mc('J36', 2, 'Bajo en octavas con melodía en corcheas encima: forma acordes', [
 // a struck chord that goes on after its notes stop is read again where the broken accompaniment goes on; a chord that still sounds is not
 mc('J37', 2, 'C atacado una vez y después bajo Alberti en G con melodía: el C no sigue sonando', [], [['C3', 0, 1], ['E3', 0, 1], ['G3', 0, 1], ['E5', 0, 1], ['G2', 1, .5], ['D3', 1.5, .5], ['B2', 2, .5], ['D3', 2.5, .5], ['G2', 3, .5], ['D3', 3.5, .5], ['D5', 1, 2], ['B4', 3, 1]], { chords: ['C', 'G'] });
 mc('J38', 2, 'C sostenido cuatro tiempos con melodía en corcheas que arpegia otro acorde: sigue siendo C', [['C3 E3 G3', 4]], [['F4', 0, .5], ['A4', .5, .5], ['D5', 1, .5], ['B4', 1.5, .5], ['F4', 2, .5], ['A4', 2.5, .5], ['D5', 3, .5], ['B4', 3.5, .5]], { chords: ['C'] });
+// the notes the lane shows apart from its chords are spelled by the semitone they go up to, as the notes of a step (decision 14)
+mc('J39', 2, 'Paso cromático en la melodía, G♯ → A: se escribe por la nota a la que sube (decisión 14)', [['C3 E3 G3', 4], ['F3 A3 C4', 4]], [['E4', 0, 1], ['G4', 1, 1], ['G#4', 2, 1], ['A4', 3, 1], ['A4', 4, 4]], { textHas: ['G♯4 (68)'], textNot: ['A♭4 (68)'] });
+mc('J40', 2, 'Nota agregada del carril, G♯3 → A3: se escribe por la nota a la que sube (decisión 14)', [['C3 E3', 4], ['F3 C4', 4]], [['G3', 0, 2], ['G#3', 2, 2], ['A3', 4, 4], ['E5', 0, 4], ['F5', 4, 4]], { textHas: ['+G♯3 en 2'], textNot: ['+A♭3'] });
+mc('J41', 3, 'C natural que sube a C♯ en Re mayor: sigue siendo C, no B♯ (semitono cromático, misma letra)', [['D3 F#3 A3', 4], ['G2 B2 D3', 4], ['A2 C#3 E3 G3', 4], ['D3 F#3 A3', 4]], [['F#4', 0, 2], ['A4', 2, 2], ['B4', 4, 2], ['C5', 6, 2], ['C#5', 8, 4], ['D5', 12, 4]], { key: 'D mayor', textHas: ['C5 (72)'], textNot: ['B♯4'] });
 
 for (const c of melCases) {
   const p = pat(c.id, c.chords, c.mel);

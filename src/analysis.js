@@ -441,25 +441,36 @@ function chromaticReading(rs,romans,key,prefs){
 // starting then a semitone down; the notes of every step of the progression count, so the goal may be in the next chord. A note
 // that goes down keeps its name (written by the semitone it goes to, B → B♭ came out C♭). Only with auto accidentals, and only
 // for steps that say when their notes sound. Fixed on the development set of TAVERN (2 Nov 2026; decision 14)
+// A natural note whose goal has its own letter (C → C♯ in D major) keeps it: the letter under the goal gave B♯ → C♯
+function goalSpell(n,a,b,evs,key,prefs,blue){
+  if(SCALE_STEPS[key.mode].some(x=>(x+key.tonic)%12===n.midi%12)) return n;
+  const d=evs.filter(x=>x.m===n.midi&&x.s<b&&x.s+x.l>a).map(x=>{const nx=new Set(evs.filter(y=>y.s===x.s+x.l&&Math.abs(y.m-n.midi)===1).map(y=>y.m-n.midi)); return nx.size===1?[...nx][0]:0;}).filter(Boolean);
+  if(!d.length||d.some(x=>x!==1)) return n;
+  const g=plainSpell(n.midi+1,prefs,key); if(!n.a&&g.l===n.l) return n;
+  if(blue) return n;
+  const l=(g.l+6)%7; let ac=((n.midi-NAT[l])%12+12)%12; if(ac>6) ac-=12;
+  return Math.abs(ac)<=1?{...n,...spellMidi(n.midi,l,ac)}:n;
+}
+const isBlue=(m,r,key)=>key.mode==='major'&&(m-key.tonic+12)%12===3&&!!r&&!!r.c&&r.c.root===key.tonic&&[4,10].every(x=>r.notes.some(y=>(y-key.tonic+12)%12===x));
+const autoAcc=prefs=>prefs.accPref!=='sharp'&&prefs.accPref!=='flat';
 function spellByGoal(rs,steps,key,prefs){
-  if(prefs.accPref==='sharp'||prefs.accPref==='flat') return;
+  if(!autoAcc(prefs)) return;
   const evs=[...new Map(steps.flatMap(s=>s.evs||[]).map(x=>[x.m+':'+x.s+':'+x.l,x])).values()];
   if(!evs.length) return;
-  const sc=SCALE_STEPS[key.mode].map(x=>(x+key.tonic)%12);
-  const goesUp=(m,a,b)=>{
-    const d=evs.filter(x=>x.m===m&&x.s<b&&x.s+x.l>a).map(x=>{const nx=new Set(evs.filter(y=>y.s===x.s+x.l&&Math.abs(y.m-m)===1).map(y=>y.m-m)); return nx.size===1?[...nx][0]:0;}).filter(Boolean);
-    return d.length>0&&d.every(x=>x===1);
-  };
   rs.forEach((r,i)=>{
     const st=steps[i]; if(!st.evs) return;
     const a=st.a||0, b=a+st.dur;
-    r.spelled=r.spelled.map(n=>{
-      const pc=n.midi%12;
-      if(sc.includes(pc)||(r.sp&&r.sp.byPc[pc]&&!n.orn&&!(r.orn||[]).includes(n.midi))||!goesUp(n.midi,a,b)) return n;
-      const l=(plainSpell(n.midi+1,prefs,key).l+6)%7; let ac=((n.midi-NAT[l])%12+12)%12; if(ac>6) ac-=12;
-      return Math.abs(ac)<=1?{...n,...spellMidi(n.midi,l,ac)}:n;
-    });
+    r.spelled=r.spelled.map(n=>r.sp&&r.sp.byPc[n.midi%12]&&!n.orn&&!(r.orn||[]).includes(n.midi)?n:goalSpell(n,a,b,evs,key,prefs,isBlue(n.midi,r,key)));
   });
+}
+// The notes the lane shows apart from its chords (the added notes «+G♯3 at 2» and the melody) are spelled as the notes of a step:
+// a tone of the chord over them with the chord's letter, any other by the semitone it goes up to (decision 14), else by the key.
+// evs are every note of the pattern ({m,s,l}), so the goal may be in any voice
+function laneSpell(m,s,l,r,evs,key,prefs){
+  const own=r&&r.sp&&r.sp.byPc[m%12];
+  if(own) return spellMidi(m,own.l,own.a);
+  const n=plainSpell(m,prefs,key);
+  return autoAcc(prefs)&&key?goalSpell(n,s,s+l,evs,key,prefs,isBlue(m,r,key)):n;
 }
 function analyzeProgression(steps,prefs){
   // the key comes from the chords' roots and notes, which do not depend on how they are spelled; the spelling then follows the key
@@ -628,4 +639,4 @@ function dissonance(r){
   return Math.min(1,v);
 }
 
-export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, RANK, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, letterName, melodyText, modeName, noteText, octOff, ornamentText, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp, rankHelp, scoreDetail, keyWhy, bookends, resolution };
+export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, RANK, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, laneSpell, letterName, melodyText, modeName, noteText, octOff, ornamentText, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp, rankHelp, scoreDetail, keyWhy, bookends, resolution };

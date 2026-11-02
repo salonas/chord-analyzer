@@ -1,7 +1,7 @@
 // Text export and import (reimportable plain text).
 import { HIGH, LATIN, LETTERS, LOW, NAT, OCT_CONV, T, barsText, fmtB, numB, sigOf, uid } from './data.js';
 import { isDrum, isMulti, isPure, normProg, progEnd, segStep, segs, stepTiming } from './model.js';
-import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, keyName, keyText, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
+import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, keyName, keyText, laneSpell, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
 import { exprSummary, instLabel, instText } from './expression.js';
 import { arpeggioChords, blockMelody, splitHarmony } from './harmony.js';
 import { TOL, against, melodyKind, step } from './roles.js';
@@ -41,22 +41,22 @@ const TEN_VAL={low:.15,mid:.5,high:.85};
 const melTen=f=>f?`${TEN_WORD[f.ten]} (${numText(TEN_VAL[f.ten])})`:'—';
 // a note held over a chord change that clashes with the new chord and then falls a step to one of its tones:
 // "retardo 4–3 → E4". It is an addition to the role, inside the same column
-function suspension(mel,i,prefs,next,key){
+function suspension(mel,i,prefs,next,sp){
   const x=mel[i], nx=mel[i+1], m=x.notes[0];
   if(!next||!next.r||!next.r.c||!nx||x.s>=next.a||x.s+x.l<=next.a+TOL) return '';
   const held=against(m,next.r), to=against(nx.notes[0],next.r), d=nx.notes[0]-m;
   if(held.tone||!to||!to.tone||!(d<0&&step(d))||nx.s<x.s+x.l-TOL) return '';
-  return ` · ${tr('retardo','suspension')} ${held.iv}–${to.iv} → ${noteText(plainSpell(nx.notes[0],prefs,key),prefs)}`;
+  return ` · ${tr('retardo','suspension')} ${held.iv}–${to.iv} → ${noteText(sp(nx),prefs)}`;
 }
-function melodyRole(mel,i,info,toneAt,prefs,next,key){
+function melodyRole(mel,i,info,toneAt,prefs,next,sp){
   const kind=melodyKind(mel,i,info,toneAt,next); if(kind==='none') return '—';
-  const sus=suspension(mel,i,prefs,next,key), nx=mel[i+1];
+  const sus=suspension(mel,i,prefs,next,sp), nx=mel[i+1];
   switch(kind){
     case 'tone': return tr('nota del acorde','chord tone')+sus;
     case 'double': return tr('bordadura doble','double neighbor')+sus;
     case 'passing': return tr('paso','passing')+sus;
     case 'neighbor': return tr('bordadura','neighbor')+sus;
-    case 'appoggiatura': return `${tr('apoyatura','appoggiatura')} → ${noteText(plainSpell(nx.notes[0],prefs,key),prefs)}`+sus;
+    case 'appoggiatura': return `${tr('apoyatura','appoggiatura')} → ${noteText(sp(nx),prefs)}`+sus;
     case 'anticipation': return `${tr('anticipación','anticipation')} → ${next.label}`;
     case 'escape': return tr('escapada','escape tone')+sus;
     case 'tension': return tr('tensión','tension')+sus;
@@ -67,22 +67,24 @@ function harmonyLines(p,prefs,L){
   const Hm=splitHarmony(p);
   const A=analyzeProgression(Hm.chords.map(c=>({notes:c.notes,dur:c.b-c.a,...stepTiming(p,c.a,c.b,c.notes,c.withMel),...(p.names[sigOf(c.notes)]||{})})),prefs);
   return {Hm,A,write(){
-    const nt=m=>noteText(plainSpell(m,prefs,A.key),prefs);
+    const nt=m=>noteText(plainSpell(m,prefs,A.key),prefs), evs=p.notes.map(n=>({m:n.m,s:n.s,l:n.l}));
+    // the added notes and the melody are spelled as the notes of a step, by their chord and their goal (laneSpell)
+    const lane=(m,s,l,r)=>laneSpell(m,s,l,r,evs,A.key,prefs), lenOf=x=>(p.notes.find(n=>n.m===x.m&&n.s===x.s)||{l:0}).l;
     L.push(tr('# Armonía: n. acorde | grado (función · tensión estimada 0–1: base (función y disonancia) + contexto (llegada, sorpresa, espera)) | inicio–fin (tiempos) | voces | bajo','# Harmony: n. chord | degree (function · estimated tension 0–1: base (function and dissonance) + context (arrival, surprise, wait)) | start–end (beats) | voices | bass')+octTail(prefs));
     if(!Hm.chords.length) L.push(tr('— sin acordes','— no chords'));
     Hm.chords.forEach((c,i)=>{
-      const r=A.rs[i], adds=c.adds.map(x=>`+${nt(x.m)} ${tr('en','at')} ${fmtB(x.s)}`).join(' · ');
+      const r=A.rs[i], adds=c.adds.map(x=>`+${noteText(lane(x.m,x.s,lenOf(x),r),prefs)} ${tr('en','at')} ${fmtB(x.s)}`).join(' · ');
       const bass=c.bass.map((x,j)=>(j===0?noteText(r.spelled[0],prefs):nt(x.m))+(x.pass?tr(' (paso)',' (passing)'):'')).join(' → ');
       L.push(`${i+1}. ${chordLabel(r,prefs)} | ${A.romans[i]?A.romans[i].text:'?'} (${FN_NAME[A.fn[i]]} · ${tenText(r,A.ten[i])}) | ${numB(c.a)}–${numB(c.b)} | ${r.spelled.slice(1).map(n=>noteText(n,prefs)).join(' ')||'—'}${adds?` (${adds})`:''} | ${bass}`);
     });
     const melLines=(list,head)=>{
       L.push(head+octTail(prefs));
-      const ci=x=>Hm.chords.indexOf(Hm.chordAt(x.s)), info=list.map(x=>against(x.notes[0],A.rs[ci(x)],plainSpell(x.notes[0],prefs,A.key)));
+      const ci=x=>Hm.chords.indexOf(Hm.chordAt(x.s)), sp=x=>lane(x.notes[0],x.s,x.l,A.rs[ci(x)]), info=list.map(x=>against(x.notes[0],A.rs[ci(x)],sp(x)));
       const toneAt=j=>info[j]&&info[j].tone;
       list.forEach((x,i)=>{
-        const k=ci(x), name=x.notes.map(nt).join('+'), r=A.rs[k], f=info[i];
+        const k=ci(x), r=A.rs[k], name=x.notes.map(m=>noteText(lane(m,x.s,x.l,r),prefs)).join('+'), f=info[i];
         const nr=A.rs[k+1], next=k>=0&&nr?{r:nr,a:Hm.chords[k+1].a,label:chordLabel(nr,prefs)}:null;
-        L.push(`${name} (${x.notes.join(' ')}${x.notes.length>1?tr(', doblada',', doubled'):''}) | ${numB(x.s)} | ${numB(x.l)} | ${r?chordLabel(r,prefs):'—'} | ${f?f.iv:'—'} | ${melTen(f)} | ${melodyRole(list,i,info,toneAt,prefs,next,A.key)}`);
+        L.push(`${name} (${x.notes.join(' ')}${x.notes.length>1?tr(', doblada',', doubled'):''}) | ${numB(x.s)} | ${numB(x.l)} | ${r?chordLabel(r,prefs):'—'} | ${f?f.iv:'—'} | ${melTen(f)} | ${melodyRole(list,i,info,toneAt,prefs,next,sp)}`);
       });
     };
     const cols=tr('nota (MIDI) | inicio | duración | sobre | intervalo | tensión estimada 0–1 | rol','note (MIDI) | start | length | over | interval | estimated tension 0–1 | role');
