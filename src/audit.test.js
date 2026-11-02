@@ -180,11 +180,14 @@ describe('row 18: what the empty sheet says about chords', () => {
     expect(chords([[60, 0, 0.5], [64, 0.5, 0.5], [67, 1, 0.5], [72, 1.5, 0.5]])).toBe(1);
   });
   it('reads a legato tune as melody only', () => expect(chords([[60, 0, 1.5], [62, 1, 1.5], [64, 2, 1.5], [65, 3, 1.5]])).toBe(0));
-  it('says all of this, in both languages', () => {
-    const es = emptySheetText();
-    for (const w of ['tres notas a la vez', 'dos si las dos duran un tiempo o más', 'arpegio']) expect(es).toContain(w);
-    const en = inEnglish(emptySheetText);
-    for (const w of ['three notes at once', 'two if both last a beat or more', 'arpeggio']) expect(en).toContain(w);
+  it('reads a broken accompaniment under a held voice as chords', () => {
+    expect(chords([[48, 0, 0.5], [55, 0.5, 0.5], [52, 1, 0.5], [55, 1.5, 0.5], [76, 0, 2]])).toBe(1);
+  });
+  it('says all of this as a list, in both languages', () => {
+    expect(emptySheetText()).toEqual({ head: 'Solo melodía: no hay acordes. La app arma un acorde cuando hay:', items: ['tres notas a la vez', 'dos notas a la vez que duran un tiempo o más',
+      'un arpegio: una sola voz que salta entre tres o más notas de un acorde', 'un acompañamiento: tres o más notas distintas en un tiempo mientras otra voz se sostiene'] });
+    expect(inEnglish(emptySheetText)).toEqual({ head: 'Melody only: no chords. The app builds a chord when there are:', items: ['three notes at once', 'two notes at once that last a beat or more',
+      'an arpeggio: a single voice leaping between three or more notes of a chord', 'an accompaniment: three or more different notes in a beat while another voice holds'] });
   });
 });
 

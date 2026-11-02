@@ -270,7 +270,7 @@ function renderProgression(){
   let h='';
   if(R.segs.length) h=analysisSheet(A,p);
   else if(isMulti(p)) h=`<div class="empty">${tr('Un pattern con varias pistas no se analiza como progresión: usa «Separar pistas» para analizar una en su propio pattern.','A pattern with several tracks is not analysed as a progression: use “Split tracks” to analyse one in its own pattern.')}</div>`;
-  else if(!isDrum(p)&&p.notes.length) h=`<div class="empty">${emptySheetText()}</div>`;
+  else if(!isDrum(p)&&p.notes.length){ const e=emptySheetText(); h=`<div class="empty">${e.head}<ul>${e.items.map(x=>`<li>${x}</li>`).join('')}</ul></div>`; }
   else h=isDrum(p)?drumSummaryHtml(p):`<div class="empty">${tr('Dibuja notas en el piano roll o arma un acorde y pulsa «+ Al final» (Enter). La tonalidad, los grados y los patrones aparecen aquí.','Draw notes in the piano roll or build a chord and press “+ At the end” (Enter). The key, the degrees and the patterns show up here.')}</div>`;
   $('progAnalysis').innerHTML=h;
 }

@@ -87,8 +87,13 @@ function warningText(w,nm,ref){
   }
 }
 
-// What the empty sheet says when a pattern has notes but no chord; each clause is a rule of harmony.js (splitHarmony, arpeggioChords)
-const emptySheetText=()=>tr('Solo melodía: ningún acorde. Un acorde empieza con tres notas a la vez, con dos si las dos duran un tiempo o más, o con un arpegio: una sola voz que salta entre tres o más notas de un acorde, por medio compás o por compás.',
-  'Melody only: no chord. A chord starts with three notes at once, or with two if both last a beat or more, or with an arpeggio: a single voice that leaps between three or more notes of a chord, by half a bar or by the bar.');
+// What the empty sheet says when a pattern has notes but no chord: a head and one item per rule of harmony.js
+// (splitHarmony, arpeggioChords, gridChords)
+const emptySheetText=()=>({
+  head:tr('Solo melodía: no hay acordes. La app arma un acorde cuando hay:','Melody only: no chords. The app builds a chord when there are:'),
+  items:[tr('tres notas a la vez','three notes at once'),
+    tr('dos notas a la vez que duran un tiempo o más','two notes at once that last a beat or more'),
+    tr('un arpegio: una sola voz que salta entre tres o más notas de un acorde','an arpeggio: a single voice leaping between three or more notes of a chord'),
+    tr('un acompañamiento: tres o más notas distintas en un tiempo mientras otra voz se sostiene','an accompaniment: three or more different notes in a beat while another voice holds')]});
 
 export { LIMITS, MUDDY, activeCands, candTags, chordWarnings, emptySheetText, intervalText, spellActive, warningText };
