@@ -1,0 +1,544 @@
+{
+ "tavern": [
+  {
+   "cat": "por tramo | tonalidad (tónica y modo)",
+   "n": 2202,
+   "ok": 1610,
+   "pct": 73.1
+  },
+  {
+   "cat": "por tramo | tonalidad (solo la tónica)",
+   "n": 2202,
+   "ok": 1625,
+   "pct": 73.8
+  },
+  {
+   "cat": "por tramo | acorde: raíz (solo la lectura propia)",
+   "n": 21984,
+   "ok": 13174,
+   "pct": 59.9
+  },
+  {
+   "cat": "por tramo | acorde: raíz (acepta A o B)",
+   "n": 21984,
+   "ok": 13304,
+   "pct": 60.5
+  },
+  {
+   "cat": "por tramo | acorde: raíz + calidad (solo la lectura propia)",
+   "n": 21984,
+   "ok": 10918,
+   "pct": 49.7
+  },
+  {
+   "cat": "por tramo | acorde: raíz + calidad (acepta A o B)",
+   "n": 21984,
+   "ok": 11180,
+   "pct": 50.9
+  },
+  {
+   "cat": "por tramo | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando",
+   "n": 16110,
+   "ok": 8982,
+   "pct": 55.8
+  },
+  {
+   "cat": "por tramo | inversión (cruda)",
+   "n": 21984,
+   "ok": 12570,
+   "pct": 57.2
+  },
+  {
+   "cat": "por tramo | inversión (dado el acorde correcto)",
+   "n": 11180,
+   "ok": 10563,
+   "pct": 94.5
+  },
+  {
+   "cat": "por tramo | grado (crudo)",
+   "n": 21984,
+   "ok": 10724,
+   "pct": 48.8
+  },
+  {
+   "cat": "por tramo | grado (dada la tonalidad correcta)",
+   "n": 16266,
+   "ok": 10399,
+   "pct": 63.9
+  },
+  {
+   "cat": "por tramo | enarmonía (nota a nota)",
+   "n": 137849,
+   "ok": 135285,
+   "pct": 98.1
+  },
+  {
+   "cat": "por tramo | enarmonía (tramo con todas las notas bien)",
+   "n": 21984,
+   "ok": 20086,
+   "pct": 91.4
+  },
+  {
+   "cat": "por tramo | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)",
+   "n": 7023,
+   "ok": 6833,
+   "pct": 97.3
+  },
+  {
+   "cat": "de punta a punta | tonalidad (tónica y modo)",
+   "n": 1966,
+   "ok": 1382,
+   "pct": 70.3
+  },
+  {
+   "cat": "de punta a punta | tonalidad (solo la tónica)",
+   "n": 1966,
+   "ok": 1398,
+   "pct": 71.1
+  },
+  {
+   "cat": "de punta a punta | segmentación: cortes del analista que la app también corta (±48 ticks)",
+   "n": 18573,
+   "ok": 12122,
+   "pct": 65.3
+  },
+  {
+   "cat": "de punta a punta | segmentación: cortes de la app que el analista también corta (±48 ticks)",
+   "n": 22474,
+   "ok": 15586,
+   "pct": 69.4
+  },
+  {
+   "cat": "de punta a punta | tramo del analista cubierto por un acorde de la app (≥ la mitad)",
+   "n": 19907,
+   "ok": 15111,
+   "pct": 75.9
+  },
+  {
+   "cat": "de punta a punta | acorde: raíz (solo la lectura propia)",
+   "n": 15111,
+   "ok": 9005,
+   "pct": 59.6
+  },
+  {
+   "cat": "de punta a punta | acorde: raíz (acepta A o B)",
+   "n": 15111,
+   "ok": 9142,
+   "pct": 60.5
+  },
+  {
+   "cat": "de punta a punta | acorde: raíz + calidad (solo la lectura propia)",
+   "n": 15111,
+   "ok": 7256,
+   "pct": 48
+  },
+  {
+   "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
+   "n": 15111,
+   "ok": 7492,
+   "pct": 49.6
+  },
+  {
+   "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando",
+   "n": 11345,
+   "ok": 6097,
+   "pct": 53.7
+  },
+  {
+   "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)",
+   "n": 5223,
+   "ok": 4103,
+   "pct": 78.6
+  },
+  {
+   "cat": "de punta a punta | inversión (cruda)",
+   "n": 15111,
+   "ok": 10071,
+   "pct": 66.6
+  },
+  {
+   "cat": "de punta a punta | inversión (dado el acorde correcto)",
+   "n": 7492,
+   "ok": 6793,
+   "pct": 90.7
+  },
+  {
+   "cat": "de punta a punta | grado (crudo)",
+   "n": 15111,
+   "ok": 7547,
+   "pct": 49.9
+  },
+  {
+   "cat": "de punta a punta | grado (dada la tonalidad correcta)",
+   "n": 10833,
+   "ok": 6970,
+   "pct": 64.3
+  },
+  {
+   "cat": "de punta a punta | enarmonía (nota a nota)",
+   "n": 48033,
+   "ok": 47673,
+   "pct": 99.3
+  },
+  {
+   "cat": "de punta a punta | enarmonía (tramo con todas las notas bien)",
+   "n": 15111,
+   "ok": 14882,
+   "pct": 98.5
+  },
+  {
+   "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app",
+   "n": 19907,
+   "ok": 7492,
+   "pct": 37.6
+  },
+  {
+   "cat": "por tramo | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde",
+   "n": 5874,
+   "ok": 2198,
+   "pct": 37.4
+  },
+  {
+   "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde",
+   "n": 3766,
+   "ok": 1395,
+   "pct": 37
+  }
+ ],
+ "rock": [
+  {
+   "cat": "tónica (solo la lectura propia)",
+   "n": 382,
+   "ok": 273,
+   "pct": 71.5
+  },
+  {
+   "cat": "tónica (acepta ambos analistas)",
+   "n": 382,
+   "ok": 276,
+   "pct": 72.3
+  },
+  {
+   "cat": "tónica (o su relativa, suplementaria)",
+   "n": 382,
+   "ok": 318,
+   "pct": 83.2
+  },
+  {
+   "cat": "tónica (o la alternativa que muestra la app, suplementaria)",
+   "n": 382,
+   "ok": 289,
+   "pct": 75.7
+  },
+  {
+   "cat": "tónica por región de ≥ 4 acordes (la app recibe la región sola)",
+   "n": 589,
+   "ok": 435,
+   "pct": 73.9
+  },
+  {
+   "cat": "modulación: de las canciones en que el corpus cambia de tonalidad, las que la app informa como cambio",
+   "n": 61,
+   "ok": 0,
+   "pct": 0
+  }
+ ],
+ "agreement": [
+  {
+   "cat": "raíz + calidad",
+   "n": 21856,
+   "ok": 20118,
+   "pct": 92
+  },
+  {
+   "cat": "inversión",
+   "n": 21856,
+   "ok": 20378,
+   "pct": 93.2
+  },
+  {
+   "cat": "grado",
+   "n": 21856,
+   "ok": 20967,
+   "pct": 95.9
+  }
+ ],
+ "topTramo": [
+  {
+   "cat": "por tramo | acorde: raíz + calidad (acepta A o B)",
+   "sig": "la app no leyó acorde (el tramo tiene 5 o más clases de altura)",
+   "n": 3221,
+   "example": {
+    "phrase": "B063_00_03c",
+    "mode": "por tramo",
+    "label": "Vb/V",
+    "key": "c",
+    "notes": "F# (54) C (72) D (74) Eb (75) F (77)",
+    "expected": "D/1ª inversión",
+    "got": "(sin acorde)"
+   }
+  },
+  {
+   "cat": "por tramo | acorde: raíz + calidad (acepta A o B)",
+   "sig": "la app no leyó acorde (el tramo tiene 3 o 4 clases de altura)",
+   "n": 1109,
+   "example": {
+    "phrase": "B063_02_02b",
+    "mode": "por tramo",
+    "label": "IV/III",
+    "key": "c",
+    "notes": "Ab (56) C (60) Eb (63) Ab (80) B (83) C (84)",
+    "expected": "A♭",
+    "got": "(sin acorde)"
+   }
+  },
+  {
+   "cat": "por tramo | acorde: raíz + calidad (acepta A o B)",
+   "sig": "raíz equivocada: mayor leído con raíz en una nota ajena al acorde (m11)",
+   "n": 676,
+   "example": {
+    "phrase": "B064_01_03c",
+    "mode": "por tramo",
+    "label": "I",
+    "key": "F",
+    "notes": "F (53) G (55) A (57) Bb (58) C (60) D (62) F (65)",
+    "expected": "F",
+    "got": "Gm11/3ª inversión"
+   }
+  },
+  {
+   "cat": "por tramo | enarmonía (nota a nota)",
+   "sig": "C# escrito Db",
+   "n": 632,
+   "example": {
+    "phrase": "B063_02_01a",
+    "label": "V7b",
+    "key": "c",
+    "note": "C# (73)",
+    "app": "Db",
+    "appChord": "(sin acorde)"
+   }
+  },
+  {
+   "cat": "por tramo | enarmonía (nota a nota)",
+   "sig": "G# escrito Ab",
+   "n": 621,
+   "example": {
+    "phrase": "B063_09_02b",
+    "label": "IV/V",
+    "key": "C",
+    "note": "G# (68)",
+    "app": "Ab",
+    "appChord": "(sin acorde)"
+   }
+  },
+  {
+   "cat": "por tramo | enarmonía (nota a nota)",
+   "sig": "D# escrito Eb",
+   "n": 544,
+   "example": {
+    "phrase": "B063_09_02b",
+    "label": "IV/V",
+    "key": "C",
+    "note": "D# (75)",
+    "app": "Eb",
+    "appChord": "(sin acorde)"
+   }
+  },
+  {
+   "cat": "por tramo | acorde: raíz + calidad (acepta A o B)",
+   "sig": "la app no leyó acorde (el tramo tiene una sola clase de altura)",
+   "n": 495,
+   "example": {
+    "phrase": "B064_00_01a",
+    "mode": "por tramo",
+    "label": "I",
+    "key": "F",
+    "notes": "F (41) F (65)",
+    "expected": "F",
+    "got": "(sin acorde)"
+   }
+  },
+  {
+   "cat": "por tramo | acorde: raíz + calidad (acepta A o B)",
+   "sig": "raíz bien; esperado mayor, la app leyó maj7",
+   "n": 418,
+   "example": {
+    "phrase": "B063_00_01a",
+    "mode": "por tramo",
+    "label": "Vb",
+    "key": "c",
+    "notes": "B (47) D (50) G (55) D (74) F# (78) G (79)",
+    "expected": "G/1ª inversión",
+    "got": "Gmaj7/1ª inversión"
+   }
+  },
+  {
+   "cat": "por tramo | acorde: raíz + calidad (acepta A o B)",
+   "sig": "raíz bien; esperado mayor, la app leyó maj9",
+   "n": 386,
+   "example": {
+    "phrase": "B063_00_02b",
+    "mode": "por tramo",
+    "label": "Ib/III",
+    "key": "c",
+    "notes": "G (55) Bb (58) Eb (63) D (74) Eb (75) F (77) G (79)",
+    "expected": "E♭/1ª inversión",
+    "got": "E♭maj9/1ª inversión"
+   }
+  },
+  {
+   "cat": "por tramo | acorde: raíz + calidad (acepta A o B)",
+   "sig": "raíz bien; esperado mayor, la app leyó maj11",
+   "n": 306,
+   "example": {
+    "phrase": "B065_01_02b",
+    "mode": "por tramo",
+    "label": "Ic",
+    "key": "D",
+    "notes": "A (45) C# (49) D (50) E (52) F# (54) G (55) C# (61) D (62) E (64) F# (66) G (67) A (69)",
+    "expected": "D/2ª inversión",
+    "got": "Dmaj11/2ª inversión"
+   }
+  }
+ ],
+ "topE2E": [
+  {
+   "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
+   "sig": "la app no leyó acorde (el tramo tiene 2 clases de altura)",
+   "n": 718,
+   "example": {
+    "phrase": "B063_02_02b",
+    "mode": "de punta a punta",
+    "label": "V7d/III",
+    "key": "c",
+    "notes": "Ab (56) Bb (58)",
+    "expected": "B♭7/3ª inversión",
+    "got": "(sin acorde)"
+   }
+  },
+  {
+   "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
+   "sig": "raíz equivocada: mayor leído con raíz en su 3ª (m)",
+   "n": 675,
+   "example": {
+    "phrase": "B063_00_03c",
+    "mode": "de punta a punta",
+    "label": "Vb/iv",
+    "key": "c",
+    "notes": "E (52) G (55)",
+    "expected": "C/1ª inversión",
+    "got": "Em"
+   }
+  },
+  {
+   "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
+   "sig": "raíz bien; esperado mayor, la app leyó 5",
+   "n": 636,
+   "example": {
+    "phrase": "B063_00_02b",
+    "mode": "de punta a punta",
+    "label": "IV/III",
+    "key": "c",
+    "notes": "Ab (56) Eb (63)",
+    "expected": "A♭",
+    "got": "A♭5"
+   }
+  },
+  {
+   "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
+   "sig": "raíz bien; esperado 7, la app leyó mayor",
+   "n": 395,
+   "example": {
+    "phrase": "B064_03_02b",
+    "mode": "de punta a punta",
+    "label": "V7/iv",
+    "key": "f",
+    "notes": "F (53) A (69) C (72)",
+    "expected": "F7",
+    "got": "F"
+   }
+  },
+  {
+   "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
+   "sig": "raíz equivocada: mayor leído con raíz en su 5ª (mayor)",
+   "n": 368,
+   "example": {
+    "phrase": "B063_09_04d",
+    "mode": "de punta a punta",
+    "label": "IV",
+    "key": "C",
+    "notes": "E (52) G (55) C (60)",
+    "expected": "F",
+    "got": "C/1ª inversión"
+   }
+  },
+  {
+   "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
+   "sig": "raíz equivocada: mayor leído con raíz en una nota ajena al acorde (mayor)",
+   "n": 359,
+   "example": {
+    "phrase": "B063_00_02b",
+    "mode": "de punta a punta",
+    "label": "V/III",
+    "key": "c",
+    "notes": "Bb (46) Eb (75) G (79)",
+    "expected": "B♭",
+    "got": "E♭/2ª inversión"
+   }
+  },
+  {
+   "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
+   "sig": "raíz equivocada: mayor leído con raíz en una nota ajena al acorde (m)",
+   "n": 356,
+   "example": {
+    "phrase": "B063_00_04d",
+    "mode": "de punta a punta",
+    "label": "V",
+    "key": "c",
+    "notes": "G (43) C (72) Eb (75)",
+    "expected": "G",
+    "got": "Cm/2ª inversión"
+   }
+  },
+  {
+   "cat": "de punta a punta | tonalidad (tónica y modo)",
+   "sig": "se leyó la tonalidad de la dominante",
+   "n": 324,
+   "example": {
+    "phrase": "B063_09_01a",
+    "mode": "de punta a punta",
+    "key": "C",
+    "got": "G major"
+   }
+  },
+  {
+   "cat": "de punta a punta | inversión (dado el acorde correcto)",
+   "sig": "con el acorde bien: esperado fundamental, la app dio 1ª inversión",
+   "n": 280,
+   "example": {
+    "phrase": "B063_00_01a",
+    "mode": "de punta a punta",
+    "label": "V",
+    "key": "c",
+    "notes": "B (47) D (50) G (55)",
+    "expected": "G",
+    "got": "G/1ª inversión"
+   }
+  },
+  {
+   "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
+   "sig": "raíz equivocada: 7 leído con raíz en una nota ajena al acorde (mayor)",
+   "n": 253,
+   "example": {
+    "phrase": "B065_01_01a",
+    "mode": "de punta a punta",
+    "label": "V7",
+    "key": "D",
+    "notes": "F# (42) D (62) F# (66)",
+    "expected": "A7",
+    "got": "D/1ª inversión"
+   }
+  }
+ ]
+}
