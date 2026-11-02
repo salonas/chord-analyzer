@@ -134,6 +134,25 @@ function gridChords(ns,a,b){
   });
 }
 
+// A struck chord longer than two beats that goes on after its notes stop (the accompaniment broke into a figure and no
+// chord was struck again) is read again beat by beat as a broken accompaniment (gridChords), but only where half or more
+// of the pitch classes struck with it no longer sound: a chord held under a tune, or over a passing bass, stays one chord.
+// The beats left keep the old chord.
+const LONG=2*T;
+function staleChord(ns,c,role){
+  if(c.b-c.a<=LONG) return [c];
+  const own=ns.filter(n=>role.get(n.id)!=='mel'&&n.s>=c.a-TOL&&n.s<c.b-TOL), pcs=[...new Set(c.notes.map(m=>m%12))];
+  const gone=g=>2*pcs.filter(pc=>!own.some(n=>n.m%12===pc&&n.s<g.b&&n.s+n.l>g.a)).length>=pcs.length;
+  const G=gridChords(ns,c.a,c.b).filter(gone);
+  if(!G.length) return [c];
+  const piece=(a,b)=>{ const bass=c.bass.filter(x=>x.s>=a-TOL&&x.s<b);
+    return {...c,a,b,pcs:new Set(c.pcs),bass:bass.length?bass:[{m:c.notes[0],s:a}],adds:c.adds.filter(x=>x.s>=a-TOL&&x.s<b)}; };
+  const out=[]; let t=c.a;
+  for(const g of G){ if(g.a>t) out.push(piece(t,g.a)); out.push(g); t=g.b; }
+  if(t<c.b) out.push(piece(t,c.b));
+  return out;
+}
+
 // Chords change when the pitch classes above the bass change, the bass changes, or the whole chord is struck again.
 // Returns {chords:[{a,b,notes,bass:[{m,s,pass}],adds:[{m,s}]}], mel:[{notes:[...],s,l}]} in ticks.
 function splitHarmony(p){
@@ -194,6 +213,7 @@ function splitHarmony(p){
   // after the one-voice arpeggio (arpeggioChords, above) and the struck chords: the stretch before the first chord, or the
   // whole pattern when none started, may be a broken accompaniment
   const first=chords.length?chords[0].a:progEnd(p);
+  chords.splice(0,chords.length,...chords.flatMap(c=>staleChord(ns,c,role)));
   if(ns.length&&first>ns[0].s) chords.unshift(...gridChords(ns,ns[0].s,first));
   chords.forEach(c=>{
     c.bass.sort((x,y)=>x.s-y.s);
