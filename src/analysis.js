@@ -363,7 +363,11 @@ function keyRegions(items,top,opts={}){
   // each region ends where the next starts; one too short goes back into its neighbour (the one before, or the next for the first)
   const withTo=()=>regs.forEach((r,i)=>{ r.to=i+1<regs.length?regs[i+1].from-1:N-1; });
   const ownCads=r=>cads.filter(c=>c.i>=r.from&&c.i<r.to&&sameKey(c.key,r.key)).length;
-  const short=(r,i)=>r.to-r.from+1<R.chords||(timed&&beats(r.from,r.to)<R.beats)||(i>0&&R.cads>1&&ownCads(r)<R.cads)||(i>0&&R.noOldTonic&&items.slice(r.from,r.to+1).some(it=>isTonic(it,regs[i-1].key)));
+  // variant of decision 15 (manual test P6), off in the app: the old tonic triad may stay in the new region when it is that
+  // region's IV and a V7 → I of its own confirms it (C in C major → G major, confirmed by D7 → G). Measured on 2 Nov 2026 with
+  // tools/modulation-sim.mjs and left out, as the brakes go up (THEORY.md, «Pendientes conocidos»)
+  const asIV=(r,old)=>(old.tonic-r.key.tonic+12)%12===5&&cads.some(c=>c.i>=r.from&&c.i<r.to&&sameKey(c.key,r.key)&&items[c.i].q==='dom');
+  const short=(r,i)=>r.to-r.from+1<R.chords||(timed&&beats(r.from,r.to)<R.beats)||(i>0&&R.cads>1&&ownCads(r)<R.cads)||(i>0&&R.noOldTonic&&items.slice(r.from,r.to+1).some(it=>isTonic(it,regs[i-1].key))&&!(R.oldTonicIV&&asIV(r,regs[i-1].key)));
   for(;;){
     withTo();
     for(let i=regs.length-1;i>0;i--) if(sameKey(regs[i].key,regs[i-1].key)) regs.splice(i,1);

@@ -3,8 +3,8 @@
 // any change), the false ones (a change in an analysis with none annotated), the tonic row with the main key (the region that
 // lasts longest), and on TAVERN, which annotates one key per phrase, the key rows by stretch and end to end and the phrases the
 // app splits. «sin regiones» is the app before F11. The test songs and works are left out unless --test is given (looked at
-// once, at the end of the stage). Not part of the suite:
-//   node tools/modulation-sim.mjs [--test]
+// once, at the end of the stage). A word that is not a flag keeps only the variants whose name contains it. Not part of the suite:
+//   node tools/modulation-sim.mjs [--test] [filter]
 import { progressionKeys } from '../src/analysis.js';
 import { harmonySegs } from '../src/harmony.js';
 import { normProg, segStep } from '../src/model.js';
@@ -17,7 +17,9 @@ const VARIANTS = [['sin regiones', null], ['A: cadencia V → I, ≥ 4 acordes y
   ['A con V7, ≥ 8 acordes y ≥ 32 tiempos', { v7: true, chords: 8, beats: 32 }], ['A con dos cadencias, ≥ 8 acordes y ≥ 32 tiempos', { cads: 2, chords: 8, beats: 32 }],
   ['A con V7, dos cadencias, ≥ 8 acordes y ≥ 32 tiempos', { v7: true, cads: 2, chords: 8, beats: 32 }], ['A con V7 y ≥ 16 acordes', { v7: true, chords: 16, beats: 32 }],
   ['A sin la tónica anterior', { noOldTonic: true }], ['A sin la tónica anterior y dos cadencias', { noOldTonic: true, cads: 2 }], ['A sin la tónica anterior, ≥ 8 acordes y ≥ 32 tiempos', { noOldTonic: true, chords: 8, beats: 32 }],
-  ['A sin la tónica anterior, dos cadencias, ≥ 8 acordes y ≥ 32 tiempos', { noOldTonic: true, cads: 2, chords: 8, beats: 32 }], ['B sin la tónica anterior', { tonicSpan: true, noOldTonic: true }], ['B sin la tónica anterior y dos cadencias', { tonicSpan: true, noOldTonic: true, cads: 2 }]];
+  ['A sin la tónica anterior, dos cadencias, ≥ 8 acordes y ≥ 32 tiempos', { noOldTonic: true, cads: 2, chords: 8, beats: 32 }], ['B sin la tónica anterior', { tonicSpan: true, noOldTonic: true }], ['B sin la tónica anterior y dos cadencias', { tonicSpan: true, noOldTonic: true, cads: 2 }],
+  ['A sin la tónica anterior, salvo si es el IV de la región nueva y la confirma V7 → I', { noOldTonic: true, oldTonicIV: true }]];
+const only = process.argv.slice(2).find(x => !x.startsWith('--')) || '';
 const stepOf = (notes, a, b) => {
   const on = notes.filter(n => n[1] < b && n[1] + n[2] > a), ms = [...new Set(on.map(n => n[0]))].sort((x, y) => x - y);
   return ms.length ? { notes: ms, dur: b - a, a, evs: on.map(n => ({ m: n[0], s: n[1], l: n[2] })) } : null;
@@ -33,7 +35,7 @@ const overlap = (a, r) => Math.max(0, Math.min(a.to, r.to) - Math.max(a.from, r.
 const songs = listJson('rock').filter(s => isTest(s.song) === test);
 const pieces = listJson('tavern').filter(p => isTest(p.piece) === test);
 console.log(`${test ? 'PRUEBA' : 'desarrollo'}: ${songs.length} canciones del Rock Corpus, ${pieces.length} obras de TAVERN`);
-for (const [name, opts] of VARIANTS) {
+for (const [name, opts] of VARIANTS.filter(([n]) => n.includes(only))) {
   const rockUnits = [], tavUnits = [];
   let withChange = 0, strict = 0, loose = 0, none = 0, falseCh = 0, an = 0, tonicOk = 0;
   const hits = [], falses = [];
