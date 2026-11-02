@@ -40,6 +40,6 @@ Además, fuera de las 24 filas:
 | «(doblada)», E(5) | Cierre: «(doblada)»; Reglas: Nombres en el texto exportado | `src/audit.test.js` «labels fixed at the close»; `src/harmony.test.js` «writes a power chord as E(5), never E5» |
 | Bajo «(breve)» | Reglas: «(breve)» | `src/harmony.test.js` «writes four chord lines and no lone note as a chord» y «short bass notes» |
 
-El bajo «(breve)» describe lo que el código detecta y no afirma función; la regla de una nota de paso de verdad queda como mejora futura (`THEORY.md`, «Pendientes conocidos»).
+El bajo «(breve)» describe lo que el código detecta y no afirma función; la regla de una nota de paso de verdad, sin implementar, está en `THEORY.md`, «Reglas de las etiquetas» (nota de paso en el bajo).
 
 La sesión B agregó 19 pruebas; la suite queda en 1097 + 2 saltadas.
