@@ -320,18 +320,15 @@ kbd{display:inline-block;font:inherit;font-size:13px;line-height:1.2;border:2px 
 .an-pats{flex:1 1 100%}
 .an-pats>div{display:flex;flex-wrap:wrap;gap:6px}
 .an .none,.an .expr{font-size:15px}
-/* --rh: height of one chord row, the unit of the bracket positions */
-.an-rows{--row:36px;--rh:var(--row);position:relative;columns:300px;column-gap:28px}
-.an-row{display:flex;column-gap:10px;height:var(--rh);white-space:nowrap;break-inside:avoid}
-@media (max-width:480px){
-  .an-rows{--rh:calc(2 * var(--row))}
-  .an-row{flex-wrap:wrap}
-  .an-row .sub{flex-basis:100%;padding-left:32px}
-}
+/* --rh: height of one chord row, the unit of the bracket positions. Each chord takes two ruled lines,
+   the degree on the first and the chord, function and tension on the second, so neither is cut short */
+.an-rows{--row:36px;--rh:calc(2 * var(--row));position:relative;columns:300px;column-gap:28px}
+.an-row{display:flex;flex-wrap:wrap;column-gap:10px;height:var(--rh);white-space:nowrap;break-inside:avoid}
+.an-row .sub{flex-basis:100%;padding-left:32px}
 .an-row>span{display:inline-block;height:var(--row);line-height:var(--row);overflow:hidden}
 .an-row .n{min-width:22px;font-size:13px;color:var(--brown);text-align:right}
-.an-row .main{font-family:var(--hand);font-size:32px;min-width:4.2em}
-/* the tension (0,x) never gets cut: when the row is narrow the ellipsis falls on the chord symbol and function */
+.an-row .main{font-family:var(--hand);font-size:32px;min-width:4.2em;max-width:calc(100% - 32px);text-overflow:ellipsis}
+/* the tension (0,x) never gets cut: when the line is narrow the ellipsis falls on the chord symbol and function */
 .an-row .sub{display:flex;column-gap:.4em;min-width:0;font-size:13px;color:var(--brown)}
 .an-row .fn{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .an-row .ten{flex:none}
