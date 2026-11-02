@@ -234,6 +234,7 @@ prog('F27', 2, 'Sin dominante, el primero cuando empatan: Sol menor y no Si♭ m
 prog('F28', 2, 'Sin dominante, ni abre y cierra: el que más dura (La menor dura 3 de 6)', ['F2 A2 C3', 'G2 B2 D3', 'A2 C3 E3*3', 'G2 B2 D3'], { key: 'A menor', why: ['el acorde que más dura es la tónica'] });
 prog('F29', 2, 'En contra: ♭VI–♭VII–I prestado (el A♭ no es mixolidio), Do mayor sin etiqueta', ['C3 E3 G3', 'Ab2 C3 Eb3', 'Bb2 D3 F3', 'C3 E3 G3'], { key: 'C mayor', mode: '' });
 prog('F30', 2, 'C – D – G es ambiguo: I–V/V–V (semicadencia en Do) o IV–V–I en Sol; la tonalidad no elegida sale como alternativa, sin etiqueta lidia', ['C3 E3 G3', 'D3 F#3 A3', 'G2 B2 D3'], { key: ['C mayor', 'G mayor'], alt: ['C mayor', 'G mayor'], mode: '' });
+prog('F31', 2, 'G – C, solo dos acordes, es ambiguo: V–I en Do o I–IV en Sol; gana Do, y Sol sale como alternativa', ['G2 B2 D3', 'C3 E3 G3'], { key: ['C mayor'], alt: ['G mayor'] });
 prog('F11', 3, 'Modulación Do → Sol (dos regiones)', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3 F3', 'C3 E3 G3', 'A2 C3 E3', 'D3 F#3 A3 C4', 'G2 B2 D3', 'D3 F#3 A3 C4', 'G2 B2 D3'], { key: ['G mayor', 'C mayor → G mayor'], regions: true });
 prog('F12', 2, 'Re♭ mayor (nombre de tonalidad)', ['Db3 F3 Ab3', 'Gb2 Bb2 Db3', 'Ab2 C3 Eb3 Gb3', 'Db3 F3 Ab3'], { key: 'Db mayor' });
 prog('F13', 2, 'Sol♯ menor (nombre de tonalidad)', ['G#2 B2 D#3', 'C#3 E3 G#3', 'D#3 F##3 A#3 C#4', 'G#2 B2 D#3'], { key: ['G# menor', 'Ab menor'] });
