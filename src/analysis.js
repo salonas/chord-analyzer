@@ -43,8 +43,15 @@ const noteText=(n,prefs)=>letterName(n.l,n.a,prefs)+(n.oct+octOff(prefs));
 
 // ---------- chord analysis ----------
 // The points of a candidate name; the lowest wins. The type adds its rank (TYPES: 0 to RANK.maxType, the rarer the more), the other
-// terms are these
-const RANK={bass:3,missing:2,locked:10,sixthNo5:1.5};
+// terms are these. A bass that is not the root costs more on the 7th (a 4/2 chord) and more again on any other degree than the 3rd
+// or the 5th (a 9th, 11th or 13th, an altered 5th, the 6th, the 2nd or 4th of a sus chord), where the same notes have a likelier
+// root: B D G with E♭ as an ornament is G/B, not E♭maj7♯5/B (fixed on the development set of TAVERN, 2 Nov 2026)
+const RANK={bass:3,bass7:2,bassFar:4,missing:2,locked:10,sixthNo5:1.5};
+const bassCost=(t,r,bass)=>{
+  if(bass===r) return 0;
+  const d=t.degs.find(x=>x.pc===(bass-r+12)%12);
+  return RANK.bass+(d.n===7?RANK.bass7:d.n===3||(d.n===5&&d.pc===7)?0:RANK.bassFar);
+};
 function analyze(notes,locked){
   const pcs=[...new Set(notes.map(m=>m%12))];
   if(pcs.length<2) return [];
@@ -56,7 +63,7 @@ function analyze(notes,locked){
       if(![...rel].every(x=>full.has(x))) continue;
       const missing=t.degs.filter(d=>!rel.has(d.pc));
       if(missing.some(d=>!d.opt)) continue;
-      const parts={type:t.rank,missing:missing.length*RANK.missing,bass:bass!==r?RANK.bass:0,sixth:missing.some(d=>d.n===5)&&/^m?6$/.test(t.sym)?RANK.sixthNo5:0};
+      const parts={type:t.rank,missing:missing.length*RANK.missing,bass:bassCost(t,r,bass),sixth:missing.some(d=>d.n===5)&&/^m?6$/.test(t.sym)?RANK.sixthNo5:0};
       let score=parts.type+parts.missing+parts.bass+parts.sixth;
       if(locked!=null && locked===r){ score-=RANK.locked; parts.locked=-RANK.locked; }
       out.push({root:r,type:t,missing,score,parts,slash:bass!==r,bass});
@@ -100,17 +107,21 @@ function ornWeights(evs,a,dur){
   W.forEach((v,k)=>W.set(k,v/tot));
   return W;
 }
-function readOrnaments(notes,evs,a,dur){
+// Once the key is known (the second reading of analyzeProgression), the four best names of each set weigh the context terms of
+// readWithMelody too (ctxOf): the key, and the neighbours of the first reading (2 Nov 2026, development set of TAVERN)
+function readOrnaments(notes,evs,a,dur,key,nb){
   const ev=evs.filter(x=>x.s<a+dur&&x.s+x.l>a&&notes.includes(x.m)); if(!ev.length||!(dur>0)) return null;
   const W=ornWeights(ev,a,dur), bassPc=notes[0]%12, free=[...W.keys()].filter(pc=>pc!==bassPc);
   const sets=[[]]; for(const x of free) for(const s of [...sets]) if(s.length<ORN.maxDrop) sets.push([...s,x]);
   let best=null;
   for(const D of sets){
-    const keep=notes.filter(m=>!D.includes(m%12));
-    const c=new Set(keep.map(m=>m%12)).size>=2&&analyze(keep,null)[0]; if(!c) continue;
-    const ext=c.type.degs.filter(d=>d.n>=7).map(d=>(d.pc+c.root)%12).filter(pc=>W.has(pc)&&!D.includes(pc)&&W.get(pc)<ORN.extUnder).length;
-    const cost=c.score+ORN.drop*10*D.reduce((s,pc)=>s+W.get(pc),0)+ORN.ext*ext;
-    if(!best||cost<best.cost-1e-9) best={c,cost,D};
+    const keep=notes.filter(m=>!D.includes(m%12)); if(new Set(keep.map(m=>m%12)).size<2) continue;
+    for(const c of analyze(keep,null).slice(0,key?4:1)){
+      const ext=c.type.degs.filter(d=>d.n>=7).map(d=>(d.pc+c.root)%12).filter(pc=>W.has(pc)&&!D.includes(pc)&&W.get(pc)<ORN.extUnder).length;
+      const ctx=ctxOf(c,key,nb||{});
+      const cost=c.score+ORN.drop*10*D.reduce((s,pc)=>s+W.get(pc),0)+ORN.ext*ext+Object.values(ctx).reduce((s,v)=>s+v,0);
+      if(!best||cost<best.cost-1e-9) best={c:Object.keys(ctx).length?{...c,ctx}:c,cost,D};
+    }
   }
   return best;
 }
@@ -122,6 +133,14 @@ function readOrnaments(notes,evs,a,dur){
 // The notes the step shows and spells are still its own; mel holds the notes of the tune the name takes, and the reading
 // keeps the context terms it got (ctx) for its tooltip. Fixed on the development set of TAVERN (2 Nov 2026).
 const NB={key:1,next:1,prev:.5};
+const ctxOf=(c,key,nb)=>{
+  const ctx={}; if(!key) return ctx;
+  const it=x=>x&&{root:x.root,q:x.type.q}, ek=expFor(key), inKey=x=>{const e=ek[(x.root-key.tonic+12)%12]; return !!e&&e.includes(x.type.q);};
+  if(nb.next&&inKey(nb.next)&&leads(it(c),it(nb.next))) ctx.next=-NB.next;
+  if(!inKey(c)) ctx.key=NB.key;
+  if(nb.prev&&inKey(c)&&leads(it(nb.prev),it(c))) ctx.prev=-NB.prev;
+  return ctx;
+};
 function readWithMelody(step,key,nb){
   const harm=[...step.notes].sort((a,b)=>a-b), bass=harm[0], a=step.a||0, dur=step.dur;
   const ev=step.all.filter(x=>x.s<a+dur&&x.s+x.l>a&&x.m>=bass); if(!ev.length||!(dur>0)) return null;
@@ -129,19 +148,12 @@ function readWithMelody(step,key,nb){
   const W=ornWeights(ev.filter(x=>own.has(x.m%12)),a,dur), tune=[...new Set(ev.map(x=>x.m%12))].filter(pc=>!own.has(pc));
   const free=[...W.keys(),...tune].filter(pc=>pc!==bass%12), sets=[[]];
   for(const x of free) for(const s of [...sets]) if(s.length<ORN.maxDrop) sets.push([...s,x]);
-  const it=c=>c&&{root:c.root,q:c.type.q};
   let best=null;
   for(const D of sets){
     const keep=notes.filter(m=>!D.includes(m%12)); if(new Set(keep.map(m=>m%12)).size<2) continue;
     for(const c of analyze(keep,null).slice(0,4)){
       const ext=c.type.degs.filter(d=>d.n>=7).map(d=>(d.pc+c.root)%12).filter(pc=>W.has(pc)&&!D.includes(pc)&&W.get(pc)<ORN.extUnder).length;
-      const ctx={};
-      if(key){
-        const ek=expFor(key), inKey=x=>{const e=ek[(x.root-key.tonic+12)%12]; return !!e&&e.includes(x.type.q);};
-        if(nb.next&&inKey(nb.next)&&leads(it(c),it(nb.next))) ctx.next=-NB.next;
-        if(!inKey(c)) ctx.key=NB.key;
-        if(nb.prev&&inKey(c)&&leads(it(nb.prev),it(c))) ctx.prev=-NB.prev;
-      }
+      const ctx=ctxOf(c,key,nb);
       const cost=c.score+ORN.drop*10*D.reduce((s,pc)=>s+(W.get(pc)||0),0)+ORN.ext*ext+Object.values(ctx).reduce((s,v)=>s+v,0);
       if(!best||cost<best.cost-1e-9) best={c:Object.keys(ctx).length?{...c,ctx}:c,cost,D};
     }
@@ -188,7 +200,7 @@ function resolveStep(step,prefs,key,nb){
   // a chord the user named keeps its name; otherwise the timing of the notes, when the step has it, may leave some out.
   // The reading without the ornaments is kept either way (orn when it names the step, ornAlt when the user named another)
   const named=cands.find(x=>x.root===step.root&&x.type.sym===step.sym);
-  const o=step.all?readWithMelody(step,key,nb||{}):step.evs?readOrnaments(notes,step.evs,step.a||0,step.dur):null;
+  const o=step.all?readWithMelody(step,key,nb||{}):step.evs?readOrnaments(notes,step.evs,step.a||0,step.dur,key,nb):null;
   const c=named||(o&&o.c)||cands[0]||null;
   const sp=c?spellCandidate(c,notes,prefs,key):null;
   const spelled=sp?sp.notes:notes.map(m=>plainSpell(m,prefs,key));
@@ -520,8 +532,15 @@ function contextTension(rs,romans,fn,lead,i){
   return null;
 }
 // «3 inversión + 0,2 tipo = 3,2»: what a candidate name scored, for its tooltip
+// the bass in the tooltip: «inversión» on the 3rd or the perfect 5th, else its degree («bajo en la 7ª», «bajo en la 5ª alterada»)
+const ORD_EN={2:'2nd',4:'4th',5:'5th',6:'6th',7:'7th',9:'9th',11:'11th',13:'13th'};
+function bassLabel(c){
+  const d=c.type.degs.find(x=>x.pc===(c.bass-c.root+12)%12);
+  if(!d||d.n===3||(d.n===5&&d.pc===7)) return tr('inversión','inversion');
+  return d.n===5?tr('bajo en la 5ª alterada','bass on the altered 5th'):tr(`bajo en la ${d.n}ª`,`bass on the ${ORD_EN[d.n]}`);
+}
 function scoreDetail(c){
-  const P=c.parts, rows=[['bass',tr('inversión','inversion')],['missing',tr('omisión','omission')],['sixth',tr('6ª sin 5','6th without 5th')],['type',tr('tipo','type')]].filter(([k])=>P[k]);
+  const P=c.parts, rows=[['bass',bassLabel(c)],['missing',tr('omisión','omission')],['sixth',tr('6ª sin 5','6th without 5th')],['type',tr('tipo','type')]].filter(([k])=>P[k]);
   const f=x=>tenNum(+x.toFixed(2)).replace('-','−');
   let s=rows.length?rows.map(([k,l],i)=>`${i?'+ ':''}${f(P[k])} ${l}`).join(' '):`0 ${tr('tipo','type')}`;
   if(P.locked) s+=` − ${f(-P.locked)} ${tr('raíz elegida','chosen root')}`;
@@ -536,8 +555,8 @@ function scoreDetail(c){
 // The rule of the order, written from the constants of analyze
 function rankHelp(){
   const n=tenNum, top=Math.max(...TYPES.map(t=>t.rank));
-  return tr(`Se ordenan por puntos y gana el menor: +${n(RANK.bass)} si el bajo no es la fundamental, +${n(RANK.missing)} por nota omitida, de 0 a ${n(top)} según el tipo (más raro, más puntos); la raíz que eliges resta ${n(RANK.locked)}. En la franja también cuentan la melodía y el contexto: −${n(NB.next)} si va a su acorde siguiente como V → I, +${n(NB.key)} si queda fuera de la tonalidad, −${n(NB.prev)} si llega desde su dominante.`,
-    `They are ordered by points and the lowest wins: +${n(RANK.bass)} if the bass is not the root, +${n(RANK.missing)} per omitted note, ${n(0)} to ${n(top)} by type (the rarer, the more points); the root you choose subtracts ${n(RANK.locked)}. In the lane, the melody and the context count too: −${n(NB.next)} if it goes to the next chord as V → I, +${n(NB.key)} if it falls outside the key, −${n(NB.prev)} if it arrives from its dominant.`);
+  return tr(`Se ordenan por puntos y gana el menor: bajo en la 3ª o la 5ª: +${n(RANK.bass)}; en la 7ª: +${n(RANK.bass+RANK.bass7)}; en otra nota (9ª, 6ª, 5ª alterada): +${n(RANK.bass+RANK.bassFar)}; +${n(RANK.missing)} por nota omitida; de 0 a ${n(top)} según el tipo (más raro, más puntos); la raíz que eliges resta ${n(RANK.locked)}. En la franja también cuentan la melodía y el contexto: −${n(NB.next)} si va a su acorde siguiente como V → I, +${n(NB.key)} si queda fuera de la tonalidad, −${n(NB.prev)} si llega desde su dominante.`,
+    `They are ordered by points and the lowest wins: bass on the 3rd or 5th: +${n(RANK.bass)}; on the 7th: +${n(RANK.bass+RANK.bass7)}; on any other note (9th, 6th, altered 5th): +${n(RANK.bass+RANK.bassFar)}; +${n(RANK.missing)} per omitted note; ${n(0)} to ${n(top)} by type (the rarer, the more points); the root you choose subtracts ${n(RANK.locked)}. In the lane, the melody and the context count too: −${n(NB.next)} if it goes to the next chord as V → I, +${n(NB.key)} if it falls outside the key, −${n(NB.prev)} if it arrives from its dominant.`);
 }
 const tenNum=x=>tr(String(x).replace('.',','),String(x));
 // «base 0,13 + sorpresa 0,15 = 0,28», for the tooltip of the sheet

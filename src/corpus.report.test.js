@@ -25,7 +25,7 @@ describe.skipIf(!process.env.CORPUS_REPORT)('corpus report', () => {
     const plainU = pieces.map(p => ({ test: isTest(p.piece), run: evalTavern([p], { plain: true }) }));
     const cmp = t => { const b = side(plainU, t).map(r => r.T), a = side(tavU, t).map(r => r.T); return { b: mergeRuns(side(plainU, t)).T.rows(), a: mergeRuns(side(tavU, t)).T.rows(), d: bootstrapDiff(b, a) }; };
     const CMP = { dev: cmp(false), test: cmp(true) };
-    const CMP_ROWS = ['por tramo | acorde: raíz + calidad (acepta A o B)', 'por tramo | acorde: nombre exacto, sin extensiones (acepta A o B)', 'por tramo | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)', 'por tramo | tonalidad (tónica y modo)', 'por tramo | inversión (dado el acorde correcto)', 'por tramo | enarmonía (tramo con todas las notas bien)', 'de punta a punta | acorde: raíz + calidad (acepta A o B)', 'de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app', 'de punta a punta | tonalidad (tónica y modo)'];
+    const CMP_ROWS = ['por tramo | acorde: raíz + calidad (acepta A o B)', 'por tramo | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable', 'por tramo | acorde: nombre exacto, sin extensiones (acepta A o B)', 'por tramo | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)', 'por tramo | tonalidad (tónica y modo)', 'por tramo | inversión (dado el acorde correcto)', 'por tramo | enarmonía (tramo con todas las notas bien)', 'de punta a punta | acorde: raíz + calidad (acepta A o B)', 'de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app', 'de punta a punta | tonalidad (tónica y modo)'];
     const cmpCells = (C, cat) => { const b = num(C.b, cat), a = num(C.a, cat), d = C.d[cat]; return `${b} % | ${a} % | ${d ? `${(a - b).toFixed(1)} (${d[0]} a ${d[1]})` : 'sin datos'}`; };
     const tavSkipped = JSON.parse(fs.readFileSync(new URL('tavern/skipped.json', OUT), 'utf8'));
     const rockSkipped = JSON.parse(fs.readFileSync(new URL('rock/skipped.json', OUT), 'utf8'));
@@ -37,8 +37,8 @@ describe.skipIf(!process.env.CORPUS_REPORT)('corpus report', () => {
     const topRock = [...rockDev.T.errs.values()].sort((a, b) => b.n - a.n).slice(0, 5);
     const ok = (v, goal) => (v === null ? 'sin datos' : v >= goal ? 'cumple' : 'no cumple');
     const G = [
-      ['Acorde por tramo (raíz + calidad, acepta A o B)', '80 %', 'por tramo | acorde: raíz + calidad (acepta A o B)', 80, 'TAVERN, por tramo anotado'],
-      ['Acorde de punta a punta (los tramos sin acorde de la app cuentan como fallo)', '70 %', 'de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app', 70, 'TAVERN, de punta a punta'],
+      ['Acorde por tramo (raíz + calidad, acepta A o B; sin los tramos de calidad no determinable: power chord o una sola nota)', '75 %', 'por tramo | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable', 75, 'TAVERN, por tramo anotado'],
+      ['Acorde de punta a punta (los tramos sin acorde de la app cuentan como fallo)', '60 %', 'de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app', 60, 'TAVERN, de punta a punta'],
       ['Inversión, dado el acorde correcto', '≥ 94 %', 'por tramo | inversión (dado el acorde correcto)', 94, 'TAVERN, por tramo anotado'],
       ['Tonalidad (tónica y modo)', '85 %', 'por tramo | tonalidad (tónica y modo)', 85, 'TAVERN, por tramo anotado'],
       ['Tónica, sin aceptar la relativa', '82 %', 'tónica (acepta ambos analistas)', 82, 'Rock Corpus'],
@@ -65,7 +65,7 @@ ${G.map(([n, m, v, goal, c, ci]) => `| ${n} | ${m} | ${v === null ? 'sin datos' 
 
 ## Antes y después de las reglas que leen el tiempo y la melodía
 
-«Antes» es la misma evaluación con los pasos sin el inicio y la duración de sus notas y sin las notas de la melodía, como los leía la app hasta el 2026-11-01; «después», con ellos (decisiones 8 y 11 de \`THEORY.md\`). La segmentación de la app (decisiones 9 y 10) es la misma en los dos lados, así que esta tabla no mide la de punta a punta de la etapa: esa comparación, contra la base corregida \`965e9d6\`, está en \`THEORY.md\`. Δ en puntos, con su IC 95 % pareado: cada remuestreo toma las mismas obras en los dos lados. La regla se fijó mirando solo desarrollo; la prueba se miró una vez, al final.
+«Antes» es la misma evaluación con los pasos sin el inicio y la duración de sus notas y sin las notas de la melodía, como los leía la app hasta el 2026-11-01; «después», con ellos (decisiones 8 y 11 de \`THEORY.md\`, y el contexto sin melodía de la decisión 12). La segmentación de la app (decisiones 9 y 10) y el costo del bajo por grado (decisión 12) son los mismos en los dos lados, así que esta tabla no mide cada etapa: las comparaciones de cada etapa, pareadas contra su base, están en \`THEORY.md\`. Δ en puntos, con su IC 95 % pareado: cada remuestreo toma las mismas obras en los dos lados. La regla se fijó mirando solo desarrollo; la prueba se miró una vez, al final.
 
 | Medida | Desarrollo antes | Desarrollo después | Δ desarrollo | Prueba antes | Prueba después | Δ prueba |
 |---|---|---|---|---|---|---|
@@ -77,6 +77,7 @@ ${CMP_ROWS.map(cat => `| ${cat.replace(' | ', ' — ')} | ${cmpCells(CMP.dev, ca
 |---|---|---|---|
 | Acorde (raíz + calidad, acepta A o B) | ${both(tT, tD, 'por tramo', 'acorde: raíz + calidad (acepta A o B)')} | ${both(tT, tD, 'de punta a punta', 'acorde: raíz + calidad (acepta A o B)')} | excluida (circular) |
 | Acorde, nombre exacto, sin extensiones (F7♭9 no cuenta como F7) | ${both(tT, tD, 'por tramo', 'acorde: nombre exacto, sin extensiones (acepta A o B)')} | ${both(tT, tD, 'de punta a punta', 'acorde: nombre exacto, sin extensiones (acepta A o B)')} | excluida (circular) |
+| Acorde, sin los tramos de calidad no determinable (power chord o una sola nota con la raíz esperada) | ${both(tT, tD, 'por tramo', 'acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable')} | ${both(tT, tD, 'de punta a punta', 'acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable')} | excluida (circular) |
 | Acorde, contando como fallo los tramos que la app no cubre | ${both(tT, tD, 'por tramo', 'acorde: raíz + calidad (acepta A o B)')} | ${both(tT, tD, 'de punta a punta', 'acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app')} | excluida (circular) |
 | Inversión (dado el acorde correcto) | ${both(tT, tD, 'por tramo', 'inversión (dado el acorde correcto)')} | ${both(tT, tD, 'de punta a punta', 'inversión (dado el acorde correcto)')} | excluida (circular) |
 | Grado (crudo; deriva de la raíz y la tonalidad) | ${both(tT, tD, 'por tramo', 'grado (crudo)')} | ${both(tT, tD, 'de punta a punta', 'grado (crudo)')} | excluida (circular) |
