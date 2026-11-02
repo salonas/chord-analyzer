@@ -27,9 +27,12 @@ function against(m,r,sp){
   // a degree the voicing leaves out (the 5 of C(no5)) still counts as a chord tone
   const degs=r.c.type.degs, rel=((m-r.c.root)%12+12)%12, d=degs.find(x=>x.pc===rel);
   if(d) return {iv:d.label,ten:d.n<=7?'low':'mid',tone:d.n<=7};
-  // half a step above a chord tone clashes (♭9 over the root, 4 over a major 3rd)
+  // half a step above a chord tone clashes (♭9 over the root, 4 over a major 3rd): an avoid note, the free role. Over a
+  // dominant (major 3rd and minor 7th) the ♭9 and the ♭13 are available tensions instead (avail); they still clash, so
+  // their tension stays high
   const root=sp&&r.sp&&r.sp.byPc[r.c.root], iv=root?byLetter(rel,((sp.l-root.l)%7+7)%7):null;
-  return {iv:iv||OUT_DEG[rel],ten:degs.some(x=>x.pc===(rel+11)%12)?'high':'mid',tone:false};
+  const dom=degs.some(x=>x.pc===4)&&degs.some(x=>x.pc===10);
+  return {iv:iv||OUT_DEG[rel],ten:degs.some(x=>x.pc===(rel+11)%12)?'high':'mid',tone:false,avail:dom&&(rel===1||rel===8)};
 }
 // a chord tone, a step to one side, a third leap to the other side and a step back to the same tone:
 // the two notes in the middle are one ornament (double neighbor, cambiata)
@@ -56,7 +59,7 @@ function melodyKind(mel,i,info,toneAt,next){
   // the last note before the change that belongs to the next chord announces it, even when it came by step
   if(ahead) return 'anticipation';
   if(step(d1)) return 'escape';
-  return k.ten==='mid'||toward?'tension':'free';
+  return k.ten==='mid'||k.avail||toward?'tension':'free';
 }
 // The role of every melody note of a pattern by note id: {kind, to} where to are the ids of the next melody note
 function melodyKinds(p,prefs){

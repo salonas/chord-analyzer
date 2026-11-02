@@ -12,35 +12,7 @@ Cierre del proyecto, 2 nov 2026 (rama `docs/closing-state`, desde `main` en `28e
 - **Las 15 decisiones** de teoría están implementadas y probadas (lista abajo, una línea cada una).
 - **Corpus externos:** TAVERN (27 obras, dos anotadores) y Rock Corpus RS 200 (382 análisis), con conjunto de desarrollo y de prueba separados por hash; la prueba se miró una sola vez por etapa. 3 de 7 metas se cumplen en prueba y las 4 restantes se aceptaron con su cifra (tabla abajo).
 - **Ratchet del corpus en `npm test`:** 11 filas de desarrollo que no pueden empeorar (abajo).
-- **Trazabilidad de las etiquetas** (sesión B del cierre): cada etiqueta teórica de la interfaz y del texto exportado tiene su función, su regla en este archivo y un test. Las 24 filas de la auditoría de `inversiones-tension-ui.md` (el documento no está en el repositorio):
-
-  | Fila | Etiqueta | Prueba |
-  |---|---|---|
-  | 1 | Nombre del acorde activo | sonda A; `src/audit.test.js` «labels fixed at the close» (descripción, `chordDesc`) |
-  | 2 | Nombre de cada tipo | `src/audit.test.js` «row 2» |
-  | 3 | Intervalo de dos notas | `src/audit.test.js` «row 3» |
-  | 4 | Deletreo del acorde activo | `src/audit.test.js` «row 4» |
-  | 5 | Por qué un nombre va primero (puntos, regla) | `src/why.test.js` «row 5» (dos bloques) |
-  | 6 | Etiquetas de «Posibles nombres» | `src/audit.test.js` «row 6» (dos bloques) |
-  | 7 y 8 | Avisos y sus umbrales | `src/audit.test.js` «rows 7 and 8» |
-  | 9 | «No se reconoce el acorde» | sonda A25; `src/audit.test.js` «rows 7 and 8» (aviso `unknown`) |
-  | 10 | Por qué la tonalidad | `src/why.test.js` «row 10»; línea del texto, «closing trace» |
-  | 11 | Final (cadencia) | sonda G; «sin cadencia final» y cadencia modal en `src/audit.test.js` |
-  | 12 | Patrones | sonda H; `src/gaps.test.js`; «(continúa en … al repetir)» en `src/audit.test.js` |
-  | 13 | Grado | sonda D y V |
-  | 14 | Función | sonda E |
-  | 15 | Tensión 0–1 | sonda T; `src/analysis.test.js` «tension with context» |
-  | 16 | Ayuda «su tensión estimada (0 a 1)» | `src/audit.test.js` (`sheetHint`) |
-  | 17 | Franja: nombre y grado · función | sonda; `src/english.test.js` «writes the inversion in words and keeps the strip short» |
-  | 18 | Hoja vacía | `src/audit.test.js` «row 18» |
-  | 19 | Intervalo de la melodía | `src/audit.test.js` «row 19»; sonda J31, J32 |
-  | 20 | Tensión de la melodía, «estimada» | sonda J30; `src/audit.test.js` «closing trace» |
-  | 21 | Rol de la melodía | sonda J; retardo en `src/audit.test.js` «closing trace» |
-  | 22 | Pesos de Expresión en su ayuda | `src/audit.test.js` «row 22» |
-  | 23 | Apoyaturas en Expresión | `src/expression.test.js` «expressPattern roles» |
-  | 24 | Pie de página: lo que es estimación | `src/audit.test.js` «closing trace» |
-
-  Además: adornos y melodía que completa el acorde (`src/why.test.js`), semicadencia en el porqué (`src/why.test.js`), modos (sonda F), regiones y pivote (`src/regions.test.js`, sonda J42), «(doblada)» y «sin 5» (`src/audit.test.js`). La sesión B agregó 13 pruebas; la suite queda en 1091 + 2 saltadas.
+- **Trazabilidad de las etiquetas** (sesión B del cierre): cada etiqueta teórica de la interfaz y del texto exportado tiene su función, su regla en este archivo y un test. La tabla por fila de la auditoría está en [docs/TRAZABILIDAD.md](docs/TRAZABILIDAD.md).
 - **«Estimación»:** se revisó cada lugar donde se dice (tonalidad, patrones, tensión, tensión de la melodía, sentimientos, «Regla práctica» del registro grave). Ninguno se quita: la tonalidad tiene cifra de corpus pero lejos de la certeza (80,0 % y 70,5 % en prueba), y los demás no tienen medición externa. El pie de página se corrigió porque describía la lectura bajo una melodía como un corte por cambio de notas; ahora la nombra entre las estimaciones (texto aprobado el 2 nov 2026).
 
 ### Metas al cierre
@@ -89,8 +61,6 @@ Imprime el antes → después de cada fila para el commit y este archivo. Las ci
 
 ### Pendientes conocidos
 
-- **Rol «libre»: la regla escrita no coincide con el código, pendiente de decisión.** La regla de «Etiquetas fijadas al cierre» llama tensión a la 9ª, 11ª o 13ª (natural o alterada) y libre a lo demás. El código (`against` y `melodyKind` en `src/roles.js`) llama libre a la nota fuera del acorde que está medio tono sobre una nota del acorde, y tensión a las otras. Casos sobre C, entre dos C5 por salto: F4 (11ª) es «libre» en el código y tensión en la regla; B4 (7ª mayor) es «tensión» en el código y libre en la regla; D♭4 sobre C7 (♭9) es «libre» en el código y tensión en la regla. Sin test hasta decidir.
-- **Grados que se omiten: la regla y el código coinciden en la 5ª, no en el resto.** La regla dice que en la oncena suele omitirse la 3ª y en la trecena la 11ª. El código (`d.opt` en `src/data.js`) permite omitir la 5ª justa y, en oncenas y trecenas, la 9ª; nunca la 3ª. C G B♭ D F se lee C9sus4, no C11 sin 3; C E G B♭ A se lee C13 sin 9; las trecenas ya se definen sin 11ª. «sin 5» tiene test; lo demás, sin test hasta decidir.
 - **Texto de interfaz que no es una etiqueta teórica, fuera del alcance del objetivo de trazabilidad** (no tiene regla de teoría que probar): Hz, MIDI y «sin MIDI» de las notas del acorde activo, «N coincidencias», «en uso», «Una sola nota.», «Ninguno de los N patrones conocidos.», «(en bucle)» y las cabeceras `# Patrones:` y `# Final:` del texto exportado (estas dos, cubiertas solo por los fixtures).
 - **Del trabajo con el corpus, solo con desarrollo** (detalle en «Retomar desde main»): lo que cuestan las frases partidas por la modulación (la enarmonía quedó a 0,2 puntos de su meta en prueba); las modulaciones sin cadencia (20 de 46); la enarmonía que queda (659 tramos); la quinta abajo del rock en la tonalidad (40 casos); la lectura por tramo (meta 75 %) y la candidata de segmentación «el trozo siguiente no suma notas fuera del acorde anterior» (+0,9).
 - Comparar al oído el volumen GM con las muestras de la plantilla (`LEVEL` en `src/audio.js`).
@@ -98,7 +68,7 @@ Imprime el antes → después de cada fila para el commit y este archivo. Las ci
 
 ### Cómo retomar
 
-1. `npm test` (1091 + 2 saltadas, ratchet incluido) y la sonda, que corre dentro de la suite (`src/theory.test.js`, 608 de 608).
+1. `npm test` (1093 + 2 saltadas, ratchet incluido) y la sonda, que corre dentro de la suite (`src/theory.test.js`, 608 de 608).
 2. Antes de tocar una regla, leer su decisión arriba. Una regla nueva se mide en desarrollo, pareada por obra: `node tools/paired-eval.mjs <worktree de la base>`. El conjunto de prueba se mira una vez, al cierre de la etapa (`--test`), y regenerar `REPORT.md` (`CORPUS_REPORT=1 npx vitest run src/corpus.report.test.js`) también es mirarlo.
 3. Si la sonda cambia a propósito, revisar cada diferencia y regenerar: `UPDATE_THEORY=1 npx vitest run src/theory.test.js` (escribe `passing.json` y `texts.json`). Si mejora el corpus de desarrollo, fijar el ratchet con `UPDATE_CORPUS="<motivo>"`.
 4. Una etiqueta nueva o cambiada lleva su regla en este archivo y su test en el mismo commit.
@@ -147,13 +117,13 @@ Sin decidir y sin cambios: nada de lo de `inversiones-tension-ui.md` queda sin d
 
 ## Etiquetas fijadas al cierre
 
-Escritas el 2 nov 2026 desde la teoría, antes de compararlas con el código (sesión B del cierre del proyecto). Cada una dice cuándo aparece la etiqueta y por qué. Comparadas con el código: «sin cadencia final», «(continúa en … al repetir)» y «(doblada)» coinciden y tienen test en `src/audit.test.js` («labels fixed at the close»); «sin 5» coincide y tiene test, y el resto de los grados que se omiten no coincide; el rol «libre» no coincide. Las dos diferencias están en «Estado final», pendientes conocidos.
+Escritas el 2 nov 2026 desde la teoría, antes de compararlas con el código (sesión B del cierre del proyecto). Cada una dice cuándo aparece la etiqueta y por qué. Comparadas con el código: «sin cadencia final», «(continúa en … al repetir)» y «(doblada)» coincidían; el rol «libre» y los grados que se omiten no coincidían, y Joaquín decidió el mismo día (abajo). Todas tienen test en `src/audit.test.js` («labels fixed at the close»).
 
 - **«sin cadencia final»** (hoja, bajo «Final»). Una cadencia es la fórmula de los dos últimos acordes que cierra la frase: auténtica (V → I con V mayor), modal (v → i, sin sensible), plagal (IV → I o iv → I), con sensible (vii° → I), con sustituto tritonal (♭II7 → I), ♭VII → I (backdoor en mayor), rota (V → vi o ♭VI) y semicadencia (termina en V). Si la progresión tiene menos de dos acordes, o sus dos últimos no forman ninguna de esas fórmulas, no hay cadencia final: la hoja dice «sin cadencia final» y el texto exportado no escribe la línea `# Final:`. Un I⁶₄ → I no es cadencia (G10), ni un ii → I.
 - **«(continúa en … al repetir)»** (texto exportado; en la hoja, «(en bucle)»). Un pattern suena en bucle, así que a sus últimos acordes les siguen los primeros. Un patrón que empieza dentro de la progresión y solo se completa con los primeros acordes de la vuelta siguiente se dice con la parte que está en la progresión y la que llega al repetir: G Am F C tiene I, y al repetir sigue V–vi–IV. Se usa solo si el patrón no aparece completo sin dar la vuelta.
-- **Rol «libre»** (texto exportado, columna «rol»). Una nota de la melodía que no es del acorde, que no forma ninguna figura (paso, bordadura simple o doble, apoyatura, escapada, anticipación, retardo) y que no es una tensión del acorde (9ª, 11ª o 13ª, natural o alterada, sin resolver por grado conjunto) es libre: típicamente llega por salto y sale por salto. Es la categoría de lo que no se deja clasificar, no una figura.
+- **Rol «libre»** (texto exportado, columna «rol»). Decidido con Joaquín el 2 nov 2026, desde la regla del código. Una nota de la melodía que no es del acorde y no forma ninguna figura (paso, bordadura simple o doble, apoyatura, escapada, anticipación, retardo) es libre si queda medio tono sobre una nota del acorde: es una *avoid note*, que choca con la nota que tiene debajo (F sobre C, A♭ sobre C). Si no, es tensión (B sobre C). Excepción: sobre un acorde con 3ª mayor y 7ª menor (dominante), la ♭9 y la ♭13 son tensión, no libre (D♭ y A♭ sobre C7). La tensión de la columna sigue siendo alta para las notas que chocan, también en la excepción. Está en `against` y `melodyKind` (`src/roles.js`); los roles «tensión» y «libre» no cambian la velocity de Expresión.
 - **«(doblada)»** (texto exportado, nombre del paso). Una sola clase de altura en varias octavas no forma acorde: es una nota doblada en octavas. El texto dice «nota:» con las notas que suenan y «(doblada)»; una nota sola dice «nota:» sin «(doblada)».
-- **«sin 5»** (descripción del acorde activo y etiqueta en «Posibles nombres»). Un acorde puede nombrarse con un grado que no suena. En las tríadas, séptimas y novenas el grado que se omite es la 5ª justa, porque no cambia la calidad: la 3ª y la 7ª la definen, y una 5ª alterada define el tipo (7♭5, aug). En la oncena la 3ª suele omitirse (choca con la 11ª), y en la trecena la 11ª. La descripción dice «sin 5» (o el grado que falte); el símbolo de una tríada sin 5ª lleva «(no5)». Cada grado omitido cuesta +2 en el orden de los nombres (fila 5).
+- **«sin 5»** (descripción del acorde activo y etiqueta en «Posibles nombres»). Decidido con Joaquín el 2 nov 2026, desde la regla del código (`d.opt` en `src/data.js`). La 5ª justa se puede omitir siempre; en oncenas y trecenas, también la 9ª; la 3ª nunca se omite: sin 3ª y con 4ª el acorde se nombra sus4 (C G B♭ D F = C9sus4); la trecena dominante no incluye la 11ª natural. La descripción dice «sin 5» o «sin 9»; el símbolo de una tríada sin 5ª lleva «(no5)». Cada grado omitido cuesta +2 en el orden de los nombres (fila 5).
 
 ## Estado
 

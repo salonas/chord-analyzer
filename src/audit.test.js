@@ -1,5 +1,5 @@
 import { T, TYPES } from './data.js';
-import { analyze, analyzeProgression, resolveStep, spellCandidate } from './analysis.js';
+import { analyze, analyzeProgression, candSymbol, resolveStep, spellCandidate } from './analysis.js';
 import { progText } from './text.js';
 import { RULES } from './expression.js';
 import { HTML_EN, setLang } from './i18n.js';
@@ -305,6 +305,27 @@ describe('labels fixed at the close', () => {
   it('writes one pitch class in several octaves as a doubled note, and a lone note without the word', () => {
     expect(blocks([[48, 60]]).find(l => l.startsWith('1. '))).toMatch(/^1\. nota: C3\+C4 \(doblada\) \|/);
     expect(blocks([[48]]).find(l => l.startsWith('1. '))).toMatch(/^1\. nota: C3 \|/);
+  });
+  // the 3rd is never left out: without it and with the 4th the chord is a sus4; an eleventh or a thirteenth can leave out its 9th
+  it('names C G B♭ D F as C9sus4 and C E G B♭ A as C13 without its 9th', () => {
+    const first = notes => { const c = analyze(notes, null)[0], sp = spellCandidate(c, notes, PREFS), sy = candSymbol(c, sp, PREFS); return [sy.main + sy.slash, chordDesc(c, sp, sp.notes, PREFS)]; };
+    expect(first([48, 55, 58, 62, 65])).toEqual(['C9sus4', 'C novena suspendida de 4ª']);
+    expect(first([48, 52, 55, 58, 69])).toEqual(['C13', 'C trecena · sin 9']);
+  });
+  // free is an avoid note: half a step above a chord tone; over a dominant the ♭9 and the ♭13 are tensions
+  it('calls a note half a step above a chord tone free, except the ♭9 and the ♭13 over a dominant', () => {
+    // the note comes and goes by leap, between two chord tones
+    const role = (chord, m, by = 72) => {
+      const notes = [...chord.map((x, i) => ({ id: 'c' + i, m: x, s: 0, l: 4 * T, v: 100 })), ...[[by, 0, 1], [m, 1, 1], [by, 2, 2]].map(([x, s, l], i) => ({ id: 'm' + i, m: x, s: s * T, l: l * T, v: 100 }))];
+      const t = progText(normProg({ id: 'p', name: 'p', beats: 4, names: {}, notes }), PREFS).split('\n');
+      return t.find(l => l.includes(`(${m}) | 1 |`)).split(' | ').at(-1);
+    };
+    const C7 = [48, 52, 55, 58];
+    expect(role(C, 65)).toBe('libre');
+    expect(role(C, 71, 76)).toBe('tensión');
+    expect(role(C7, 61)).toBe('tensión');
+    expect(role(C7, 68)).toBe('tensión');
+    expect(role(C, 68)).toBe('libre');
   });
   it('says «sin 5» for a seventh chord without its 5th, in the description and in the tags', () => {
     const notes = [48, 52, 58], c = analyze(notes, null)[0], sp = spellCandidate(c, notes, PREFS);

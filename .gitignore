@@ -1,6 +1,7 @@
 node_modules/
 dist/
-docs/
+docs/*
+!docs/TRAZABILIDAD.md
 page.js
 *.b64
 __pycache__/
