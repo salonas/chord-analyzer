@@ -1,6 +1,6 @@
 // What the inspector says about the active chord, as pure functions so that each label has a rule and a test.
 import { freq } from './data.js';
-import { analyze, inversionText, letterName, noteText, plainSpell, spellCandidate } from './analysis.js';
+import { analyze, inversionText, letterName, melodyText, noteText, ornamentText, plainSpell, spellCandidate } from './analysis.js';
 import { tr } from './i18n.js';
 
 // The notes of the active chord and their spelling: a chord taken from the progression is spelled in the key the lane
@@ -100,4 +100,16 @@ const emptySheetText=()=>({
     tr('un arpegio: una sola voz que salta entre tres o más notas de un acorde','an arpeggio: a single voice leaping between three or more notes of a chord'),
     tr('un acompañamiento: tres o más notas distintas en un tiempo mientras otra voz se sostiene','an accompaniment: three or more different notes in a beat while another voice holds')]});
 
-export { LIMITS, MUDDY, activeCands, candTags, chordWarnings, emptySheetText, intervalText, spellActive, warningText };
+// The line under the name of the active chord: root and type, then its inversion, the degrees it leaves out («sin 5»), the
+// ornaments (decision 8) and the notes of the tune that complete it (decision 11)
+function chordDesc(cur,sp,spelled,prefs){
+  const inv=inversionText(cur);
+  return `${sp.rootName} ${cur.type.name}${inv?' · '+inv:''}${cur.missing.length?tr(' · sin ',' · no ')+cur.missing.map(d=>d.label).join(', '):''}${cur.orn?' · '+ornamentText(cur.orn,spelled,prefs):''}${cur.mel?' · '+melodyText(cur.mel,sp,prefs):''}`;
+}
+
+// What the sheet says under «Final»: the cadence of the last two chords, or that there is none
+const endingText=cad=>cad||tr('sin cadencia final','no final cadence');
+// The help under the sheet: what each row shows (the tension is an estimate, decision 7) and what the brackets join
+const sheetHint=()=>tr('Grado; al lado, el acorde, su función y su tensión estimada (0 a 1). Las llaves numeradas del margen unen los grados de cada patrón reconocido; una llave abierta sigue en el otro extremo (patrón en bucle).','Degree; next to it, the chord, its function and its estimated tension (0 to 1). The numbered brackets in the margin join the degrees of each recognized pattern; an open bracket continues at the other end (looping pattern).');
+
+export { LIMITS, MUDDY, activeCands, candTags, chordDesc, chordWarnings, emptySheetText, endingText, intervalText, sheetHint, spellActive, warningText };

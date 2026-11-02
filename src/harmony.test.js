@@ -1,6 +1,7 @@
 import { harmonySegs, splitHarmony } from './harmony.js';
 import { parseText, progText } from './text.js';
 import { T } from './data.js';
+import { setLang } from './i18n.js';
 import { PREFS } from './test/helpers.js';
 
 // The default MIDI (src/default_in_c.mid): Cmaj7 Am7 Dm7 G7 under a tune, with a passing bass and an inner voice
@@ -61,9 +62,10 @@ describe('harmonySegs', () => {
 
 describe('harmony and melody in the text', () => {
   const t = progText(pattern(ROWS), PREFS), L = t.split('\n');
+  // «(breve)» says only what is detected: D3 and D♭3 are short notes under the chord (D3 is a neighbour, not a passing tone)
   it('writes four chord lines and no lone note as a chord', () => {
     expect(L.filter(l => /^\d+\. /.test(l))).toEqual([
-      '1. Cmaj7 | Imaj7 (tónica · 0,1) | 0–4 | B3 E4 G4 (+C4 en 2 · +A4 en 2,5) | C3 → D3 (paso) → D♭3 (paso) → C3',
+      '1. Cmaj7 | Imaj7 (tónica · 0,1) | 0–4 | B3 E4 G4 (+C4 en 2 · +A4 en 2,5) | C3 → D3 (breve) → D♭3 (breve) → C3',
       '2. Am7 | vi7 (tónica · 0,13) | 4–8 | G3 C4 E4 G4 | A2',
       '3. Dm7 | ii7 (subdominante · 0,28) | 8–10 | C4 F4 A4 | D3',
       '4. G7 | V7 (dominante · 0,68) | 10–12 | F3 B3 D4 (+D3 en 10,5) | G2']);
@@ -111,5 +113,16 @@ describe('top voice', () => {
   it('reads back without turning its lines into chords', () => {
     const back = parseText(progText(pattern(BRIMSTONE), PREFS), PREFS).projects[0].patterns[0];
     expect(back.notes.length).toBe(BRIMSTONE.split('|').length);
+  });
+});
+
+// «(breve)» / «(short)»: a bass note that does not start with the chord, sounds under all its notes and lasts half a beat or less
+describe('short bass notes', () => {
+  // C (E3 G3 C4) held four beats, C2 for the first two, then half a beat of A1 reached by a leap
+  const rows = '52 0 4|55 0 4|60 0 4|36 0 2|33 2 .5';
+  it('marks the short note under the chord, whatever its function, in both languages', () => {
+    expect(progText(pattern(rows), PREFS).split('\n').find(l => l.startsWith('1. '))).toMatch(/\| C2 → A1 \(breve\)$/);
+    setLang('en');
+    try { expect(progText(pattern(rows), PREFS).split('\n').find(l => l.startsWith('1. '))).toMatch(/\| C2 → A1 \(short\)$/); } finally { setLang('es'); }
   });
 });
