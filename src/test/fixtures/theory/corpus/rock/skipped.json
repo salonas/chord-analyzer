@@ -1,0 +1,29 @@
+{
+ "note": "Counts of what the converter did not turn into cases (see corpus/README.md).",
+ "stats": {
+  "analyses converted": 382,
+  "analysis skipped: more than a tenth of the chords not converted": 18,
+  "chord dropped: IV9 (figure outside the converted set)": 12,
+  "chord dropped: Id9 (figure outside the converted set)": 10,
+  "chord dropped: V+11 (figure outside the converted set)": 18,
+  "chord dropped: V11 (figure outside the converted set)": 52,
+  "chord dropped: V11/IV (figure outside the converted set)": 4,
+  "chord dropped: V7b9 (figure outside the converted set)": 6,
+  "chord dropped: V7s4 (figure outside the converted set)": 12,
+  "chord dropped: V9 (figure outside the converted set)": 8,
+  "chord dropped: V9/IV (figure outside the converted set)": 3,
+  "chord dropped: Vs4 (figure outside the converted set)": 11,
+  "chord dropped: Vs4/vi (figure outside the converted set)": 5,
+  "chord dropped: bIII+9 (figure outside the converted set)": 2,
+  "chord dropped: bVII9 (figure outside the converted set)": 8,
+  "chord dropped: bVIb5 (figure outside the converted set)": 4,
+  "chord dropped: bVIs4 (figure outside the converted set)": 6,
+  "chord dropped: iid6/ii (figure outside the converted set)": 4,
+  "chord dropped: iis4 (figure outside the converted set)": 1,
+  "chord dropped: v7s4 (figure outside the converted set)": 2,
+  "chord dropped: vi9 (figure outside the converted set)": 1,
+  "chords converted": 38770,
+  "chords dropped": 169,
+  "songs with at least one analysis": 198
+ }
+}
