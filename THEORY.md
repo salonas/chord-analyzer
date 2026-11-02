@@ -155,12 +155,12 @@ Rama `feat/key-detection`, desde `main` (`4febb3f`): meta de punta a punta 56 % 
 
 **Etapa de la tonalidad, cerrada el 2 nov 2026** (rama `feat/key-detection`; decisión 13; detalle en Estado). Prueba, mirada una sola vez: tonalidad de TAVERN 79,0 % → 80,0 % (68,1–92,2), Δ +1,0 (0 a 2,2); tónica del rock 69,2 % → 70,5 % (56,4–83,5), Δ +1,3 (−3,7 a 8,0). Ninguna de las dos metas se cumple (85 % y 82 %).
 
-**Propuesta de metas de tonalidad (para decidir con Joaquín):**
+**Metas de tonalidad, decididas con Joaquín el 2 nov 2026:**
 
 - **Tonalidad de TAVERN: 82 % en prueba para la próxima etapa; 85 % a largo plazo.** En desarrollo quedan 314 errores de 1622 (80,6 %). Una quinta arriba son 183 (58 %), casi todas frases que tonicizan el V con su sensible, que TAVERN anota en la tonalidad de la obra: la frase sola no alcanza, y atacarlas pide el contexto de la obra o de las frases anteriores, que es el trabajo de las regiones (F11). Los otros grupos suman 60 + 49 + 16 + 6 = 131, un techo de 131 / 1622 = 8,1 puntos. El 82 % pide 2 puntos: unos 12 de los 580 análisis de prueba o, en desarrollo, 2 % de 1622 = 32 de esos 131 (uno de cada cuatro).
 - **Tónica del rock: 75 % en prueba para la próxima etapa; 82 % a largo plazo.** En desarrollo quedan 72 errores de 304 (76,3 %). El grupo mayor es ahora la quinta abajo, 40 (56 %), con brecha mediana 33: la misma colección de notas, donde la escala acumulada en una canción larga tapa las pistas de tónica. La escala mixolidia ya se midió y no sirve; lo que falta probar es que las pistas de tónica no se diluyan con el largo (por ejemplo, la escala por acorde distinto y no sumada vuelta a vuelta). El 75 % son 58,5 de 78 análisis: +4 análisis, dos canciones con sus dos analistas.
 - **Cuidado con el tamaño de la prueba:** cada análisis del rock pesa 1 / 78 = 1,3 puntos y una canción con dos analistas 2,6; el intervalo de la tónica abarca 27 puntos y el de la tonalidad de TAVERN 24. Una diferencia de menos de unos 5 puntos entre dos metas no se distingue en la prueba; por eso las metas de etapa van en pasos de esa escala.
-- Las demás metas no cambian.
+- Las demás metas no cambian. El generador (`src/corpus.report.test.js`) dice 82 % y 75 % desde el 2 nov 2026; `REPORT.md` y `report.json` los tomarán en la próxima mirada a la prueba (regenerarlos es mirarla).
 
 **Etapa de la segmentación, cerrada el 2 nov 2026** (rama `feat/segmentation-end-to-end`; la app y la sonda no cambian; detalle en Estado). Cifras de punta a punta (acorde, contando como fallo los tramos sin acorde de la app):
 
@@ -201,15 +201,15 @@ Cifras de la etapa del 2 nov 2026 (segmentación y raíz por contexto), antes �
 
 Conjunto de prueba: nunca se usa para ajustar reglas. Se separan obras completas de TAVERN (6 de 27: B066, B075, B080, Opus76, K354 y K573; 290 de 1101 frases) y canciones completas del Rock Corpus (40 de 198; 78 de 382 análisis) por un hash fijo de su nombre (`split.json`, regla en `src/test/corpus-eval.js`). Las reglas se ajustan y los errores se analizan solo con el desarrollo; las metas se miden en la prueba. Con 6 obras, el intervalo del acorde por tramo en la prueba abarca unos 9 puntos y el de la tonalidad unos 22; aun así es optimista, porque no ve la variación de obras que no conoce.
 
-Metas acordadas con Joaquín (2026-11-01; las dos del acorde, revisadas el 2026-11-02), medidas en el conjunto de prueba, con lo que da hoy (la rama de la decisión 13, `feat/key-detection`, mirada en prueba una vez):
+Metas acordadas con Joaquín (2026-11-01; las dos del acorde y las dos de la tonalidad, revisadas el 2026-11-02), medidas en el conjunto de prueba, con lo que da hoy (la rama de la decisión 13, `feat/key-detection`, mirada en prueba una vez):
 
 | Medida | Meta | Hoy (prueba, IC 95 %) |
 |---|---|---|
 | Acorde por tramo anotado (raíz + calidad, acepta A o B; sin los tramos de calidad no determinable) | 75 % (antes 80 %) | 73,7 % (68,4–78,7) |
 | Acorde de punta a punta (los tramos sin acorde de la app cuentan como fallo; desde el 2 nov 2026, los vecinos de la app con la misma lectura y el mismo bajo son un tramo) | 56 % (desde el 2 nov 2026; 60 % a largo plazo; antes 70 %) | 53,3 % (47,3–60,2) con la definición nueva; con la vieja, 49,7 % (42,9–56,3); antes de las decisiones 9 a 11, con el evaluador corregido, 33,6 % (28,6–40,5) |
 | Inversión, dado el acorde correcto | ≥ 94 % | 94,7 % (91,6–96,9; cumple) |
-| Tonalidad de TAVERN (tónica y modo) | 85 % (propuesta: 82 % para la próxima etapa, ver «Retomar desde main») | 80,0 % (68,1–92,2) |
-| Tónica del Rock Corpus, sin aceptar la relativa | 82 % (propuesta: 75 % para la próxima etapa) | 70,5 % (56,4–83,5) |
+| Tonalidad de TAVERN (tónica y modo) | 82 % (desde el 2 nov 2026; 85 % a largo plazo) | 80,0 % (68,1–92,2) |
+| Tónica del Rock Corpus, sin aceptar la relativa | 75 % (desde el 2 nov 2026; 82 % a largo plazo) | 70,5 % (56,4–83,5) |
 | Enarmonía (tramo con todas las notas bien) | 95 % | 91,1 % (88,5–94,5) |
 | Modulación: canciones del Rock Corpus con cambio de tonalidad que la app informa | la mitad | 0 de 15 |
 
@@ -222,7 +222,8 @@ Por qué cambiaron las metas del acorde (2026-11-02, acordado con Joaquín):
 - **De punta a punta, 70 % → 60 %.** El 70 % no se alcanza con la lectura de hoy (la cuenta está en el párrafo siguiente): una segmentación perfecta quedaría cerca del 67,4 % de la fila por tramo, y conservando la proporción de hoy pediría leer 88,6 % por tramo, casi el acuerdo entre anotadores (92,0 %). El 60 % es lo que da la meta por tramo con esa proporción: 75 × 0,79 = 59,3 %, en desarrollo. En prueba la proporción es 0,73 (49,0 / 67,0), y 75 × 0,73 = 54,8 %; así que el 60 % en prueba pide también conservar más de la lectura al segmentar (60 / 75 = 0,80).
 - **De punta a punta, 60 % → 56 % (2 nov 2026, después de la etapa de la segmentación).** Con la definición nueva de la medida, la prueba conserva 0,75 de la lectura por tramo, y 75 × 0,75 = 56,3 %; el 60 % queda como meta de largo plazo (la cuenta está en «Retomar desde main»).
 - **Por tramo, 80 % → 75 %.** Va atada a la de punta a punta: es la lectura que, con la proporción de hoy, da el 60 %. El 80 % se fijó junto con el 70 %, que ya no se persigue.
-- **Sin cambio:** inversión ≥ 94 %, tonalidad de TAVERN 85 %, tónica del Rock Corpus 82 %, enarmonía 95 % y modulación en la mitad de las canciones.
+- **Tonalidad de TAVERN 85 % → 82 % y tónica del Rock Corpus 82 % → 75 % (2 nov 2026, después de la etapa de la tonalidad).** Las anteriores quedan como metas de largo plazo; el motivo y la cuenta están en «Retomar desde main».
+- **Sin cambio:** inversión ≥ 94 %, enarmonía 95 % y modulación en la mitad de las canciones.
 - El reporte (`src/corpus.report.test.js`, `REPORT.md`) dice 75 % y 60 % desde la mirada a la prueba de la etapa de la lectura por tramo (regenerarlo es mirarla, así que las metas nuevas entraron en esa misma mirada). Desde el 2 nov 2026 el generador dice 56 % de punta a punta, y `REPORT.md` también desde la mirada a la prueba de la etapa de la tonalidad.
 
 **¿Era alcanzable el 70 % de punta a punta?** No con la lectura de hoy, y no en la próxima etapa (por eso bajó a 60 %). La cuenta, en desarrollo: con los cortes del analista la app acierta el 67,4 % de los tramos (fila por tramo), así que una segmentación perfecta con la lectura actual quedaría cerca de 67 %, bajo la meta. De punta a punta conserva hoy 53,2 / 67,4 = 0,79 de esa lectura (en prueba, 49,0 / 67,0 = 0,73). Para llegar a 70 % hacen falta las dos cosas: con la meta por tramo cumplida (80 %), conservar 70 / 80 = 0,875 de la lectura; o, conservando 0,79, leer 70 / 0,79 = 88,6 % por tramo, cerca del acuerdo entre los dos anotadores (92,0 % en raíz + calidad), que es el techo. Es una cota aproximada (la lectura de punta a punta no es exactamente la por tramo sobre otros cortes), pero dice dónde está el trabajo: primero la lectura por tramo (raíz equivocada con nota ajena, maj7 por tríada, tramos de una clase de altura), después la segmentación. Una meta intermedia razonable para la próxima etapa es ~60 % de punta a punta en desarrollo.
