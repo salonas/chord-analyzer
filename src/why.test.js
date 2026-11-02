@@ -12,8 +12,8 @@ const why = (chords, durs) => run(chords, durs).why;
 describe('row 5: the points of a candidate name', () => {
   const cand = (notes, root, sym, locked = null) => analyze(notes, locked).find(c => c.root === root && c.type.sym === sym);
   it('writes the rule of the order from the constants', () => {
-    expect(rankHelp()).toBe('Se ordenan por puntos y gana el menor: +3 si el bajo no es la fundamental, +2 por nota omitida, de 0 a 0,9 según el tipo (más raro, más puntos); la raíz que eliges resta 10. En la franja también cuentan la melodía y el contexto: −1 si va a su acorde siguiente como V → I, +1 si queda fuera de la tonalidad, −0,5 si llega desde su dominante.');
-    expect(inEnglish(rankHelp)).toBe('They are ordered by points and the lowest wins: +3 if the bass is not the root, +2 per omitted note, 0 to 0.9 by type (the rarer, the more points); the root you choose subtracts 10. In the lane, the melody and the context count too: −1 if it goes to the next chord as V → I, +1 if it falls outside the key, −0.5 if it arrives from its dominant.');
+    expect(rankHelp()).toBe('Se ordenan por puntos y gana el menor: bajo en la 3ª o la 5ª: +3; en la 7ª: +5; en otra nota (9ª, 6ª, 5ª alterada): +7; +2 por nota omitida; de 0 a 0,9 según el tipo (más raro, más puntos); la raíz que eliges resta 10. En la franja también cuentan la melodía y el contexto: −1 si va a su acorde siguiente como V → I, +1 si queda fuera de la tonalidad, −0,5 si llega desde su dominante.');
+    expect(inEnglish(rankHelp)).toBe('They are ordered by points and the lowest wins: bass on the 3rd or 5th: +3; on the 7th: +5; on any other note (9th, 6th, altered 5th): +7; +2 per omitted note; 0 to 0.9 by type (the rarer, the more points); the root you choose subtracts 10. In the lane, the melody and the context count too: −1 if it goes to the next chord as V → I, +1 if it falls outside the key, −0.5 if it arrives from its dominant.');
   });
   it('gives the type its rank and nothing else for a chord with its bass and all its notes', () => {
     expect(scoreDetail(cand([48, 52, 55, 58], 0, '7'))).toBe('0,2 tipo = 0,2');
@@ -22,6 +22,15 @@ describe('row 5: the points of a candidate name', () => {
   it('adds 3 for an inversion: G7/B is 3 inversión + 0,2 tipo = 3,2', () => {
     expect(scoreDetail(cand([47, 50, 53, 55], 7, '7'))).toBe('3 inversión + 0,2 tipo = 3,2');
     expect(inEnglish(() => scoreDetail(cand([47, 50, 53, 55], 7, '7')))).toBe('3 inversion + 0.2 type = 3.2');
+  });
+  // decision 12: a bass on the 7th or on another degree than the 3rd or the perfect 5th costs more, and the tooltip names it
+  it('adds 5 for a bass on the 7th and 7 for one on another degree, and names the degree', () => {
+    expect(scoreDetail(cand([41, 43, 47, 50], 7, '7'))).toBe('5 bajo en la 7ª + 0,2 tipo = 5,2');
+    expect(inEnglish(() => scoreDetail(cand([41, 43, 47, 50], 7, '7')))).toBe('5 bass on the 7th + 0.2 type = 5.2');
+    expect(scoreDetail(cand([50, 52, 55, 60], 0, 'add9'))).toMatch(/^7 bajo en la 9ª \+ /);
+    expect(inEnglish(() => scoreDetail(cand([50, 52, 55, 60], 0, 'add9')))).toMatch(/^7 bass on the 9th \+ /);
+    expect(scoreDetail(cand([44, 48, 52], 0, 'aug'))).toMatch(/^7 bajo en la 5ª alterada \+ /);
+    expect(scoreDetail(cand([43, 48, 52], 0, ''))).toBe('3 inversión = 3');
   });
   it('adds 2 for each omitted note', () => expect(scoreDetail(cand([48, 52, 58, 62], 0, '9'))).toBe('2 omisión + 0,4 tipo = 2,4'));
   it('adds 1.5 for a sixth chord without its 5th', () => expect(scoreDetail(cand([48, 52, 57], 0, '6'))).toBe('2 omisión + 1,5 6ª sin 5 + 0,45 tipo = 3,95'));

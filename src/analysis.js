@@ -532,8 +532,15 @@ function contextTension(rs,romans,fn,lead,i){
   return null;
 }
 // «3 inversión + 0,2 tipo = 3,2»: what a candidate name scored, for its tooltip
+// the bass in the tooltip: «inversión» on the 3rd or the perfect 5th, else its degree («bajo en la 7ª», «bajo en la 5ª alterada»)
+const ORD_EN={2:'2nd',4:'4th',5:'5th',6:'6th',7:'7th',9:'9th',11:'11th',13:'13th'};
+function bassLabel(c){
+  const d=c.type.degs.find(x=>x.pc===(c.bass-c.root+12)%12);
+  if(!d||d.n===3||(d.n===5&&d.pc===7)) return tr('inversión','inversion');
+  return d.n===5?tr('bajo en la 5ª alterada','bass on the altered 5th'):tr(`bajo en la ${d.n}ª`,`bass on the ${ORD_EN[d.n]}`);
+}
 function scoreDetail(c){
-  const P=c.parts, rows=[['bass',tr('inversión','inversion')],['missing',tr('omisión','omission')],['sixth',tr('6ª sin 5','6th without 5th')],['type',tr('tipo','type')]].filter(([k])=>P[k]);
+  const P=c.parts, rows=[['bass',bassLabel(c)],['missing',tr('omisión','omission')],['sixth',tr('6ª sin 5','6th without 5th')],['type',tr('tipo','type')]].filter(([k])=>P[k]);
   const f=x=>tenNum(+x.toFixed(2)).replace('-','−');
   let s=rows.length?rows.map(([k,l],i)=>`${i?'+ ':''}${f(P[k])} ${l}`).join(' '):`0 ${tr('tipo','type')}`;
   if(P.locked) s+=` − ${f(-P.locked)} ${tr('raíz elegida','chosen root')}`;
@@ -548,8 +555,8 @@ function scoreDetail(c){
 // The rule of the order, written from the constants of analyze
 function rankHelp(){
   const n=tenNum, top=Math.max(...TYPES.map(t=>t.rank));
-  return tr(`Se ordenan por puntos y gana el menor: +${n(RANK.bass)} si el bajo no es la fundamental, +${n(RANK.missing)} por nota omitida, de 0 a ${n(top)} según el tipo (más raro, más puntos); la raíz que eliges resta ${n(RANK.locked)}. En la franja también cuentan la melodía y el contexto: −${n(NB.next)} si va a su acorde siguiente como V → I, +${n(NB.key)} si queda fuera de la tonalidad, −${n(NB.prev)} si llega desde su dominante.`,
-    `They are ordered by points and the lowest wins: +${n(RANK.bass)} if the bass is not the root, +${n(RANK.missing)} per omitted note, ${n(0)} to ${n(top)} by type (the rarer, the more points); the root you choose subtracts ${n(RANK.locked)}. In the lane, the melody and the context count too: −${n(NB.next)} if it goes to the next chord as V → I, +${n(NB.key)} if it falls outside the key, −${n(NB.prev)} if it arrives from its dominant.`);
+  return tr(`Se ordenan por puntos y gana el menor: bajo en la 3ª o la 5ª: +${n(RANK.bass)}; en la 7ª: +${n(RANK.bass+RANK.bass7)}; en otra nota (9ª, 6ª, 5ª alterada): +${n(RANK.bass+RANK.bassFar)}; +${n(RANK.missing)} por nota omitida; de 0 a ${n(top)} según el tipo (más raro, más puntos); la raíz que eliges resta ${n(RANK.locked)}. En la franja también cuentan la melodía y el contexto: −${n(NB.next)} si va a su acorde siguiente como V → I, +${n(NB.key)} si queda fuera de la tonalidad, −${n(NB.prev)} si llega desde su dominante.`,
+    `They are ordered by points and the lowest wins: bass on the 3rd or 5th: +${n(RANK.bass)}; on the 7th: +${n(RANK.bass+RANK.bass7)}; on any other note (9th, 6th, altered 5th): +${n(RANK.bass+RANK.bassFar)}; +${n(RANK.missing)} per omitted note; ${n(0)} to ${n(top)} by type (the rarer, the more points); the root you choose subtracts ${n(RANK.locked)}. In the lane, the melody and the context count too: −${n(NB.next)} if it goes to the next chord as V → I, +${n(NB.key)} if it falls outside the key, −${n(NB.prev)} if it arrives from its dominant.`);
 }
 const tenNum=x=>tr(String(x).replace('.',','),String(x));
 // «base 0,13 + sorpresa 0,15 = 0,28», for the tooltip of the sheet
