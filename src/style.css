@@ -438,9 +438,11 @@ footer{font-size:13px;color:var(--ink)}
 @media (hover:none){ .patbar .pscroll{display:none} }
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
-/* fullscreen piano roll: the stage fills the screen, the roll takes what the tools leave */
+/* fullscreen piano roll: the stage fills the screen and scrolls; the roll takes the height the tools leave (set in main.js)
+   and can still be stretched, and the help and the analysis sheet stay below it */
 .stage:fullscreen{display:flex;flex-direction:column;gap:10px;padding:12px;background:var(--bg) url(/img/wall.png) 0 0;overflow:auto}
-.stage:fullscreen .roll{flex:1 1 auto;height:auto;min-height:0;resize:none}
+.stage:fullscreen .roll{flex:none}
+.stage:not(:fullscreen) #bFullInfo{display:none}
 #bFull[aria-pressed=true]{background:var(--ink);color:var(--paper)}
 
 /* open projects: a strip of tabs above the patterns' */
