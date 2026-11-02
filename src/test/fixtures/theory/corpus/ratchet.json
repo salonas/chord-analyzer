@@ -1,6 +1,6 @@
 {
  "updated": "2026-11-02",
- "why": "línea base: cifras de desarrollo de main e6627ac (cierre del proyecto, sin cambios de reglas)",
+ "why": "la voz grave bajo un acorde es su bajo (fix/manual-test-nov2): acorde de punta a punta 9039 → 9062",
  "units": {
   "tavern": 21,
   "rock": 158
@@ -11,7 +11,7 @@
    "n": 15909
   },
   "acorde de punta a punta": {
-   "ok": 9039,
+   "ok": 9062,
    "n": 16404
   },
   "inversión, dado el acorde correcto": {

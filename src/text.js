@@ -79,7 +79,11 @@ function harmonyLines(p,prefs,L){
       // «(breve)»: a bass note that does not start with the chord, sounds under all its notes and lasts half a beat or less
       // (the role 'pass' of harmony.js); it claims no function, so it is not called a passing tone
       const bass=c.bass.map((x,j)=>(j===0?noteText(r.spelled[0],prefs):nt(x.m))+(x.pass?tr(' (breve)',' (short)'):'')).join(' → ');
-      L.push(`${i+1}. ${chordLabel(r,prefs)} | ${degText(A.romans[i])} (${FN_NAME[A.fn[i]]} · ${tenText(r,A.ten[i])}) | ${numB(c.a)}–${numB(c.b)} | ${r.spelled.slice(1).map(n=>noteText(n,prefs)).join(' ')||'—'}${adds?` (${adds})`:''} | ${bass}`);
+      // a note that sounds in the chord only as the tune (a broken accompaniment keeps it among the chord's notes, so that
+      // it names the chord, decision 11) is written under «# Melodía», not among the voices
+      const tune=m=>Hm.mel.some(x=>x.notes.includes(m)&&x.s<c.b&&x.s+x.l>c.a)&&!p.notes.some(n=>n.m===m&&Hm.role.get(n.id)!=='mel'&&n.s<c.b&&n.s+n.l>c.a);
+      const voices=r.spelled.slice(1).filter(n=>!tune(n.midi));
+      L.push(`${i+1}. ${chordLabel(r,prefs)} | ${degText(A.romans[i])} (${FN_NAME[A.fn[i]]} · ${tenText(r,A.ten[i])}) | ${numB(c.a)}–${numB(c.b)} | ${voices.map(n=>noteText(n,prefs)).join(' ')||'—'}${adds?` (${adds})`:''} | ${bass}`);
     });
     const melLines=(list,head)=>{
       L.push(head+octTail(prefs));

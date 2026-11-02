@@ -2,6 +2,8 @@ import { libText, parseText, pickInterp, progText, projectText } from './text.js
 import fx from './test/fixtures/text.json';
 import turnaround from './test/fixtures/turnaround.json';
 import { PREFS, PREFS_BY, clone, noId } from './test/helpers.js';
+import { splitHarmony } from './harmony.js';
+import { normProg } from './model.js';
 
 const parsedNoId = r => { const o = clone(r); o.projects.forEach(pr => pr.patterns.forEach(pt => { pt.notes = noId(pt.notes); })); return o; };
 
@@ -34,6 +36,33 @@ describe('projectText and parseText', () => {
   });
   it('hand-written text in every accepted format', () => {
     expect(parsedNoId(parseText(fx.hand.text, PREFS))).toEqual(fx.hand.parsed);
+  });
+});
+
+describe('voices and tune in the text export', () => {
+  // P2 of the manual test of 2 Nov 2026: an Alberti bass in eighths under a tune in half notes
+  const alberti = [48, 55, 52, 55, 48, 55, 52, 55, 48, 57, 53, 57, 48, 57, 53, 57, 47, 55, 50, 55, 47, 55, 50, 55, 48, 55, 52, 55, 48, 55, 52, 55];
+  const tune = [[76, 0, 2], [79, 2, 2], [77, 4, 2], [81, 6, 2], [74, 8, 1], [77, 9, 1], [79, 10, 2], [72, 12, 4]];
+  const p = normProg({ id: 'p', name: 'P2', beats: 4, names: {},
+    notes: [...alberti.map((m, i) => ({ id: 'a' + i, m, s: i * 48, l: 48, v: 100 })), ...tune.map(([m, s, l], i) => ({ id: 't' + i, m, s: s * 96, l: l * 96, v: 100 }))] });
+  it('a note of the tune leaves the voices of its chord only to be written under «# Melodía»', () => {
+    const lines = progText(p, PREFS).split('\n'), H = splitHarmony(p);
+    const harm = lines.filter(l => /^\d+\. /.test(l));
+    const from = lines.findIndex(l => l.startsWith('# Melodía')), to = lines.findIndex((l, i) => i > from && l.startsWith('#'));
+    const mel = lines.slice(from + 1, to).map(l => l.split(' | '));
+    expect(harm[0].split(' | ')[3]).toBe('E3 G3');
+    expect(H.chords.length).toBe(harm.length);
+    let moved = 0;
+    H.chords.forEach((c, i) => {
+      const voices = harm[i].split(' | ')[3].split(' ');
+      c.notes.slice(1).forEach(m => {
+        const line = mel.find(x => x[0].includes(`(${m}`) && +x[1] * 96 < c.b && (+x[1] + +x[2]) * 96 > c.a);
+        if (line) { moved++; expect(voices).not.toContain(line[0].split(' (')[0]); }
+        else expect(voices.length).toBeGreaterThan(0);
+      });
+    });
+    expect(moved).toBeGreaterThan(0);
+    expect(mel.map(x => x[0].split(' (')[0])).toEqual(['E5', 'G5', 'F5', 'A5', 'D5', 'F5', 'G5', 'C5']);
   });
 });
 
