@@ -97,10 +97,12 @@ function harmonyLines(p,prefs,L){
       });
     };
     const cols=tr('nota (MIDI) | inicio | duración | sobre | intervalo | tensión estimada 0–1 | rol','note (MIDI) | start | length | over | interval | estimated tension 0–1 | role');
-    if(Hm.mel.length) melLines(Hm.mel,`${tr('# Melodía','# Melody')}: ${cols}`);
     // a tune that moves with the chords is told apart from them only by being the highest voice: when the tune found
-    // covers under half of that voice, the voice is read on its own
-    if(Hm.top.filter(x=>Hm.mel.some(y=>y.s===x.s&&y.notes[0]===x.notes[0])).length*2<Hm.top.length) melLines(Hm.top,`${tr('# Voz superior','# Top voice')}: ${cols}`);
+    // covers under half of that voice, the voice is read instead, and it holds the tune found. «# Melodía» and «# Voz
+    // superior» never go together (manual test of 2 Nov 2026, P5 and P6)
+    const covered=Hm.top.filter(x=>Hm.mel.some(y=>y.s===x.s&&y.notes[0]===x.notes[0])).length;
+    if(Hm.mel.length&&covered*2>=Hm.top.length) melLines(Hm.mel,`${tr('# Melodía','# Melody')}: ${cols}`);
+    else if(Hm.top.length) melLines(Hm.top,`${tr('# Voz superior','# Top voice')}: ${cols}`);
   }};
 }
 function progText(p,prefs){
