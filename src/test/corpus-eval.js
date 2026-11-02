@@ -310,3 +310,34 @@ export function evalRock(songs) {
   }
   return { T, info };
 }
+
+// ---------- the ratchet of the development figures (src/corpus.ratchet.test.js) ----------
+// The goals are measured on the test set, once per stage. npm test holds instead the development figures of the same rows and
+// of the brakes of the modulation (decision 15), so that no rule lowers one without saying so. better: which way is better.
+export const RATCHET_ROWS = [
+  { row: 'acorde por tramo', set: 'tavern', better: 'up', cat: 'por tramo | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable' },
+  { row: 'acorde de punta a punta', set: 'tavern', better: 'up', cat: 'de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app' },
+  { row: 'inversión, dado el acorde correcto', set: 'tavern', better: 'up', cat: 'por tramo | inversión (dado el acorde correcto)' },
+  { row: 'tonalidad de TAVERN por tramo', set: 'tavern', better: 'up', cat: 'por tramo | tonalidad (tónica y modo)' },
+  { row: 'tonalidad de TAVERN de punta a punta', set: 'tavern', better: 'up', cat: 'de punta a punta | tonalidad (tónica y modo)' },
+  { row: 'tónica del rock', set: 'rock', better: 'up', cat: 'tónica (acepta ambos analistas)' },
+  { row: 'enarmonía', set: 'tavern', better: 'up', cat: 'por tramo | enarmonía (tramo con todas las notas bien)' },
+  { row: 'modulación estricta', set: 'rock', better: 'up', cat: 'modulación, estricta: de los análisis en que el corpus cambia de tonalidad, aquellos en que una región nueva de la app tiene la tónica de una región nueva anotada y cubre al menos su mitad' },
+  { row: 'modulaciones falsas (freno)', set: 'rock', better: 'down', cat: 'modulación falsa: de los análisis sin cambio de tonalidad anotado, aquellos en que la app informa uno (menos es mejor)' },
+  { row: 'frases partidas por tramo (freno)', set: 'tavern', better: 'down', cat: 'por tramo | frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)' },
+  { row: 'frases partidas de punta a punta (freno)', set: 'tavern', better: 'down', cat: 'de punta a punta | frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)' },
+];
+// {row: {ok, n}} from the categories of TAVERN and of the Rock Corpus (Maps of category → {n, ok})
+export const ratchetCounts = (tavern, rock) => Object.fromEntries(RATCHET_ROWS.map(r => {
+  const c = (r.set === 'rock' ? rock : tavern).get(r.cat);
+  return [r.row, c ? { ok: c.ok, n: c.n } : null];
+}));
+// The test figures of the same rows, as a floor: written by the report at the one look at the test set that closes a stage, never
+// checked by npm test. rows: {tavern, rock} as Tally.rows(); ci: {tavern, rock} as bootstrapCI
+export const ratchetFloor = (rows, ci, date) => ({
+  date,
+  rows: Object.fromEntries(RATCHET_ROWS.map(r => {
+    const x = rows[r.set].find(y => y.cat === r.cat);
+    return [r.row, x ? { ok: x.ok, n: x.n, pct: x.pct, ci95: (ci[r.set] || {})[r.cat] || null } : null];
+  })),
+});

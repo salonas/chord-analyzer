@@ -90,7 +90,7 @@ Se eligen **TAVERN** (principal) y **Rock Corpus** (secundario), con estas condi
    las etiquetas) y con la segmentación propia de la app (de punta a punta).
 4. **Cadencia queda «sin corpus»** en el reporte; se sigue cubriendo con los casos propios de la sonda.
 
-Los casos del corpus no entran al ratchet de la sonda (`passing.json`) hasta fijar metas. El reporte está en [REPORT.md](REPORT.md).
+Los casos del corpus no entran al ratchet de la sonda (`passing.json`). Desde el 2 nov 2026 tienen su propio ratchet en `npm test`, solo con el conjunto de desarrollo: `src/corpus.ratchet.test.js` falla si baja alguna de las 11 filas de `ratchet.json` (las metas y los frenos de la modulación). El reporte está en [REPORT.md](REPORT.md).
 
 ## Archivos de esta carpeta
 
@@ -102,6 +102,7 @@ Los casos del corpus no entran al ratchet de la sonda (`passing.json`) hasta fij
 | `rock/LICENSE`, `rock/NOTICE.md` | Texto de CC BY 4.0 y aviso de atribución. |
 | `*/skipped.json` | Lo que el conversor no convirtió y por qué, con conteos. |
 | `REPORT.md`, `report.json` | Línea base de acierto por categoría, metas y los errores más frecuentes. |
+| `ratchet.json` | Ratchet de `npm test`: aciertos y total de desarrollo de cada fila (`dev`), con el motivo y la fecha de la última regeneración (`why`, `updated`), y las mismas filas en prueba como piso (`testFloor`), que escribe el reporte y `npm test` no comprueba. Las filas y su dirección están en `RATCHET_ROWS` (`src/test/corpus-eval.js`). |
 | `split.json` | Conjunto de prueba: obras de TAVERN y canciones del Rock Corpus que nunca se usan para ajustar reglas (hash fijo del nombre, una de cada cinco). El análisis de errores sale solo del resto. |
 
 Regenerar los casos (necesita los datos originales, que no se versionan):
@@ -111,11 +112,19 @@ python -I tools/corpus_tavern.py <checkout de TAVERN> src/test/fixtures/theory/c
 python -I tools/corpus_rock.py <rs200_harmony de rock_corpus_v2-1> src/test/fixtures/theory/corpus/rock
 ```
 
-Regenerar el reporte (no corre en `npm test`):
+Regenerar el reporte (no corre en `npm test`; imprime las cifras de prueba, así que regenerarlo es mirarlas, una vez al cierre de cada etapa). También escribe `testFloor` en `ratchet.json`:
 
 ```bash
 CORPUS_REPORT=1 npx vitest run src/corpus.report.test.js
 ```
+
+Regenerar las cifras de desarrollo del ratchet, a propósito y con el motivo; imprime el antes → después de cada fila para el commit y `THEORY.md`:
+
+```bash
+UPDATE_CORPUS="decisión 16: …" npx vitest run src/corpus.ratchet.test.js
+```
+
+Las mismas cifras, en un hilo y con su tiempo: `node tools/dev-time.mjs`.
 
 Fuentes usadas: TAVERN en el commit `7cc65dc5365603a92376af50ac71491bea7a16ae` (clon parcial, solo los archivos `Joined`); Rock Corpus v2.1
 (`https://rockcorpus.midside.com/versions/rock_corpus_v2-1.zip`, 656,9 kB, solo `rs200_harmony`).

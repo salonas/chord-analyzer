@@ -1,7 +1,7 @@
 // Writes the accuracy report on the external corpus cases. It only runs on request, measures and asserts nothing:
 //   CORPUS_REPORT=1 npx vitest run src/corpus.report.test.js
 import fs from 'node:fs';
-import { bootstrapCI, bootstrapDiff, evalRock, evalTavern, isTest, listJson, mergeRuns } from './test/corpus-eval.js';
+import { bootstrapCI, bootstrapDiff, evalRock, evalTavern, isTest, listJson, mergeRuns, ratchetFloor } from './test/corpus-eval.js';
 
 const OUT = new URL('./test/fixtures/theory/corpus/', import.meta.url);
 const ciText = (ci, name) => (ci && ci[name] ? `, IC 95 % ${ci[name][0]}–${ci[name][1]}` : '');
@@ -157,6 +157,9 @@ ${errs(topRock)}
 `;
     fs.writeFileSync(new URL('REPORT.md', OUT), md);
     fs.writeFileSync(new URL('report.json', OUT), JSON.stringify({ test: { tavern: tT, rock: rT }, development: { tavern: tD, rock: rD }, ci95: { test: { tavern: CI.tT, rock: CI.rT }, development: { tavern: CI.tD, rock: CI.rD } }, all: { tavern: tA, rock: rA }, agreement: tav.info.agreement.rows(), goals: G.map(([n, m, v, , , ci]) => ({ measure: n, goal: m, test: v, ci95: ci })), topTramoDev: topAll, topE2EDev: topE2E, topRockDev: topRock }, null, 1) + '\n');
+    // the test figures of the rows of the ratchet (src/corpus.ratchet.test.js), as its floor: npm test does not check them
+    const RATCHET = new URL('ratchet.json', OUT), held = JSON.parse(fs.readFileSync(RATCHET, 'utf8'));
+    fs.writeFileSync(RATCHET, JSON.stringify({ ...held, testFloor: ratchetFloor({ tavern: tT, rock: rT }, { tavern: CI.tT, rock: CI.rT }, new Date().toISOString().slice(0, 10)) }, null, 1) + '\n');
     fs.writeFileSync(new URL('split.json', OUT), JSON.stringify({
       rule: "test if parseInt(sha1('chord-analyzer-corpus-v1:' + name).hex.slice(0, 8), 16) % 5 === 0; name = work file (TAVERN) or song (Rock Corpus)",
       tavernTestWorks: pieces.filter(p => isTest(p.piece)).map(p => p.piece), rockTestSongs: songs.filter(s => isTest(s.song)).map(s => s.song),

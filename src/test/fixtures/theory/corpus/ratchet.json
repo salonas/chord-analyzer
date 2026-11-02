@@ -1,0 +1,158 @@
+{
+ "updated": "2026-11-02",
+ "why": "línea base: cifras de desarrollo de main e6627ac (cierre del proyecto, sin cambios de reglas)",
+ "units": {
+  "tavern": 21,
+  "rock": 158
+ },
+ "dev": {
+  "acorde por tramo": {
+   "ok": 11660,
+   "n": 15909
+  },
+  "acorde de punta a punta": {
+   "ok": 9039,
+   "n": 16404
+  },
+  "inversión, dado el acorde correcto": {
+   "ok": 11074,
+   "n": 11660
+  },
+  "tonalidad de TAVERN por tramo": {
+   "ok": 1308,
+   "n": 1622
+  },
+  "tonalidad de TAVERN de punta a punta": {
+   "ok": 1278,
+   "n": 1622
+  },
+  "tónica del rock": {
+   "ok": 232,
+   "n": 304
+  },
+  "enarmonía": {
+   "ok": 15755,
+   "n": 16398
+  },
+  "modulación estricta": {
+   "ok": 12,
+   "n": 46
+  },
+  "modulaciones falsas (freno)": {
+   "ok": 5,
+   "n": 258
+  },
+  "frases partidas por tramo (freno)": {
+   "ok": 77,
+   "n": 1622
+  },
+  "frases partidas de punta a punta (freno)": {
+   "ok": 58,
+   "n": 1622
+  }
+ },
+ "testFloor": {
+  "date": "2026-11-02",
+  "rows": {
+   "acorde por tramo": {
+    "ok": 3973,
+    "n": 5388,
+    "pct": 73.7,
+    "ci95": [
+     68.6,
+     78.7
+    ]
+   },
+   "acorde de punta a punta": {
+    "ok": 2976,
+    "n": 5586,
+    "pct": 53.3,
+    "ci95": [
+     47.5,
+     60.1
+    ]
+   },
+   "inversión, dado el acorde correcto": {
+    "ok": 3763,
+    "n": 3973,
+    "pct": 94.7,
+    "ci95": [
+     91.6,
+     96.9
+    ]
+   },
+   "tonalidad de TAVERN por tramo": {
+    "ok": 464,
+    "n": 580,
+    "pct": 80,
+    "ci95": [
+     68.1,
+     92.2
+    ]
+   },
+   "tonalidad de TAVERN de punta a punta": {
+    "ok": 426,
+    "n": 580,
+    "pct": 73.4,
+    "ci95": [
+     61,
+     86.7
+    ]
+   },
+   "tónica del rock": {
+    "ok": 55,
+    "n": 78,
+    "pct": 70.5,
+    "ci95": [
+     56.4,
+     83.5
+    ]
+   },
+   "enarmonía": {
+    "ok": 5316,
+    "n": 5586,
+    "pct": 95.2,
+    "ci95": [
+     93.7,
+     96.8
+    ]
+   },
+   "modulación estricta": {
+    "ok": 6,
+    "n": 15,
+    "pct": 40,
+    "ci95": [
+     0,
+     78.3
+    ]
+   },
+   "modulaciones falsas (freno)": {
+    "ok": 3,
+    "n": 63,
+    "pct": 4.8,
+    "ci95": [
+     0,
+     12.5
+    ]
+   },
+   "frases partidas por tramo (freno)": {
+    "ok": 29,
+    "n": 580,
+    "pct": 5,
+    "ci95": [
+     0.6,
+     12
+    ]
+   },
+   "frases partidas de punta a punta (freno)": {
+    "ok": 28,
+    "n": 580,
+    "pct": 4.8,
+    "ci95": [
+     0.6,
+     13.3
+    ]
+   }
+  }
+ }
+}
