@@ -108,6 +108,9 @@ const units = [];
 let check = 0;
 const ti = process.argv.indexOf('--test'), TEST = ti > 0;
 if (TEST) process.argv.splice(ti, 1);
+// --after-is-app: on the development set too, check the «after» against the app instead of the base (a stage's total Δ)
+const ai = process.argv.indexOf('--after-is-app'), AFTER = TEST || ai > 0;
+if (ai > 0) process.argv.splice(ai, 1);
 for (const p of listJson('tavern').filter(p => isTest(p.piece) === TEST)) {
   const cases = [];
   for (const ph of p.phrases) {
@@ -146,14 +149,14 @@ const run = (on, isBase) => units.map(cases => { const T = new Tally(); cases.fo
 }); return T; });
 const sum = (us, row) => us.reduce((o, u) => { const c = u.cats.get(row); if (c) { o.n += c.n; o.ok += c.ok; } return o; }, { n: 0, ok: 0 });
 const pct = c => (100 * c.ok / c.n).toFixed(1);
-const base = run(new Set(baseRules), !TEST);
+const base = run(new Set(baseRules), !AFTER);
 if (check) { console.error(`la copia con las reglas de la base (${baseRules.join(' + ') || 'ninguna'}) no da lo que da la app en ${check} casos`); process.exit(1); }
 const asked = process.argv.slice(2), variants = asked.length ? [asked] : RULES.map(r => [r]);
-if (!TEST) console.log(`desarrollo; la copia con las reglas de la base (${baseRules.join(' + ') || 'ninguna'}) da lo mismo que la app en todos los casos`);
+if (!AFTER) console.log(`desarrollo; la copia con las reglas de la base (${baseRules.join(' + ') || 'ninguna'}) da lo mismo que la app en todos los casos`);
 for (const v of variants) {
   flips.clear();
-  const after = run(new Set([...baseRules, ...v]), TEST), d = bootstrapDiff(base, after), cb = bootstrapCI(base), ca = bootstrapCI(after);
-  if (TEST) { if (check) { console.error(`la copia con ${[...baseRules, ...v].join(' + ')} no da lo que da la app en ${check} casos`); process.exit(1); } console.log(`PRUEBA; la copia con ${[...baseRules, ...v].join(' + ')} da lo mismo que la app en todos los casos`); }
+  const after = run(new Set([...baseRules, ...v]), AFTER), d = bootstrapDiff(base, after), cb = bootstrapCI(base), ca = bootstrapCI(after);
+  if (AFTER) { if (check) { console.error(`la copia con ${[...baseRules, ...v].join(' + ')} no da lo que da la app en ${check} casos`); process.exit(1); } console.log(`${TEST ? 'PRUEBA' : 'desarrollo'}; la copia con ${[...baseRules, ...v].join(' + ')} da lo mismo que la app en todos los casos`); }
   console.log(`\n${v.join(' + ')}`);
   for (const row of [ROW_T, ROW_E, ROW_R]) {
     const b = sum(base, row), a = sum(after, row);
