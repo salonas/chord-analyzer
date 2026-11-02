@@ -47,7 +47,7 @@ Imprime el antes → después de cada fila para el commit y este archivo. Las ci
 2. La voz aguda de un bloque es melodía solo a más de una octava, con 3 notas de acorde debajo y 2 o más bloques donde cambia.
 3. Los modos son una etiqueta sobre mayor o menor, por su nota característica y con todas las notas en la escala.
 4. iii y vi son tónica; el ♭VI en menor, subdominante.
-5. C – D7 – G es ambiguo: Sol mayor auténtica o Do mayor con semicadencia, con la otra como alternativa.
+5. C – D – G (tríadas) es ambiguo: Do mayor con semicadencia o Sol mayor, con la otra como alternativa. Con D7 manda la decisión 13: Sol mayor, sin alternativa.
 6. Inversiones de acordes con extensiones en palabras; la barra «/», solo para funciones secundarias.
 7. Tensión = base (función y disonancia) + contexto de Meyer (llegada, sorpresa, espera), rotulada estimación.
 8. Notas de adorno por duración: hasta 5 clases de altura fuera del nombre, nunca el bajo, con su costo.
@@ -95,7 +95,7 @@ Resueltas por el usuario el 1 nov 2026. Cada una fija una regla; si un caso de p
 
    Los grados siguen relativos a la mayor, con ♭. Hecho (ver el historial). Casos: F08, F09, F10, uno lidio (D–E) y un ii–V–I en Do que debe seguir siendo Do mayor, no Re dórico.
 4. **Funciones de iii y vi: ambos tónica.** El ♭VI en menor queda como subdominante (`harmonicFunction`, grado 8 en menor).
-5. **G12 (C – D7 – G) es ambiguo.** Se acepta Sol mayor con cadencia auténtica o Do mayor con semicadencia; la app muestra la otra lectura como alternativa.
+5. **C – D – G (tríadas) es ambiguo.** Se acepta Do mayor con semicadencia o Sol mayor con cadencia auténtica, y la app muestra la otra lectura como alternativa (F30: Do 15,51, Sol 15,01). Con D7 (C – D7 – G) manda la decisión 13. El D7 es el V7 de Sol, así que pesa 3 y no 1. Además, como a G llega su propio V7, G sigue contando como final en la tónica. Sol mayor gana 21,01 contra 16,51: queda a más de 2 puntos, el margen de la tonalidad alternativa, y la app no muestra alternativa (F37; corregido el 2 nov 2026 desde la prueba manual, P7). G12 (el mismo C – D7 – G) es el caso anterior y acepta las dos lecturas; la lectura actual, Sol sin alternativa, la fija F37.
 
 6. **Inversiones con extensiones: palabras, no barra.** Decidido el 1 nov 2026 (`inversiones-tension-ui.md`, sección 1). El cifrado de bajo cifrado (⁶, ⁶₄, ⁶₅, ⁴₃, ⁴₂) queda para tríadas y séptimas. Los acordes con extensiones, add, sus, 6 o power chord llevan el grado y las palabras de `inversionText`: «V9 en 1ª inversión», «Imaj9 con bajo en la 9». La barra «/» se reserva a las funciones secundarias, que combinan las dos cosas: V⁶/V, V⁶₅/vi, vii°⁶₅/V. La hoja y el texto exportado muestran la forma completa (`text`); la franja de acordes, solo el grado (`short`). La raíz de un dim7 la fija la resolución: la nota un semitono bajo la raíz del acorde siguiente.
 

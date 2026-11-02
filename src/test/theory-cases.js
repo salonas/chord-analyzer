@@ -237,6 +237,7 @@ prog('F28', 2, 'Sin dominante, ni abre y cierra: el que más dura (La menor dura
 prog('F29', 2, 'En contra: ♭VI–♭VII–I prestado (el A♭ no es mixolidio), Do mayor sin etiqueta', ['C3 E3 G3', 'Ab2 C3 Eb3', 'Bb2 D3 F3', 'C3 E3 G3'], { key: 'C mayor', mode: '' });
 prog('F30', 2, 'C – D – G es ambiguo: I–V/V–V (semicadencia en Do) o IV–V–I en Sol; la tonalidad no elegida sale como alternativa, sin etiqueta lidia', ['C3 E3 G3', 'D3 F#3 A3', 'G2 B2 D3'], { key: ['C mayor', 'G mayor'], alt: ['C mayor', 'G mayor'], mode: '', reg: ['C mayor', 'G mayor'] });
 prog('F31', 2, 'G – C, solo dos acordes, es ambiguo: V–I en Do o I–IV en Sol; gana Do, y Sol sale como alternativa', ['G2 B2 D3', 'C3 E3 G3'], { key: ['C mayor'], alt: ['G mayor'] });
+prog('F37', 2, 'C – D7 – G: el V7 lleva a Sol y no hay alternativa (Sol 21,01 contra Do 16,51, a más de 2 puntos; decisión 13); con D tríada es F30', ['C3 E3 G3', 'D3 F#3 A3 C4', 'G2 B2 D3'], { key: 'G mayor', alt: '' });
 prog('F11', 3, 'Modulación Do → Sol (dos regiones)', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3 F3', 'C3 E3 G3', 'A2 C3 E3', 'D3 F#3 A3 C4', 'G2 B2 D3', 'D3 F#3 A3 C4', 'G2 B2 D3'], { key: ['G mayor', 'C mayor → G mayor'], regions: true, reg: 'C mayor → G mayor', pivot: 5 });
 // F11, modulation: two regions, each confirmed by an authentic cadence in its key. The pivot is read in both keys
 prog('F32', 3, 'Modulación a la relativa menor, Do → La menor, con pivote (Dm: ii en Do = iv en La menor)', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3 F3', 'C3 E3 G3', 'D3 F3 A3', 'E2 G#2 B2 D3', 'A2 C3 E3', 'D3 F3 A3', 'E2 G#2 B2 D3', 'A2 C3 E3'], { reg: 'C mayor → A menor', pivot: 5 });
@@ -288,8 +289,9 @@ for (const c of progCases) {
   if (ch.pivot != null) add('tonalidad', c.id + '-pivote', c.level, head + ' · acorde pivote', ch.pivot ? `acorde ${ch.pivot}` : '(directa)', o.pivots.length ? (o.pivots[0] ? `acorde ${o.pivots[0]}` : '(directa)') : '(sin cambio)', o.pivots[0] === ch.pivot, c.ref);
   if (ch.mode != null) add('modo', c.id + '-modo', c.level, head, ch.mode || '(sin etiqueta)', o.mode || '(sin etiqueta)', o.mode === ch.mode, c.ref);
   if (ch.text) add('modo', c.id + '-texto', c.level, head, ch.text, o.keyText, o.keyText === ch.text, c.ref);
-  // the alternate must be one of the listed keys and not the one chosen
-  if (ch.alt) add('tonalidad', c.id + '-alt', c.level, head + ' (alternativa visible)', ch.alt, o.alt || '(sin alternativa)', !!o.alt && acc(ch.alt, o.alt) && o.alt !== o.key, c.ref);
+  // the alternate must be one of the listed keys and not the one chosen; '' asks for no alternate
+  if (ch.alt === '') add('tonalidad', c.id + '-alt', c.level, head + ' (sin alternativa)', '(sin alternativa)', o.alt || '(sin alternativa)', !o.alt, c.ref);
+  else if (ch.alt) add('tonalidad', c.id + '-alt', c.level, head + ' (alternativa visible)', ch.alt, o.alt || '(sin alternativa)', !!o.alt && acc(ch.alt, o.alt) && o.alt !== o.key, c.ref);
   if (ch.romans) ch.romans.forEach((e, i) => { if (e == null) return; add('grado', `${c.id}.${i + 1}`, c.level, `${head} · acorde ${i + 1} (${o.labels[i]})`, e, o.romans[i], acc(e, o.romans[i]), c.ref); });
   if (ch.short) ch.short.forEach((e, i) => { if (e == null) return; add('grado', `${c.id}.${i + 1}-franja`, c.level, `${head} · franja, acorde ${i + 1} (${o.labels[i]})`, e, o.shorts[i], acc(e, o.shorts[i]), c.ref); });
   if (ch.why) ch.why.forEach(w => add('tonalidad', `${c.id}-por-qué`, c.level, `${head} · el porqué contiene "${w}"`, w, o.why || '(sin motivos)', o.why.includes(w), c.ref));

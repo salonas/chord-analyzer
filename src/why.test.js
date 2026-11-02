@@ -101,6 +101,14 @@ describe('row 10: the reasons of the key', () => {
     expect(inEnglish(() => why([C, G]).text)).toBe('C major, nearly tied with G major: starts on the tonic · every chord is in the scale');
     expect(why([C, F, G7, C]).text).not.toContain('empatada');
   });
+  // decision 5: C – D – G stays ambiguous; with D7, its own V7 leads to G and there is no half cadence (decision 13)
+  it('shows the other key for C – D – G and none for C – D7 – G', () => {
+    const D = [50, 54, 57], D7 = [50, 54, 57, 60];
+    expect(why([C, D, G]).text).toMatch(/^C mayor, casi empatada con G mayor: /);
+    expect(run([C, D7, G]).key.tonic).toBe(7);
+    expect(run([C, D7, G]).alt).toBeFalsy();
+    expect(why([C, D7, G]).text).not.toContain('empatada');
+  });
   it('keeps the points out of the visible text and in the title', () => {
     const w = why([C, F, G7, C]);
     expect(w.text).not.toMatch(/\d/);
