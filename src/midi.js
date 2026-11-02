@@ -6,6 +6,7 @@ import { analyzeProgression, resolveStep } from './analysis.js';
 import { projectText } from './text.js';
 import { tr } from './i18n.js';
 import { flScript } from './flscript.js';
+import { harmonySegs } from './harmony.js';
 import { pitchClip } from './flpitch.js';
 
 // ---------- MIDI export (format 0, 96 PPQ) wrapped in a stored zip ----------
@@ -59,8 +60,9 @@ function midiFile(p,bpm,prefs){
       ev.push({t:V.e,o:1.5,d:pb(0)});
     });
   }
-  const S=segs(p), A=analyzeProgression(S.map(s=>segStep(p,s)),prefs);
-  if(!isDrum(p)) S.forEach((s,i)=>ev.push({t:s.a,o:0,d:meta(0x06,enc(A.rs[i].label))}));
+  // the chord markers are the lane's chords (harmonySegs), so a chord under a moving tune is one marker, as in the lane
+  const S=isDrum(p)?[]:harmonySegs(p), A=analyzeProgression(S.map(s=>segStep(p,s)),prefs);
+  S.forEach((s,i)=>ev.push({t:s.a,o:0,d:meta(0x06,enc(A.rs[i].label))}));
   // same tick: chord marker, then note-offs, then pitch bends and controllers, then note-ons, so a repeated note is not cut short
   ev.sort((a,b)=>a.t-b.t||a.o-b.o);
   const us=Math.round(60000000/(bpm||90));

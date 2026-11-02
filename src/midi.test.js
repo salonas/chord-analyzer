@@ -31,6 +31,15 @@ describe('midiFile', () => {
     for (let i = 0; i < b.length - 2; i++) if (b[i] === 0xff && b[i + 1] === 0x06) marks.push(b.subarray(i + 3, i + 3 + b[i + 2]).toString('latin1'));
     expect(marks).toEqual(['Am', 'It+6', 'E', 'Am']);
   });
+  // the markers are the lane's chords: a tune that moves over a chord does not split it (manual test, P4: not «F7 | It+6»)
+  it('writes one marker per chord of the lane, with a tune moving over it', () => {
+    const rows = [[33, 0, 4], [45, 0, 4], [48, 0, 4], [52, 0, 4], [72, 0, 4], [29, 4, 4], [41, 4, 4], [45, 4, 4], [51, 4, 4], [72, 4, 2], [75, 6, 2],
+      [28, 8, 4], [40, 8, 4], [44, 8, 4], [47, 8, 4], [76, 8, 4], [33, 12, 4], [45, 12, 4], [48, 12, 4], [52, 12, 4], [69, 12, 4]];
+    const p = { ...clone(turnaround.patterns[0]), notes: rows.map(([m, s, l], i) => ({ id: 'p' + i, m, s: s * 96, l: l * 96, v: 100 })) };
+    const b = Buffer.from(midiFile(p, 90, PREFS).bytes), marks = [];
+    for (let i = 0; i < b.length - 2; i++) if (b[i] === 0xff && b[i + 1] === 0x06) marks.push(b.subarray(i + 3, i + 3 + b[i + 2]).toString('latin1'));
+    expect(marks).toEqual(['Am', 'Ger+6', 'E', 'Am']);
+  });
   it('drum pattern without chord markers', () => {
     const c = fx.midi.default.drums, r = midiFile(clone(c.input), c.bpm, PREFS);
     expect(hex(r.bytes)).toBe(c.hex);
