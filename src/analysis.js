@@ -42,6 +42,9 @@ const octOff=prefs=>(OCT_CONV[prefs.octConv]||OCT_CONV.sci).off;
 const noteText=(n,prefs)=>letterName(n.l,n.a,prefs)+(n.oct+octOff(prefs));
 
 // ---------- chord analysis ----------
+// The points of a candidate name; the lowest wins. The type adds its rank (TYPES: 0 to RANK.maxType, the rarer the more), the other
+// terms are these
+const RANK={bass:3,missing:2,locked:10,sixthNo5:1.5};
 function analyze(notes,locked){
   const pcs=[...new Set(notes.map(m=>m%12))];
   if(pcs.length<2) return [];
@@ -53,9 +56,10 @@ function analyze(notes,locked){
       if(![...rel].every(x=>full.has(x))) continue;
       const missing=t.degs.filter(d=>!rel.has(d.pc));
       if(missing.some(d=>!d.opt)) continue;
-      let score=t.rank+missing.length*2+(bass!==r?3:0)+(missing.some(d=>d.n===5)&&/^m?6$/.test(t.sym)?1.5:0);
-      if(locked!=null && locked===r) score-=10;
-      out.push({root:r,type:t,missing,score,slash:bass!==r,bass});
+      const parts={type:t.rank,missing:missing.length*RANK.missing,bass:bass!==r?RANK.bass:0,sixth:missing.some(d=>d.n===5)&&/^m?6$/.test(t.sym)?RANK.sixthNo5:0};
+      let score=parts.type+parts.missing+parts.bass+parts.sixth;
+      if(locked!=null && locked===r){ score-=RANK.locked; parts.locked=-RANK.locked; }
+      out.push({root:r,type:t,missing,score,parts,slash:bass!==r,bass});
     }
   }
   out.sort((a,b)=>a.score-b.score);
@@ -142,6 +146,18 @@ function plainTonic(items){
   let best=-1, most=0; dur.forEach((d,r)=>{ if(d>most){most=d;best=r;} });
   return best;
 }
+// What the key evidence is made of, shared by detectKey and by the reasons it is explained with (keyWhy)
+const tonicQ=mode=>mode==='major'?['maj','dom']:['min'];
+// the first chord is the tonic, the last one is (V7–vi of the relative major is a deceptive cadence: it ends off the tonic on purpose),
+// and one that starts and ends on the same tonic chord is closed
+function bookends(items,t,mode){
+  const tq=tonicQ(mode), f=items[0], l=items[items.length-1], pv=items[items.length-2];
+  const deceptive=mode==='minor'&&pv&&pv.q==='dom'&&pv.root===(t+10)%12;
+  return {first:f.root===t&&tq.includes(f.q), last:l.root===t&&tq.includes(l.q)&&!deceptive,
+    closed:items.length>2&&f.root===t&&l.root===t&&f.q===l.q&&tq.includes(f.q)};
+}
+// a chord a fifth above the tonic (V, V7, or v in minor when it is major) that goes to it
+const resolvesToTonic=(it,nx,t,mode)=>!!nx&&nx.root===t&&(it.q==='dom'||it.q==='aug'||(it.q==='maj'&&mode==='minor'))&&(it.root-t+12)%12===7;
 function detectKey(items){
   const res=[];
   for(let t=0;t<12;t++) for(const mode of ['major','minor']){
@@ -155,23 +171,54 @@ function detectKey(items){
       it.pcs.forEach(p=>{const r=(p-t+12)%12; s+=sc.includes(r)?1:p===own7||lead?0:(mode==='minor'&&(r===11||r===1)?.3:mode==='major'&&(r===3||r===8||r===10)?-.5:-1.2);});
       if(it.q){ const e=EXPK[mode][(it.root-t+12)%12]; if(e&&e.includes(it.q)) s+=1.5; else if(e&&it.q==='sus') s+=.5; }
     });
-    const tq=mode==='major'?['maj','dom']:['min'];
-    const f=items[0], l=items[items.length-1];
-    if(f.root===t&&tq.includes(f.q)) s+=2;
-    // V7–vi of the relative major is a deceptive cadence: it ends off the tonic on purpose, so it is no evidence for the minor
-    const pv=items[items.length-2], deceptive=mode==='minor'&&pv&&pv.q==='dom'&&pv.root===(t+10)%12;
-    if(l.root===t&&tq.includes(l.q)&&!deceptive) s+=3;
+    const tq=tonicQ(mode), be=bookends(items,t,mode);
+    if(be.first) s+=2;
+    if(be.last) s+=3;
     // a progression that starts and ends on the same tonic chord is closed on it, even when the chords between borrow
-    if(items.length>2&&f.root===t&&l.root===t&&f.q===l.q&&tq.includes(f.q)) s+=1.5;
+    if(be.closed) s+=1.5;
     items.forEach((it,i)=>{
       if(it.root===t&&tq.includes(it.q)) s+=.5;
-      const nx=items[i+1];
-      if(nx&&nx.root===t&&(it.q==='dom'||it.q==='aug'||(it.q==='maj'&&mode==='minor'))&&(it.root-t+12)%12===7) s+=3;
+      if(resolvesToTonic(it,items[i+1],t,mode)) s+=3;
     });
     if(mode==='major') s+=.01;
     res.push({tonic:t,mode,score:s});
   }
   return res.sort((a,b)=>b.score-a.score);
+}
+// Why this key: the evidence of detectKey that applies to the one chosen, in order of weight, at most three, with no reason that another
+// one already says; the points go in the title. The mode adds its own reason
+const MODE_CHAR={dorian:[9,'6ª mayor','major 6th'],phrygian:[1,'2ª menor','minor 2nd'],lydian:[6,'4ª aumentada','augmented 4th'],mixolydian:[10,'7ª menor','minor 7th']};
+function keyWhy(items,key,alt,plain,prefs){
+  const t=key.tonic, mode=key.mode, sc=mode==='major'?MAJ:MIN, be=bookends(items,t,mode), R=[];
+  const push=(es,en,pts)=>R.push({text:tr(es,en),pts});
+  let res=0; items.forEach((it,i)=>{ if(resolvesToTonic(it,items[i+1],t,mode)) res+=3; });
+  if(items.length===1){ if(be.first) push('el único acorde es la tónica','the only chord is the tonic',5); }
+  else {
+    if(res) push('un V resuelve a la tónica','a V resolves to the tonic',res);
+    if(be.first&&be.last) push('empieza y termina en la tónica','starts and ends on the tonic',5+(be.closed?1.5:0));
+    else if(be.last) push('termina en la tónica','ends on the tonic',3);
+    else if(be.first) push('empieza en la tónica','starts on the tonic',2);
+    // with no V or vii° resolving, the chord that lasts longest weighs (plainTonic); said only when it lasts longer than every other
+    const dur=new Map(); items.forEach(it=>{ if(it.q) dur.set(it.root,(dur.get(it.root)||0)+(it.dur||1)); });
+    const longest=dur.get(t)>Math.max(0,...[...dur].filter(([r])=>r!==t).map(([,d])=>d));
+    if(plain===t&&items[0].root!==items[items.length-1].root&&longest) push('el acorde que más dura es la tónica','the longest chord is the tonic',PLAIN_TONIC);
+    // only when it is literally true: no borrowed chord, no chromatic note
+    if(items.every(it=>it.pcs.every(p=>sc.includes((p-t+12)%12)))){
+      const chords=items.every(it=>it.q), pts=items.reduce((n,it)=>n+it.pcs.length,0);
+      if(chords) push('todos los acordes son de la escala','every chord is in the scale',pts); else push('todas las notas son de la escala','every note is in the scale',pts);
+    }
+  }
+  R.splice(3);
+  if(key.modal){
+    const [rel,es,en]=MODE_CHAR[key.modal], n=plainSpell(60+(t+rel)%12,prefs,key), nm=letterName(n.l,n.a,prefs)+(n.a?'':' natural');
+    R.push({text:tr(`${modeName(key)}: aparece ${nm} (${es}) y todas las notas están en la escala`,`${modeName(key)}: ${nm} (${en}) appears and every note is in the scale`),pts:0});
+  }
+  if(!R.length) return null;
+  const kn=keyName(key,prefs), body=R.map(r=>r.text).join(' · ');
+  const text=alt?tr(`${kn}, casi empatada con ${keyName(alt,prefs)}: ${body}`,`${kn}, nearly tied with ${keyName(alt,prefs)}: ${body}`):`${kn}: ${body}`;
+  const pts=R.filter(r=>r.pts).map(r=>`${r.text} +${tenNum(r.pts)}`).join(' · ');
+  const title=`${pts}${pts?'. ':''}${tr('Puntos','Points')}: ${kn} ${tenNum(+key.score.toFixed(2))}${alt?` · ${keyName(alt,prefs)} ${tenNum(+alt.score.toFixed(2))}`:''}`;
+  return {text,title,reasons:R.map(r=>r.text)};
 }
 const modeName=k=>k&&k.modal?tr(...MODE_NAME[k.modal]):'';
 const keyName=(k,prefs)=>{const [l,a]=keyTonicSpell(k,prefs)||rootSpell(k.tonic,k.mode==='minor'?'min':'maj',prefs); return letterName(l,a,prefs)+(k.mode==='major'?tr(' mayor',' major'):tr(' menor',' minor'));};
@@ -321,7 +368,7 @@ function analyzeProgression(steps,prefs){
   const lead=rs.map((r,i)=>fn[i]==='D'&&leadingD(r.c,romans[i],key));
   const tenCtx=rs.map((r,i)=>contextTension(rs,romans,fn,lead,i));
   const ten=tenBase.map((b,i)=>Math.min(1,Math.max(0,+(b+(tenCtx[i]?tenCtx[i].val:0)).toFixed(2))));
-  return {rs,romans,key,alt,found,cad,fn,ten,tenBase,tenCtx};
+  return {rs,romans,key,alt,found,cad,fn,ten,tenBase,tenCtx,why:keyWhy(items,key,alt,plain,prefs)};
 }
 // Harmonic function in the detected key: T tonic, S subdominant, D dominant, C color (borrowed or chromatic)
 const FN_TENSION={T:.1,S:.4,D:.8,C:.5,'?':.5};
@@ -360,6 +407,20 @@ function contextTension(rs,romans,fn,lead,i){
   }
   return null;
 }
+// «3 inversión + 0,2 tipo = 3,2»: what a candidate name scored, for its tooltip
+function scoreDetail(c){
+  const P=c.parts, rows=[['bass',tr('inversión','inversion')],['missing',tr('omisión','omission')],['sixth',tr('6ª sin 5','6th without 5th')],['type',tr('tipo','type')]].filter(([k])=>P[k]);
+  const f=x=>tenNum(+x.toFixed(2)).replace('-','−');
+  let s=rows.length?rows.map(([k,l],i)=>`${i?'+ ':''}${f(P[k])} ${l}`).join(' '):`0 ${tr('tipo','type')}`;
+  if(P.locked) s+=` − ${f(-P.locked)} ${tr('raíz elegida','chosen root')}`;
+  return `${s} = ${f(c.score)}`;
+}
+// The rule of the order, written from the constants of analyze
+function rankHelp(){
+  const n=tenNum, top=Math.max(...TYPES.map(t=>t.rank));
+  return tr(`Se ordenan por puntos y gana el menor: +${n(RANK.bass)} si el bajo no es la fundamental, +${n(RANK.missing)} por nota omitida, de 0 a ${n(top)} según el tipo (más raro, más puntos); la raíz que eliges resta ${n(RANK.locked)}.`,
+    `They are ordered by points and the lowest wins: +${n(RANK.bass)} if the bass is not the root, +${n(RANK.missing)} per omitted note, ${n(0)} to ${n(top)} by type (the rarer, the more points); the root you choose subtracts ${n(RANK.locked)}.`);
+}
 const tenNum=x=>tr(String(x).replace('.',','),String(x));
 // «base 0,13 + sorpresa 0,15 = 0,28», for the tooltip of the sheet
 function tenDetail(A,i){
@@ -395,4 +456,4 @@ function dissonance(r){
   return Math.min(1,v);
 }
 
-export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, letterName, modeName, noteText, octOff, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp };
+export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, RANK, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, letterName, modeName, noteText, octOff, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp, rankHelp, scoreDetail, keyWhy, bookends, resolvesToTonic };

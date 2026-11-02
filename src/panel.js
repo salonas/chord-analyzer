@@ -36,6 +36,7 @@ function intervalText(lo,hi,a,b){
 function candTags(c,csp,lockedRoot){
   const t=[];
   if(!c.missing.length&&!c.slash) t.push({exact:true,text:tr('coincidencia exacta','exact match')});
+  if(!c.slash) t.push({text:tr('bajo = fundamental','bass is the root')});
   if(c.missing.length) t.push({text:`${tr('sin','no')} ${c.missing.map(d=>d.label).join(', ')}`});
   if(c.slash) t.push({text:inversionText(c)});
   if(lockedRoot===c.root) t.push({exact:true,text:tr('raíz elegida','chosen root')});

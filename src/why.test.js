@@ -1,0 +1,101 @@
+import { TYPES } from './data.js';
+import { analyze, analyzeProgression, bookends, rankHelp, scoreDetail } from './analysis.js';
+import { setLang } from './i18n.js';
+import { PREFS } from './test/helpers.js';
+
+const inEnglish = f => { setLang('en'); try { return f(); } finally { setLang('es'); } };
+const C = [48, 52, 55], F = [53, 57, 60], G7 = [43, 47, 50, 53], G = [43, 47, 50], Am = [45, 48, 52], Ab = [44, 48, 51];
+const run = (chords, durs = []) => analyzeProgression(chords.map((notes, i) => ({ notes, ...(durs[i] ? { dur: durs[i] } : {}) })), PREFS);
+const why = (chords, durs) => run(chords, durs).why;
+
+// Row 5 of the audit: why a name of a chord goes first
+describe('row 5: the points of a candidate name', () => {
+  const cand = (notes, root, sym, locked = null) => analyze(notes, locked).find(c => c.root === root && c.type.sym === sym);
+  it('writes the rule of the order from the constants', () => {
+    expect(rankHelp()).toBe('Se ordenan por puntos y gana el menor: +3 si el bajo no es la fundamental, +2 por nota omitida, de 0 a 0,9 según el tipo (más raro, más puntos); la raíz que eliges resta 10.');
+    expect(inEnglish(rankHelp)).toBe('They are ordered by points and the lowest wins: +3 if the bass is not the root, +2 per omitted note, 0 to 0.9 by type (the rarer, the more points); the root you choose subtracts 10.');
+  });
+  it('gives the type its rank and nothing else for a chord with its bass and all its notes', () => {
+    expect(scoreDetail(cand([48, 52, 55, 58], 0, '7'))).toBe('0,2 tipo = 0,2');
+    expect(scoreDetail(cand(C, 0, ''))).toBe('0 tipo = 0');
+  });
+  it('adds 3 for an inversion: G7/B is 3 inversión + 0,2 tipo = 3,2', () => {
+    expect(scoreDetail(cand([47, 50, 53, 55], 7, '7'))).toBe('3 inversión + 0,2 tipo = 3,2');
+    expect(inEnglish(() => scoreDetail(cand([47, 50, 53, 55], 7, '7')))).toBe('3 inversion + 0.2 type = 3.2');
+  });
+  it('adds 2 for each omitted note', () => expect(scoreDetail(cand([48, 52, 58, 62], 0, '9'))).toBe('2 omisión + 0,4 tipo = 2,4'));
+  it('adds 1.5 for a sixth chord without its 5th', () => expect(scoreDetail(cand([48, 52, 57], 0, '6'))).toBe('2 omisión + 1,5 6ª sin 5 + 0,45 tipo = 3,95'));
+  it('subtracts 10 for the root you choose', () => {
+    expect(scoreDetail(cand(C, 0, '', 0))).toBe('0 tipo − 10 raíz elegida = −10');
+    expect(scoreDetail(cand([47, 50, 53, 55], 7, '7', 7))).toBe('3 inversión + 0,2 tipo − 10 raíz elegida = −6,8');
+  });
+  it('shows the highest rank the table has in the rule', () => expect(Math.max(...TYPES.map(t => t.rank))).toBe(0.9));
+  it('adds up to the score of every candidate', () => {
+    for (const notes of [C, [47, 50, 53, 55], [48, 52, 58, 62], [48, 52, 57], [48, 51, 54, 57], [60, 61, 62]])
+      for (const locked of [null, 0, 7]) for (const c of analyze(notes, locked)) {
+        expect(Object.values(c.parts).reduce((a, b) => a + b, 0)).toBeCloseTo(c.score, 9);
+      }
+  });
+});
+
+// Row 10: why this key, one case per rule
+describe('row 10: the reasons of the key', () => {
+  it('says that a V resolves to the tonic, that it starts and ends there, and that every chord is in the scale', () => {
+    expect(why([C, F, G7, C]).reasons).toEqual(['un V resuelve a la tónica', 'empieza y termina en la tónica', 'todos los acordes son de la escala']);
+    expect(why([C, F, G7, C]).text).toBe('C mayor: un V resuelve a la tónica · empieza y termina en la tónica · todos los acordes son de la escala');
+  });
+  it('does not list "empieza" or "termina" when "empieza y termina" applies', () => {
+    const r = why([C, F, G7, C]).reasons;
+    expect(r).not.toContain('empieza en la tónica');
+    expect(r).not.toContain('termina en la tónica');
+  });
+  it('says only that it ends on the tonic when it does not start there', () => {
+    const r = why([F, G7, C]).reasons;
+    expect(r).toContain('termina en la tónica');
+    expect(r.join(' ')).not.toContain('empieza');
+  });
+  it('says only that it starts on the tonic when it does not end there', () => {
+    const r = why([C, G7, Am, F]).reasons;
+    expect(r).toContain('empieza en la tónica');
+    expect(r.join(' ')).not.toContain('termina');
+  });
+  it('says that a single chord is the tonic', () => expect(why([C]).reasons).toEqual(['el único acorde es la tónica']));
+  it('says that the longest chord is the tonic only when it lasts longer than the others (F28)', () => {
+    const f28 = [[41, 45, 48], G, [45, 48, 52], G];
+    expect(why(f28, [1, 1, 3, 1]).reasons).toContain('el acorde que más dura es la tónica');
+    expect(why([[41, 45, 48], G, [45, 48, 52], [52, 55, 59]], [1, 1, 1, 1]).reasons).not.toContain('el acorde que más dura es la tónica');
+  });
+  it('says "todos los acordes son de la escala" only when it is literally true', () => {
+    expect(why([C, F, G]).reasons).toContain('todos los acordes son de la escala');
+    expect(why([C, Ab, F, C]).reasons.join(' ')).not.toContain('de la escala');
+    expect(why([C, [50, 54, 57, 60], G, C]).reasons.join(' ')).not.toContain('de la escala');
+  });
+  it('says "todas las notas" when what it reads are lone notes', () => {
+    expect(why([[60], [62], [64], [65], [67]]).reasons).toEqual(['todas las notas son de la escala']);
+  });
+  it('adds the reason of the mode: dorian, phrygian, lydian and mixolydian', () => {
+    const D = [50, 53, 57], Gm = [43, 47, 50], E = [52, 55, 59], Fm = [53, 57, 60], Dl = [50, 54, 57], El = [52, 56, 59], Gx = [43, 47, 50], Fx = [41, 45, 48], Cx = [48, 52, 55];
+    expect(why([D, Gm, D, Gm, D]).reasons.at(-1)).toBe('dórico: aparece B natural (6ª mayor) y todas las notas están en la escala');
+    expect(why([E, Fm, E, Fm, E]).reasons.at(-1)).toBe('frigio: aparece F natural (2ª menor) y todas las notas están en la escala');
+    expect(why([Dl, El, Dl]).reasons.at(-1)).toBe('lidio: aparece G♯ (4ª aumentada) y todas las notas están en la escala');
+    expect(why([Gx, Fx, Cx, Gx]).reasons.at(-1)).toBe('mixolidio: aparece F natural (7ª menor) y todas las notas están en la escala');
+    expect(inEnglish(() => why([D, Gm, D, Gm, D]).reasons.at(-1))).toBe('Dorian: B natural (major 6th) appears and every note is in the scale');
+  });
+  it('names the alternative key when it almost ties, and not otherwise', () => {
+    expect(why([C, G]).text).toBe('C mayor, casi empatada con G mayor: empieza en la tónica · todos los acordes son de la escala');
+    expect(inEnglish(() => why([C, G]).text)).toBe('C major, nearly tied with G major: starts on the tonic · every chord is in the scale');
+    expect(why([C, F, G7, C]).text).not.toContain('empatada');
+  });
+  it('keeps the points out of the visible text and in the title', () => {
+    const w = why([C, F, G7, C]);
+    expect(w.text).not.toMatch(/\d/);
+    expect(w.title).toContain('un V resuelve a la tónica +3');
+    expect(w.title).toContain('empieza y termina en la tónica +6,5');
+    expect(w.title).toMatch(/Puntos: C mayor \d/);
+  });
+  it('does not count the last chord of a deceptive cadence as the end on the minor tonic', () => {
+    const items = [C, F, G7, Am].map(notes => ({ root: analyze(notes, null)[0].root, q: analyze(notes, null)[0].type.q }));
+    expect(bookends(items, 9, 'minor').last).toBe(false);
+    expect(bookends(items, 9, 'minor').first).toBe(false);
+  });
+});

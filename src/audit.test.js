@@ -74,12 +74,12 @@ describe('row 6: the tags of a candidate name', () => {
     const c = analyze(notes, null).find(x => x.root === root && x.type.sym === sym);
     return candTags(c, spellCandidate(c, notes, PREFS), locked).map(t => t.text);
   };
-  it('tags C as an exact match', () => expect(tags([48, 52, 55], 0, '')).toEqual(['coincidencia exacta']));
+  it('tags C as an exact match with the bass as its root', () => expect(tags([48, 52, 55], 0, '')).toEqual(['coincidencia exacta', 'bajo = fundamental']));
   it('tags Am7 over C as an inversion and gives its other name', () => expect(tags([48, 52, 55, 57], 9, 'm7')).toEqual(['1ª inversión', 'también A-7']));
-  it('tags a C9 without its 5th', () => expect(tags([48, 52, 58, 62], 0, '9')).toEqual(['sin 5']));
+  it('tags a C9 without its 5th', () => expect(tags([48, 52, 58, 62], 0, '9')).toEqual(['bajo = fundamental', 'sin 5']));
   it('tags C-7 as an exact match with its other name, and marks a chosen root', () => {
-    expect(tags([48, 51, 55, 58], 0, 'm7')).toEqual(['coincidencia exacta', 'también C-7']);
-    expect(tags([48, 51, 55, 58], 0, 'm7', 0)).toEqual(['coincidencia exacta', 'raíz elegida', 'también C-7']);
+    expect(tags([48, 51, 55, 58], 0, 'm7')).toEqual(['coincidencia exacta', 'bajo = fundamental', 'también C-7']);
+    expect(tags([48, 51, 55, 58], 0, 'm7', 0)).toEqual(['coincidencia exacta', 'bajo = fundamental', 'raíz elegida', 'también C-7']);
   });
 });
 

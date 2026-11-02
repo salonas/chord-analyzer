@@ -92,9 +92,15 @@ Rama `feat/ui-audit`, sobre `feat/tension-context` (paso 4: filas ✗ y ⚠ de l
 - **Fila 24.** El pie de página nombra la tensión entre las estimaciones.
 - Filas 5 y 10 (el «por qué» de la elección de acorde y de tonalidad) quedan para el paso 5, con los textos aprobados antes.
 
+Rama `feat/why-labels`, desde `main` con los pasos 1 a 4 fusionados (paso 5, filas 5 y 10 de la auditoría; textos aprobados el 1 nov 2026): 549 de 557 (98 %); las 8 comprobaciones nuevas pasan y no cae ninguna. Reglas en `src/analysis.js`:
+
+- **Fila 5, nombre de acorde.** `analyze` guarda en cada candidato sus `parts` (tipo, omisiones, inversión, 6ª sin 5, raíz elegida) con las constantes de `RANK` (+3 el bajo que no es la fundamental, +2 por nota omitida, −10 la raíz elegida; el tipo suma su rango, de 0 a 0,9, elegido a mano). `scoreDetail` los escribe en el tooltip de cada nombre («3 inversión + 0,2 tipo = 3,2») y `rankHelp`, desde las mismas constantes, escribe la línea fija bajo «Posibles nombres». No se agregan etiquetas de «tipo frecuente»: los rangos no son frecuencias medidas. Sí queda la etiqueta «bajo = fundamental».
+- **Fila 10, tonalidad.** `keyWhy` cita los motivos de `detectKey` que aplican a la elegida, por peso, máximo tres y sin repetir: un V resuelve a la tónica, empieza y termina (o solo empieza, o solo termina), el acorde que más dura (solo si dura estrictamente más que los otros), todos los acordes (o notas) son de la escala (solo si es literalmente cierto: sin préstamos ni cromáticos) y, si hay modo, su motivo («dórico: aparece B natural (6ª mayor) y todas las notas están en la escala»). Con alternativa: «C mayor, casi empatada con G mayor: …». Los puntos van solo en el tooltip. Se muestra bajo la placa de la hoja y como línea `# Por qué la tonalidad:` del texto exportado. `bookends` y `resolvesToTonic` son ahora los predicados de `detectKey` y de `keyWhy`, así que no se desincronizan; el ranking de `detectKey` no cambió (el fixture `analysis.json` lo confirma).
+- Pruebas: `src/why.test.js` (una por regla) y los checks `why` de F08, F09, F10, F19, F28 y D21 en la sonda. `text.json`, `midi.json` (solo el `.txt` de cada paquete) y `theory/texts.json` cambian únicamente por la línea nueva.
+
 ### Retomar desde main
 
-Punto de partida: pasos 1 a 4 de `inversiones-tension-ui.md` fusionados en `main`; la sonda da 541 de 549 y quedan 8 fallos, los mismos de antes. Sigue el paso 5 (filas 5 y 10, con textos aprobados antes).
+Punto de partida: los cinco pasos de `inversiones-tension-ui.md` fusionados en `main`; la sonda da 549 de 557 y quedan 8 fallos, los mismos de antes.
 
 Fallos que quedan:
 

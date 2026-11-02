@@ -312,6 +312,7 @@ kbd{display:inline-block;font:inherit;font-size:13px;line-height:1.2;border:2px 
 .an-head{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px}
 .an-head .plaque{font-family:var(--hand);font-size:32px;line-height:40px;padding:6px 48px}
 .an-head .plaque+.lab{margin:6px 0 0}
+.an-head .why{max-width:34em;margin-top:6px}
 .an .tag{display:inline-block;background:var(--ink);color:var(--paper);padding:1px 11px;border:2px solid var(--ink);font-size:16px;line-height:22px}
 .an .tag b{font-weight:400;margin-right:8px;color:var(--tan)}
 .an .stamp{display:inline-flex;align-items:center;gap:.5em;padding:.25em .7em;background:var(--ink);color:var(--paper);border:3px solid var(--ink);box-shadow:3px 3px 0 var(--tan-dark);font-size:16px;line-height:22px}
