@@ -1,16 +1,17 @@
 // MIDI export (format 0, 96 PPQ), stored zip and the full pack.
 import { T, uid } from './data.js';
-import { isDrum, isMulti, segStep, segs, trackOf } from './model.js';
+import { isDrum, isMulti, segStep, trackOf } from './model.js';
 import { bendAt, glidePlan, hasGlide, rangeOf } from './glide.js';
 import { analyzeProgression, resolveStep } from './analysis.js';
 import { projectText } from './text.js';
 import { tr } from './i18n.js';
 import { flScript } from './flscript.js';
+import { harmonySegs } from './harmony.js';
 import { pitchClip } from './flpitch.js';
 
 // ---------- MIDI export (format 0, 96 PPQ) wrapped in a stored zip ----------
-const SUPSUB={'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','𝄫':'bb'};
-const ascii=s=>String(s).replace(/[\u2070\u00B9\u00B2\u00B3\u2074-\u2079\u2080-\u2089]|\u{1D12B}/gu,c=>SUPSUB[c]||'').replace(/♯/g,'#').replace(/♭/g,'b').replace(/Δ/g,'maj').replace(/ø/g,'m7b5').replace(/°/g,'dim').normalize('NFD').replace(/\p{M}/gu,'').replace(/[^\x20-\x7e]/g,'?');
+const SUPSUB={'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','𝄫':'bb','⁺':'+'};
+const ascii=s=>String(s).replace(/[\u2070\u00B9\u00B2\u00B3\u2074-\u207A\u2080-\u2089]|\u{1D12B}/gu,c=>SUPSUB[c]||'').replace(/♯/g,'#').replace(/♭/g,'b').replace(/Δ/g,'maj').replace(/ø/g,'m7b5').replace(/°/g,'dim').normalize('NFD').replace(/\p{M}/gu,'').replace(/[^\x20-\x7e]/g,'?');
 function vlq(n){ const b=[n&0x7f]; while((n>>>=7)) b.unshift((n&0x7f)|0x80); return b; }
 // A multitrack pattern as a format 1 file: a conductor track (tempo, 4/4), then one track per pattern track on its own
 // channel (the kit on 10); muted tracks go too, as the file is for the DAW. Slides and portamentos are not written.
@@ -59,8 +60,9 @@ function midiFile(p,bpm,prefs){
       ev.push({t:V.e,o:1.5,d:pb(0)});
     });
   }
-  const S=segs(p), A=analyzeProgression(S.map(s=>segStep(p,s)),prefs);
-  if(!isDrum(p)) S.forEach((s,i)=>ev.push({t:s.a,o:0,d:meta(0x06,enc(A.rs[i].label))}));
+  // the chord markers are the lane's chords (harmonySegs), so a chord under a moving tune is one marker, as in the lane
+  const S=isDrum(p)?[]:harmonySegs(p), A=analyzeProgression(S.map(s=>segStep(p,s)),prefs);
+  S.forEach((s,i)=>ev.push({t:s.a,o:0,d:meta(0x06,enc(A.rs[i].label))}));
   // same tick: chord marker, then note-offs, then pitch bends and controllers, then note-ons, so a repeated note is not cut short
   ev.sort((a,b)=>a.t-b.t||a.o-b.o);
   const us=Math.round(60000000/(bpm||90));
@@ -105,7 +107,8 @@ function buildPack(pr,chords,prefs){
     // and for VST instruments, an automation clip of Channel pitch (flpitch.js)
     const clip=hasGlide(p)?pitchClip(p):null;
     if(clip) files.push({name:`${base}/${dClip}/${pn}.fst`,data:clip.bytes});
-    const S=isDrum(p)?[]:segs(p), A=analyzeProgression(S.map(s=>segStep(p,s)),prefs);
+    // the lane's chords (harmonySegs), as the markers: a tune moving over a chord does not split it into two files
+    const S=isDrum(p)?[]:harmonySegs(p), A=analyzeProgression(S.map(s=>segStep(p,s)),prefs);
     S.forEach((s,j)=>{
       // each chord on its own: the notes that sound inside it, clipped to it and moved to the start
       const notes=p.notes.filter(n=>n.s<s.b&&n.s+n.l>s.a).map(n=>({id:n.id,m:n.m,s:Math.max(n.s,s.a)-s.a,l:Math.min(n.s+n.l,s.b)-Math.max(n.s,s.a),v:n.v}));

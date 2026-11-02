@@ -7,6 +7,7 @@ import { analyze, resolveStep } from './analysis.js';
 const TOL=Math.round(.05*T); // notes that start within ±0.05 beats start together
 const SHORT=T/2;             // a passing bass lasts half a beat or less
 const isHarm=r=>r==='harm'||r==='inner';
+const OCTAVE=12;
 
 // Each note gets a role: harm (chord), inner (moving inner voice), pass (short bass), bass (longer bass) or mel (tune).
 // The lowest voice under a chord is its bass, never the tune, however long it lasts (THEORY.md, «La voz grave es el bajo»)
@@ -33,6 +34,13 @@ function noteRoles(ns){
     else if(under.some(o=>o.m<n.m)&&under.some(o=>o.m>n.m)) role.set(n.id,'inner');
     else role.set(n.id,'mel');
   }
+  // with a tune in the pattern, the top of a struck chord carries it on when it is an octave or more above the next voice and
+  // the notes under it make a chord of three or more pitch classes (manual test of 2 Nov 2026, P5 and P6; decision 2 asks
+  // more than an octave and two blocks, for plain blocks with no tune elsewhere)
+  if([...role.values()].includes('mel')) for(const g of groups){
+    const k=g.notes.length, top=g.notes[k-1], under=g.notes.slice(0,-1).map(n=>n.m);
+    if(k>=4&&role.get(top.id)==='harm'&&top.m-under[under.length-1]>=OCTAVE&&new Set(under.map(m=>m%12)).size>=3&&analyze(under,null).length) role.set(top.id,'mel');
+  }
   return role;
 }
 
@@ -53,7 +61,6 @@ function topVoice(ns){
 // The tune inside plain blocks (decision 2 in THEORY.md): the top note of a block is melody only when it is more than an
 // octave above the next voice, the notes under it are a chord of three or more pitch classes, and at least two such
 // blocks have different tops. Open pads (C2 G2 E4) and wide voicings (C2 E5 G6) stay chords. Returns the melody note ids.
-const OCTAVE=12;
 function blockMelody(p,S){
   const tops=S.map(s=>{
     if(s.notes.length<4||s.notes[s.notes.length-1]-s.notes[s.notes.length-2]<=OCTAVE) return null;

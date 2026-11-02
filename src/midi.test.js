@@ -23,6 +23,23 @@ describe('midiFile', () => {
       expect(r.skipped).toBe(c.skipped);
     });
   }
+  // an augmented sixth's marker goes by its kind, in ASCII as every marker (manual test, P4)
+  it('writes the marker of an augmented sixth as It+6', () => {
+    const chords = [[45, 48, 52], [41, 45, 51], [40, 44, 47], [45, 48, 52]];
+    const p = { ...clone(turnaround.patterns[0]), notes: chords.flatMap((ms, i) => ms.map((m, j) => ({ id: `a${i}${j}`, m, s: i * 384, l: 384, v: 100 }))) };
+    const b = Buffer.from(midiFile(p, 90, PREFS).bytes), marks = [];
+    for (let i = 0; i < b.length - 2; i++) if (b[i] === 0xff && b[i + 1] === 0x06) marks.push(b.subarray(i + 3, i + 3 + b[i + 2]).toString('latin1'));
+    expect(marks).toEqual(['Am', 'It+6', 'E', 'Am']);
+  });
+  // the markers are the lane's chords: a tune that moves over a chord does not split it (manual test, P4: not «F7 | It+6»)
+  it('writes one marker per chord of the lane, with a tune moving over it', () => {
+    const rows = [[33, 0, 4], [45, 0, 4], [48, 0, 4], [52, 0, 4], [72, 0, 4], [29, 4, 4], [41, 4, 4], [45, 4, 4], [51, 4, 4], [72, 4, 2], [75, 6, 2],
+      [28, 8, 4], [40, 8, 4], [44, 8, 4], [47, 8, 4], [76, 8, 4], [33, 12, 4], [45, 12, 4], [48, 12, 4], [52, 12, 4], [69, 12, 4]];
+    const p = { ...clone(turnaround.patterns[0]), notes: rows.map(([m, s, l], i) => ({ id: 'p' + i, m, s: s * 96, l: l * 96, v: 100 })) };
+    const b = Buffer.from(midiFile(p, 90, PREFS).bytes), marks = [];
+    for (let i = 0; i < b.length - 2; i++) if (b[i] === 0xff && b[i + 1] === 0x06) marks.push(b.subarray(i + 3, i + 3 + b[i + 2]).toString('latin1'));
+    expect(marks).toEqual(['Am', 'Ger+6', 'E', 'Am']);
+  });
   it('drum pattern without chord markers', () => {
     const c = fx.midi.default.drums, r = midiFile(clone(c.input), c.bpm, PREFS);
     expect(hex(r.bytes)).toBe(c.hex);
@@ -44,6 +61,15 @@ describe('buildPack', () => {
   afterEach(() => vi.useRealTimers());
   it('packs the turnaround with an empty library in 6 files', () => {
     expect(buildPack(clone(turnaround), [], PREFS).files.length).toBe(6);
+  });
+  // the chords of the pack are the lane's chords, as the markers: a tune over a chord does not split it (manual test, P4)
+  it('writes one file per chord of the lane, with a tune moving over it', () => {
+    const rows = [[33, 0, 4], [45, 0, 4], [48, 0, 4], [52, 0, 4], [72, 0, 4], [29, 4, 4], [41, 4, 4], [45, 4, 4], [51, 4, 4], [72, 4, 2], [75, 6, 2],
+      [28, 8, 4], [40, 8, 4], [44, 8, 4], [47, 8, 4], [76, 8, 4], [33, 12, 4], [45, 12, 4], [48, 12, 4], [52, 12, 4], [69, 12, 4]];
+    const pr = clone(turnaround);
+    pr.patterns = [{ ...pr.patterns[0], name: 'P4', notes: rows.map(([m, s, l], i) => ({ id: 'p' + i, m, s: s * 96, l: l * 96, v: 100 })) }];
+    const pk = buildPack(pr, [], PREFS), names = pk.files.map(f => f.name.split('/').pop()).filter(n => /^\d+ - .*\.mid$/.test(n));
+    expect(names).toEqual(['01 - Am (i).mid', '02 - Ger+6 (Ger65).mid', '03 - E (V).mid', '04 - Am (i).mid']);
   });
   it.each(Object.keys(fx.packs))('%s', async k => {
     const c = fx.packs[k], pk = buildPack(clone(c.project), clone(c.chords), c.prefs);

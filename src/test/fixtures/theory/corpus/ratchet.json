@@ -1,6 +1,6 @@
 {
  "updated": "2026-11-02",
- "why": "la voz grave bajo un acorde es su bajo (fix/manual-test-nov2): acorde de punta a punta 9039 → 9062",
+ "why": "the top of a struck chord carries the tune on (manual test P5, P6)",
  "units": {
   "tavern": 21,
   "rock": 158
@@ -11,7 +11,7 @@
    "n": 15909
   },
   "acorde de punta a punta": {
-   "ok": 9062,
+   "ok": 9064,
    "n": 16404
   },
   "inversión, dado el acorde correcto": {
@@ -23,7 +23,7 @@
    "n": 1622
   },
   "tonalidad de TAVERN de punta a punta": {
-   "ok": 1278,
+   "ok": 1280,
    "n": 1622
   },
   "tónica del rock": {

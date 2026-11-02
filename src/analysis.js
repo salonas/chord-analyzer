@@ -363,7 +363,11 @@ function keyRegions(items,top,opts={}){
   // each region ends where the next starts; one too short goes back into its neighbour (the one before, or the next for the first)
   const withTo=()=>regs.forEach((r,i)=>{ r.to=i+1<regs.length?regs[i+1].from-1:N-1; });
   const ownCads=r=>cads.filter(c=>c.i>=r.from&&c.i<r.to&&sameKey(c.key,r.key)).length;
-  const short=(r,i)=>r.to-r.from+1<R.chords||(timed&&beats(r.from,r.to)<R.beats)||(i>0&&R.cads>1&&ownCads(r)<R.cads)||(i>0&&R.noOldTonic&&items.slice(r.from,r.to+1).some(it=>isTonic(it,regs[i-1].key)));
+  // variant of decision 15 (manual test P6), off in the app: the old tonic triad may stay in the new region when it is that
+  // region's IV and a V7 → I of its own confirms it (C in C major → G major, confirmed by D7 → G). Measured on 2 Nov 2026 with
+  // tools/modulation-sim.mjs and left out, as the brakes go up (THEORY.md, «Pendientes conocidos»)
+  const asIV=(r,old)=>(old.tonic-r.key.tonic+12)%12===5&&cads.some(c=>c.i>=r.from&&c.i<r.to&&sameKey(c.key,r.key)&&items[c.i].q==='dom');
+  const short=(r,i)=>r.to-r.from+1<R.chords||(timed&&beats(r.from,r.to)<R.beats)||(i>0&&R.cads>1&&ownCads(r)<R.cads)||(i>0&&R.noOldTonic&&items.slice(r.from,r.to+1).some(it=>isTonic(it,regs[i-1].key))&&!(R.oldTonicIV&&asIV(r,regs[i-1].key)));
   for(;;){
     withTo();
     for(let i=regs.length-1;i>0;i--) if(sameKey(regs[i].key,regs[i-1].key)) regs.splice(i,1);
@@ -473,6 +477,23 @@ function respell(r,key,prefs,steps){
     return {...spellMidi(n.midi,l,a),deg:n.deg};
   });
 }
+// An augmented sixth is named by its kind, It⁺⁶ (Fr⁺⁶, Ger⁺⁶), in the lane, the sheet, the text and the inspector; the
+// dictionary's name (F7, the same sound) stays among the candidate names. Its own letters (D♯ over F, not E♭) are the chord's
+// for the melody too (laneSpell), and aug6 keeps the interval from the bass and the 5̂ both its notes go to, for the inspector
+// The interval of a spelled note over the bass, by letters: D♯ over F is a ♯6, not the ♭7 of F7
+const aug6Iv=(n,b)=>{ const k=((n.l-b.l)%7+7)%7, d=((((n.midi-b.midi)%12+12)%12-NAT[k])+18)%12-6; return FLAT_SIGN[d+2]+(k+1); };
+const FLAT_SIGN=['𝄫','♭','','♯','𝄪'];
+function aug6Name(r,next,g,key){
+  if(r.sp){ const own={...r.sp.byPc}; r.spelled.forEach(n=>{ const pc=n.midi%12; if(own[pc]) own[pc]={...own[pc],l:n.l,a:n.a}; }); r.sp={...r.sp,byPc:own}; }
+  const at=(s,x)=>s&&s.spelled.find(n=>((n.midi-key.tonic)%12+12)%12===x);
+  r.label=g+'⁺⁶'; r.aug6={g,lo:at(r,8),hi:at(r,6),to:at(next,7)};
+}
+const AUG6={It:['italiana','Italian'],Fr:['francesa','French'],Ger:['alemana','German']};
+function aug6Text(a,prefs){
+  const nm=n=>letterName(n.l,n.a,prefs), [es,en]=AUG6[a.g], to=a.to&&nm(a.to);
+  return tr(`Sexta aumentada ${es}: ${nm(a.lo)}–${nm(a.hi)} es una 6ª aumentada${to?`; las dos notas van a ${to}`:''}`,
+    `${en} augmented sixth: ${nm(a.lo)}–${nm(a.hi)} is an augmented sixth${to?`; both notes go to ${to}`:''}`);
+}
 // Chords the scale does not explain, read by what they do (in this order): the cadential 6/4, the tonic seventh of the blues,
 // secondary dominants and leading-tone chords, augmented sixths and the dim7 that embellishes the tonic
 function chromaticReading(rs,romans,key,prefs){
@@ -509,11 +530,14 @@ function chromaticReading(rs,romans,key,prefs){
     if(!ro||!c||ro.diatonic||ro.secondary) return;
     const rel=new Set(rs[i].notes.map(m=>(m-key.tonic+12)%12)), has=x=>rel.has(x);
     const toV=nc&&(nx.deg===7||(nx.deg===0&&nc.slash&&bassDeg(nc).n===5));
-    // ♭6̂ in the bass with ♯4̂ above it and 1̂, resolving to V: Italian, French (adds 2̂) or German (adds ♭3̂) sixth
-    if(toV&&(rs[i].notes[0]-key.tonic+12)%12===8&&has(8)&&has(0)&&has(6)&&[...rel].every(x=>[8,0,6,3,2].includes(x))&&!(has(3)&&has(2))){
-      const g=has(3)?'Ger':has(2)?'Fr':'It';
+    // ♭6̂ in the bass with ♯4̂ above it and 1̂, resolving to V: Italian, French (adds 2̂) or German (adds ♭3̂) sixth. The notes of
+    // the tune that complete the chord count (decision 11): F A D♯ under a C of the tune is a German sixth, not an Italian one
+    const six=new Set([...rel,...(rs[i].mel||[]).map(m=>(m-key.tonic+12)%12)]), in6=x=>six.has(x);
+    if(toV&&(rs[i].notes[0]-key.tonic+12)%12===8&&in6(8)&&in6(0)&&in6(6)&&[...six].every(x=>[8,0,6,3,2].includes(x))&&!(in6(3)&&in6(2))){
+      const g=in6(3)?'Ger':in6(2)?'Fr':'It';
       ro.text=ro.short=g+{Ger:'⁶₅',Fr:'⁴₃',It:'⁶'}[g]; ro.aug6=g;
       respell(rs[i],key,prefs,{8:5,0:0,6:3,3:2,2:1});
+      aug6Name(rs[i],rs[i+1],g,key);
     } else if(c.type.sym==='dim7'&&has(0)&&pv&&nc&&pv.root===key.tonic&&nc.root===key.tonic){
       ro.text=ro.short='♯ii°7'; ro.ct=true;
       respell(rs[i],key,prefs,{0:0,3:1,6:3,9:5});
@@ -794,4 +818,4 @@ function dissonance(r){
   return Math.min(1,v);
 }
 
-export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, RANK, analyze, analyzeProgression, candSymbol, defaultSpell, degreeText, detectKey, inversionText, pivotTitle, progressionKeys, keyRegions, regionTexts, keyName, keyText, laneSpell, letterName, melodyText, modeName, noteText, octOff, ornamentText, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp, rankHelp, scoreDetail, keyWhy, bookends, resolution };
+export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, RANK, analyze, analyzeProgression, aug6Iv, aug6Text, candSymbol, defaultSpell, degreeText, detectKey, inversionText, pivotTitle, progressionKeys, keyRegions, regionTexts, keyName, keyText, laneSpell, letterName, melodyText, modeName, noteText, octOff, ornamentText, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp, rankHelp, scoreDetail, keyWhy, bookends, resolution };
