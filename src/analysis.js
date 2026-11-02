@@ -345,6 +345,25 @@ function analyzeProgression(steps,prefs){
       if(ok){ found.push({name:p.name,from:i,to:(i+L-1)%N,wrap:i+L>N}); break; }
     }
   }
+  // the patterns are read in the other tonality too, as they would be in the main one: a progression that fits one in the key it
+  // was not read in (IV–V–iii–vi in C when A minor was chosen) is still found, and says in which key. The other tonality is the
+  // alternate key when there is one, and always the relative key, the usual ambiguity (the alternate shows only within 2 points).
+  // It is shown only when it spans more chords than the longest pattern of the main key: a loop that is the same in both keys
+  // (G D Em C is also i–♭VI–♭III–♭VII in E minor) adds nothing
+  const longest=Math.max(0,...found.map(f=>((PATTERNS.find(p=>p.name===f.name)||{}).seq||[]).length));
+  const rel={tonic:(key.tonic+(key.mode==='major'?9:3))%12,mode:key.mode==='major'?'minor':'major'};
+  for(const other of [alt,rel].filter((k,i,a)=>k&&a.findIndex(x=>x&&x.tonic===k.tonic&&x.mode===k.mode)===i)){
+    if(other.tonic===key.tonic&&other.mode===key.mode) continue;
+    const ar=rs.map(r=>r.c?romanFor(r.c,other):null), at=ar.map(r=>r?r.token:'?');
+    for(const p of PATTERNS){
+      const L=p.seq.length; if(L>N||L<=longest||found.some(f=>f.name===p.name||f.name.startsWith(p.name+' ('))) continue;
+      for(let i=0;i<N;i++){
+        if(i+L>N&&N<3) break;
+        let ok=true; for(let j=0;j<L;j++){ if(at[(i+j)%N]!==p.seq[j]){ok=false;break;} }
+        if(ok){ found.push({name:`${p.name} (${tr('en','in')} ${keyName(other,prefs)})`,from:i,to:(i+L-1)%N,wrap:i+L>N}); break; }
+      }
+    }
+  }
   let run=1, best=1;
   for(let i=1;i<N;i++){ if(items[i-1].q&&items[i].q&&(items[i].root-items[i-1].root+12)%12===5){run++;best=Math.max(best,run);} else run=1; }
   if(best>=3) found.push({name:tr(`Ciclo de quintas (${best} acordes seguidos)`,`Circle of fifths (${best} chords in a row)`),cycle:true});
@@ -356,7 +375,8 @@ function analyzeProgression(steps,prefs){
     if(bd===0&&ad===7&&domQ) cad=tr('Cadencia auténtica ','Authentic cadence ')+pair;
     else if(bd===0&&ad===7) cad=tr('Cadencia modal (sin sensible) ','Modal cadence (no leading tone) ')+pair;
     else if(bd===0&&ad===5) cad=tr('Cadencia plagal ','Plagal cadence ')+pair;
-    else if(bd===0&&ad===10) cad=tr('Cadencia ♭VII → I (backdoor / mixolidia)','♭VII → I cadence (backdoor / Mixolydian)');
+    // in major it is the backdoor (Mixolydian) cadence; in minor the ♭VII is the natural seventh, a plain ♭VII → i
+    else if(bd===0&&ad===10) cad=key.mode==='minor'?tr('Cadencia ♭VII → i','♭VII → i cadence'):tr('Cadencia ♭VII → I (backdoor / mixolidia)','♭VII → I cadence (backdoor / Mixolydian)');
     else if(bd===0&&ad===11) cad=tr('Cadencia con sensible ','Leading-tone cadence ')+pair;
     else if(bd===0&&ad===1&&rs[N-2].c.type.q==='dom') cad=tr('Cadencia con sustituto tritonal (♭II7 → I)','Tritone substitution cadence (♭II7 → I)');
     else if(ad===7&&(bd===9||bd===8)) cad=tr('Cadencia rota (V → ','Deceptive cadence (V → ')+romans[N-1].base+')';

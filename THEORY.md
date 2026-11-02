@@ -98,16 +98,20 @@ Rama `feat/why-labels`, desde `main` con los pasos 1 a 4 fusionados (paso 5, fil
 - **Fila 10, tonalidad.** `keyWhy` cita los motivos de `detectKey` que aplican a la elegida, por peso, máximo tres y sin repetir: un V resuelve a la tónica, empieza y termina (o solo empieza, o solo termina), el acorde que más dura (solo si dura estrictamente más que los otros), todos los acordes (o notas) son de la escala (solo si es literalmente cierto: sin préstamos ni cromáticos) y, si hay modo, su motivo («dórico: aparece B natural (6ª mayor) y todas las notas están en la escala»). Con alternativa: «C mayor, casi empatada con G mayor: …». Los puntos van solo en el tooltip. Se muestra bajo la placa de la hoja y como línea `# Por qué la tonalidad:` del texto exportado. `bookends` y `resolvesToTonic` son ahora los predicados de `detectKey` y de `keyWhy`, así que no se desincronizan; el ranking de `detectKey` no cambió (el fixture `analysis.json` lo confirma).
 - Pruebas: `src/why.test.js` (una por regla) y los checks `why` de F08, F09, F10, F19, F28 y D21 en la sonda. `text.json`, `midi.json` (solo el `.txt` de cada paquete) y `theory/texts.json` cambian únicamente por la línea nueva.
 
+Rama `feat/close-gaps`, desde `main` con los cinco pasos fusionados (C9, C12, F18 y la cadencia ♭VII → i; F11 queda fuera): 562 de 563 (99 %); las 7 comprobaciones que fallaban (A36, A43, F18, I10, I11, I13, I19) pasan, las 6 nuevas también (A46–A49 y G14 ×2) y no cae ninguna.
+
+- **F18, patrones en la otra tonalidad.** Además de la tonalidad elegida, `analyzeProgression` busca los patrones en la alternativa (si hay) y siempre en la relativa; los hallazgos dicen en qué tonalidad: «Royal road (J-pop) (en C mayor)». La alternativa se muestra solo a menos de 2 puntos, y en F18 el Do mayor queda a 3,49 de La menor, por eso se agregó la relativa. No se repite un patrón que la tonalidad principal ya encontró, y la otra lectura solo se muestra si abarca más acordes que el patrón más largo de la principal (decisión del 1 nov 2026): G D Em C y C Am F G no muestran su lectura en la relativa; F18 sí muestra «Royal road (J-pop) (en C mayor)» (4 acordes contra 3). `detectKey` no cambia.
+- **C12, lectura de notas.** `NOTE_RE` acepta 𝄪 y 𝄫, letras en minúscula (c4, ab4, fx4, sol4) y la H alemana (= B natural). La letra no puede ser el final de una palabra: la d9 de Cadd9 no es una nota. `parseText` devuelve `unread`: las palabras con forma de nota que no se pudieron leer (fuera de rango como C-1, o notaciones desconocidas como J4 o Es3); la importación las nombra en el aviso («sin leer: J4, C-1»). No adivina Es, As ni His.
+- **C9, diccionario.** Seis tipos nuevos: maj9♯11, 7♯5♯9, 7♭5♭9, 7♯5♭9, 7♭9♯11 y 13♭9, con rangos de 0,8 a 0,85 (el máximo de la regla del orden sigue siendo 0,9).
+- **Cadencia ♭VII → i.** En menor dice «Cadencia ♭VII → i» (EN «♭VII → i cadence»); en mayor sigue «backdoor / mixolidia». Caso G14: Dm G C Dm.
+- Pruebas: `src/gaps.test.js` (una por regla) y los casos A46–A49 y G14 de la sonda; la fila de tipos de `audit.test.js` incluye los seis nombres nuevos. `analysis.json` no cambia respecto a `main`; `text.json` solo recibe `unread: []` en lo leído; `theory/texts.json` no cambia respecto a `main`.
+
 ### Retomar desde main
 
-Punto de partida: los cinco pasos de `inversiones-tension-ui.md` fusionados en `main`; la sonda da 549 de 557 y quedan 8 fallos, los mismos de antes.
+Punto de partida: los cinco pasos de `inversiones-tension-ui.md` y `feat/close-gaps` fusionados en `main`; la sonda da 562 de 563 y queda un solo fallo:
 
-Fallos que quedan:
+- C10: F11 (una modulación se lee como una sola tonalidad; hay que decidir cómo se parte la progresión en regiones). Es de otro tamaño: no es un ajuste de pesos.
 
-- C9, diccionario: A36 (maj9♯11) y A43 (dominante alterado 7♯5♯9).
-- C12, parseo: I10 (𝄪), I11 (𝄫), I13 (minúsculas) e I19 (H alemana descartada sin aviso).
-- C10: F11 (modulación como una sola tonalidad) y F18 (royal road, patrones con la tonalidad alternativa).
-
-Orden acordado: C9, C12, C10. Los modos ya están.
+Después de F11 siguen los pendientes del traspaso: metas por categoría con un corpus externo de licencia verificada (todos los casos son propios) y comparar al oído el volumen GM con las muestras de la plantilla (`LEVEL` en `src/audio.js`).
 
 Regenerar la línea base a propósito, tras revisar cada diferencia: `UPDATE_THEORY=1 npx vitest run src/theory.test.js`.

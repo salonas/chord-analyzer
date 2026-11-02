@@ -509,8 +509,9 @@ $('bImport').onclick=()=>{
   });
   persistLib();
   if(first) openProject(first); else render();
-  toast(tr(`Importado: ${np} proyecto${np===1?'':'s'}, ${nc} acorde${nc===1?'':'s'}${dup?` · ${dup} repetido${dup===1?'':'s'} omitido${dup===1?'':'s'}`:''}`,
-    `Imported: ${np} project${np===1?'':'s'}, ${nc} chord${nc===1?'':'s'}${dup?` · ${dup} duplicate${dup===1?'':'s'} skipped`:''}`));
+  const skipped=res.unread.length?res.unread.join(', '):'';
+  toast(tr(`Importado: ${np} proyecto${np===1?'':'s'}, ${nc} acorde${nc===1?'':'s'}${dup?` · ${dup} repetido${dup===1?'':'s'} omitido${dup===1?'':'s'}`:''}${skipped?` · sin leer: ${skipped}`:''}`,
+    `Imported: ${np} project${np===1?'':'s'}, ${nc} chord${nc===1?'':'s'}${dup?` · ${dup} duplicate${dup===1?'':'s'} skipped`:''}${skipped?` · not read: ${skipped}`:''}`));
 };
 
 const exId=k=>'ex'+k[0].toUpperCase()+k.slice(1);
