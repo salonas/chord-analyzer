@@ -1,6 +1,6 @@
 // MIDI export (format 0, 96 PPQ), stored zip and the full pack.
 import { T, uid } from './data.js';
-import { isDrum, isMulti, segStep, segs, trackOf } from './model.js';
+import { isDrum, isMulti, segStep, trackOf } from './model.js';
 import { bendAt, glidePlan, hasGlide, rangeOf } from './glide.js';
 import { analyzeProgression, resolveStep } from './analysis.js';
 import { projectText } from './text.js';
@@ -107,7 +107,8 @@ function buildPack(pr,chords,prefs){
     // and for VST instruments, an automation clip of Channel pitch (flpitch.js)
     const clip=hasGlide(p)?pitchClip(p):null;
     if(clip) files.push({name:`${base}/${dClip}/${pn}.fst`,data:clip.bytes});
-    const S=isDrum(p)?[]:segs(p), A=analyzeProgression(S.map(s=>segStep(p,s)),prefs);
+    // the lane's chords (harmonySegs), as the markers: a tune moving over a chord does not split it into two files
+    const S=isDrum(p)?[]:harmonySegs(p), A=analyzeProgression(S.map(s=>segStep(p,s)),prefs);
     S.forEach((s,j)=>{
       // each chord on its own: the notes that sound inside it, clipped to it and moved to the start
       const notes=p.notes.filter(n=>n.s<s.b&&n.s+n.l>s.a).map(n=>({id:n.id,m:n.m,s:Math.max(n.s,s.a)-s.a,l:Math.min(n.s+n.l,s.b)-Math.max(n.s,s.a),v:n.v}));

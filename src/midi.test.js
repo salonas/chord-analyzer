@@ -62,6 +62,15 @@ describe('buildPack', () => {
   it('packs the turnaround with an empty library in 6 files', () => {
     expect(buildPack(clone(turnaround), [], PREFS).files.length).toBe(6);
   });
+  // the chords of the pack are the lane's chords, as the markers: a tune over a chord does not split it (manual test, P4)
+  it('writes one file per chord of the lane, with a tune moving over it', () => {
+    const rows = [[33, 0, 4], [45, 0, 4], [48, 0, 4], [52, 0, 4], [72, 0, 4], [29, 4, 4], [41, 4, 4], [45, 4, 4], [51, 4, 4], [72, 4, 2], [75, 6, 2],
+      [28, 8, 4], [40, 8, 4], [44, 8, 4], [47, 8, 4], [76, 8, 4], [33, 12, 4], [45, 12, 4], [48, 12, 4], [52, 12, 4], [69, 12, 4]];
+    const pr = clone(turnaround);
+    pr.patterns = [{ ...pr.patterns[0], name: 'P4', notes: rows.map(([m, s, l], i) => ({ id: 'p' + i, m, s: s * 96, l: l * 96, v: 100 })) }];
+    const pk = buildPack(pr, [], PREFS), names = pk.files.map(f => f.name.split('/').pop()).filter(n => /^\d+ - .*\.mid$/.test(n));
+    expect(names).toEqual(['01 - Am (i).mid', '02 - Ger+6 (Ger65).mid', '03 - E (V).mid', '04 - Am (i).mid']);
+  });
   it.each(Object.keys(fx.packs))('%s', async k => {
     const c = fx.packs[k], pk = buildPack(clone(c.project), clone(c.chords), c.prefs);
     expect([pk.nprog, pk.nchord, pk.skipped, pk.base]).toEqual([c.nprog, c.nchord, c.skipped, c.base]);
