@@ -232,7 +232,9 @@ const expFor=key=>key.modal?{...EXP[key.mode],...EXP_MODE[key.modal]}:EXP[key.mo
 // Only where the tonic has no dominant of its own: before one, the raised 4th or lowered 7th is a secondary dominant's, not a mode's
 function modeOf(key,items){
   if(items.some((it,i)=>i+1<items.length&&items[i+1].root===key.tonic&&leads(it,items[i+1]))) return null;
-  const rel=new Set(items.flatMap(it=>it.pcs).map(p=>(p-key.tonic+12)%12));
+  // the notes outside the plain scale of a V/V (or vii°/V) followed by the V are the secondary dominant's, not the mode's (C–D–G)
+  const sc=key.mode==='major'?MAJ:MIN, vv=(it,nx)=>!!nx&&nx.root===(key.tonic+7)%12&&leads(it,nx);
+  const rel=new Set(items.flatMap((it,i)=>vv(it,items[i+1])?it.pcs.filter(p=>sc.includes((p-key.tonic+12)%12)):it.pcs).map(p=>(p-key.tonic+12)%12));
   const hit=MODES[key.mode].filter(([,mark,against,scale])=>rel.has(mark)&&!rel.has(against)&&[...rel].every(r=>scale.includes(r)));
   return hit.length===1?hit[0][0]:null;
 }
@@ -252,15 +254,19 @@ function plainTonic(items){
 // What the key evidence is made of, shared by detectKey and by the reasons it is explained with (keyWhy)
 const tonicQ=mode=>mode==='major'?['maj','dom']:['min'];
 // the first chord is the tonic, the last one is (V7–vi of the relative major is a deceptive cadence: it ends off the tonic on purpose),
-// and one that starts and ends on the same tonic chord is closed
+// and one that starts and ends on the same tonic chord is closed. One that begins on a chord and ends on the major chord a fifth above
+// it ends on a half cadence (half, for the key of the first chord): its last chord is not the tonic, unless its own V7 goes to it
+// (IV–V7–I is an authentic cadence)
 function bookends(items,t,mode){
   const tq=tonicQ(mode), f=items[0], l=items[items.length-1], pv=items[items.length-2];
   const deceptive=mode==='minor'&&pv&&pv.q==='dom'&&pv.root===(t+10)%12;
-  return {first:f.root===t&&tq.includes(f.q), last:l.root===t&&tq.includes(l.q)&&!deceptive,
+  const half=items.length>2&&!!f.q&&(l.q==='maj'||l.q==='dom')&&(l.root-f.root+12)%12===7, first=f.root===t&&tq.includes(f.q);
+  const byV7=!!pv&&pv.q==='dom'&&leads(pv,l);
+  return {first, last:l.root===t&&tq.includes(l.q)&&!deceptive&&!(half&&!byV7), half:half&&first,
     closed:items.length>2&&f.root===t&&l.root===t&&f.q===l.q&&tq.includes(f.q)};
 }
-// a chord a fifth above the tonic (V, V7, or v in minor when it is major) that goes to it
-const resolvesToTonic=(it,nx,t,mode)=>!!nx&&nx.root===t&&(it.q==='dom'||it.q==='aug'||(it.q==='maj'&&mode==='minor'))&&(it.root-t+12)%12===7;
+// a chord a fifth above the tonic that goes to it, and what it weighs: V7 (or V+) 3, the plain V triad 1, in major as in minor
+const resolution=(it,nx,t)=>!!nx&&nx.root===t&&(it.root-t+12)%12===7?(it.q==='dom'||it.q==='aug'?3:it.q==='maj'?1:0):0;
 function detectKey(items){
   const res=[];
   for(let t=0;t<12;t++) for(const mode of ['major','minor']){
@@ -277,11 +283,12 @@ function detectKey(items){
     const tq=tonicQ(mode), be=bookends(items,t,mode);
     if(be.first) s+=2;
     if(be.last) s+=3;
+    if(be.half) s+=2;
     // a progression that starts and ends on the same tonic chord is closed on it, even when the chords between borrow
     if(be.closed) s+=1.5;
     items.forEach((it,i)=>{
       if(it.root===t&&tq.includes(it.q)) s+=.5;
-      if(resolvesToTonic(it,items[i+1],t,mode)) s+=3;
+      s+=resolution(it,items[i+1],t);
     });
     if(mode==='major') s+=.01;
     res.push({tonic:t,mode,score:s});
@@ -294,11 +301,12 @@ const MODE_CHAR={dorian:[9,'6ª mayor','major 6th'],phrygian:[1,'2ª menor','min
 function keyWhy(items,key,alt,plain,prefs){
   const t=key.tonic, mode=key.mode, sc=mode==='major'?MAJ:MIN, be=bookends(items,t,mode), R=[];
   const push=(es,en,pts)=>R.push({text:tr(es,en),pts});
-  let res=0; items.forEach((it,i)=>{ if(resolvesToTonic(it,items[i+1],t,mode)) res+=3; });
+  let res=0; items.forEach((it,i)=>{ res+=resolution(it,items[i+1],t); });
   if(items.length===1){ if(be.first) push('el único acorde es la tónica','the only chord is the tonic',5); }
   else {
     if(res) push('un V resuelve a la tónica','a V resolves to the tonic',res);
     if(be.first&&be.last) push('empieza y termina en la tónica','starts and ends on the tonic',5+(be.closed?1.5:0));
+    else if(be.half) push('empieza en la tónica y termina en su V (semicadencia)','starts on the tonic and ends on its V (half cadence)',4);
     else if(be.last) push('termina en la tónica','ends on the tonic',3);
     else if(be.first) push('empieza en la tónica','starts on the tonic',2);
     // with no V or vii° resolving, the chord that lasts longest weighs (plainTonic); said only when it lasts longer than every other
@@ -593,4 +601,4 @@ function dissonance(r){
   return Math.min(1,v);
 }
 
-export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, RANK, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, letterName, melodyText, modeName, noteText, octOff, ornamentText, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp, rankHelp, scoreDetail, keyWhy, bookends, resolvesToTonic };
+export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, RANK, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, letterName, melodyText, modeName, noteText, octOff, ornamentText, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp, rankHelp, scoreDetail, keyWhy, bookends, resolution };

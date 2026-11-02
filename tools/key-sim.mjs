@@ -4,7 +4,7 @@
 // no rule must give the app's own figures (it checks). The test works and songs are left out. Not part of the suite:
 //   node tools/key-sim.mjs [rule ...]
 // with no rule, every rule alone
-import { analyzeProgression, resolveStep, resolvesToTonic } from '../src/analysis.js';
+import { analyzeProgression, resolveStep } from '../src/analysis.js';
 import { harmonySegs } from '../src/harmony.js';
 import { normProg, segStep } from '../src/model.js';
 import { Tally, bootstrapDiff, isTest, listJson } from '../src/test/corpus-eval.js';
@@ -26,6 +26,8 @@ function plainTonic(items) {
   let best = -1, most = 0; dur.forEach((d, r) => { if (d > most) { most = d; best = r; } });
   return best;
 }
+// as it was before the triad V weighed 1 (that rule is vsym here)
+const resolvesToTonic = (it, nx, t, mode) => !!nx && nx.root === t && (it.q === 'dom' || it.q === 'aug' || (it.q === 'maj' && mode === 'minor')) && (it.root - t + 12) % 12 === 7;
 // bookends as it was before the half cadence (that rule is hc here), so that the copy with no rule stays the app of 5dc0e33
 function bookends(items, t, mode) {
   const tq = tonicQ(mode), f = items[0], l = items[items.length - 1], pv = items[items.length - 2];
@@ -42,6 +44,7 @@ const rels = (items, t) => new Set(items.flatMap(it => it.pcs).map(p => (p - t +
 //     key loses its «ends on the tonic» and the first chord's key gets it; hc:<h>:<l> gives the first chord's key h points and takes l
 //     from the last chord's key (hc is hc:3:3)
 // v3:<w>: a major V triad that goes to the minor tonic weighs w instead of 3 (only V7 → I counts in major)
+// vsym:<w>: a major V triad that goes to the tonic weighs w in major and in minor; V7 → tonic stays at 3 in both
 // tdur: the half point of each tonic chord goes by how long it lasts (the same when every chord lasts the same)
 // first:<w>: starting on the tonic weighs w instead of 2
 const RULES = ['mixo', 'mixo7', 'hc', 'v3:1.5', 'v3:0', 'tdur', 'first:3'];
@@ -76,7 +79,9 @@ function choose(items, on) {
     const total = items.reduce((n, it) => n + it.dur, 0);
     items.forEach((it, i) => {
       if (it.root === t && tq.includes(it.q)) s += on.has('tdur') ? .5 * items.length * it.dur / total : .5;
-      if (resolvesToTonic(it, items[i + 1], t, mode)) s += mode === 'minor' && it.q === 'maj' ? num('v3', 3) : 3;
+      const vs = [...on].some(x => x.startsWith('vsym:')), nx = items[i + 1];
+      if (vs && mode === 'major' && nx && nx.root === t && it.q === 'maj' && (it.root - t + 12) % 12 === 7) s += num('vsym', 1);
+      else if (resolvesToTonic(it, nx, t, mode)) s += mode === 'minor' && it.q === 'maj' ? (vs ? num('vsym', 1) : num('v3', 3)) : 3;
     });
     if (mode === 'major') s += .01;
     res.push({ tonic: t, mode, score: s });

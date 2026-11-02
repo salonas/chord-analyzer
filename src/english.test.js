@@ -24,7 +24,7 @@ const TURNAROUND_EN = `# Project: Ejemplo: turnaround en Do
 
 # Pattern: Turnaround
 # Estimated key: C major · total 12 beats (3 bars)
-# Why this key: C major: starts on the tonic · every chord is in the scale
+# Why this key: C major: starts on the tonic and ends on its V (half cadence) · every chord is in the scale
 # Patterns: Turnaround I–vi–ii–V; ii–V (continues to I when it repeats); Circle of fifths (3 chords in a row)
 # Ending: Half cadence (ends on V)
 # Instrument: Generic (no adjustment) · velocity limits 1–127 · used 100 · sensitivity 100 % · accents 100 % · humanize velocity 100 % · low trim 0/octave below C2 · high trim 0/octave above C7
