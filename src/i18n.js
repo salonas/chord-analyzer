@@ -101,6 +101,8 @@ const HTML_EN={
   'Separar voces…':'Separate voices…',
   'Pantalla completa':'Fullscreen',
   'F: el piano roll ocupa toda la pantalla; Esc para salir':'F: the piano roll fills the screen; Esc to leave',
+  'Ver análisis ↓':'See analysis ↓',
+  'Baja a los controles y al análisis de la progresión; la rueda sobre ellos vuelve arriba':'Goes down to the controls and the progression analysis; the wheel over them goes back up',
   'Separar voces':'Separate voices',
   'Cómo elegir la melodía':'How to pick the melody',
   'Seguir la línea (continuidad y altura)':'Follow the line (continuity and pitch)',

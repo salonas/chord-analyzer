@@ -797,7 +797,23 @@ async function importMidiFiles(files){
 const stage=document.querySelector('.stage');
 function toggleFull(){ if(!stage.requestFullscreen) return; if(document.fullscreenElement) document.exitFullscreen(); else stage.requestFullscreen().catch(()=>{}); }
 $('bFull').onclick=toggleFull;
-document.addEventListener('fullscreenchange',()=>{ $('bFull').setAttribute('aria-pressed',!!document.fullscreenElement); requestAnimationFrame(()=>{ rollSize(); drawRoll(); }); });
+// in fullscreen the roll takes the height of the screen under the tools; leaving gives it back the height it had
+let rollH=null;
+document.addEventListener('fullscreenchange',()=>{
+  const on=!!document.fullscreenElement, roll=$('roll');
+  $('bFull').setAttribute('aria-pressed',on);
+  if(on){
+    rollH=roll.style.height; stage.scrollTop=0;
+    const top=roll.getBoundingClientRect().top-stage.getBoundingClientRect().top;
+    roll.style.height=Math.max(240,innerHeight-top-parseFloat(getComputedStyle(stage).paddingBottom)-6)+'px'; // 6: the roll's shadow
+  } else if(rollH!=null){ roll.style.height=rollH; rollH=null; }
+  requestAnimationFrame(()=>{ rollSize(); drawRoll(); });
+});
+// down to the help and the analysis sheet; only the stage scrolls (scrollIntoView would move the page behind it too)
+$('bFullInfo').onclick=()=>{
+  const top=stage.querySelector('.help').getBoundingClientRect().top-stage.getBoundingClientRect().top+stage.scrollTop-parseFloat(getComputedStyle(stage).paddingTop);
+  stage.scrollTo({top,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});
+};
 $('bMidiIn').onclick=()=>$('midiFile').click();
 $('midiFile').onchange=e=>{ importMidiFiles([...e.target.files]); e.target.value=''; };
 R.el.addEventListener('dragover',e=>{ if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')){ e.preventDefault(); R.el.classList.add('drop'); } });
