@@ -436,6 +436,31 @@ function chromaticReading(rs,romans,key,prefs){
     }
   });
 }
+// A note outside the key that the chord leaves out and that the same voice follows a semitone up is written with the letter under
+// the one it goes to: G♯ → A, not A♭ → A. The same voice is a note that starts when this one ends, a semitone up, with no other
+// starting then a semitone down; the notes of every step of the progression count, so the goal may be in the next chord. A note
+// that goes down keeps its name (written by the semitone it goes to, B → B♭ came out C♭). Only with auto accidentals, and only
+// for steps that say when their notes sound. Fixed on the development set of TAVERN (2 Nov 2026; decision 14)
+function spellByGoal(rs,steps,key,prefs){
+  if(prefs.accPref==='sharp'||prefs.accPref==='flat') return;
+  const evs=[...new Map(steps.flatMap(s=>s.evs||[]).map(x=>[x.m+':'+x.s+':'+x.l,x])).values()];
+  if(!evs.length) return;
+  const sc=SCALE_STEPS[key.mode].map(x=>(x+key.tonic)%12);
+  const goesUp=(m,a,b)=>{
+    const d=evs.filter(x=>x.m===m&&x.s<b&&x.s+x.l>a).map(x=>{const nx=new Set(evs.filter(y=>y.s===x.s+x.l&&Math.abs(y.m-m)===1).map(y=>y.m-m)); return nx.size===1?[...nx][0]:0;}).filter(Boolean);
+    return d.length>0&&d.every(x=>x===1);
+  };
+  rs.forEach((r,i)=>{
+    const st=steps[i]; if(!st.evs) return;
+    const a=st.a||0, b=a+st.dur;
+    r.spelled=r.spelled.map(n=>{
+      const pc=n.midi%12;
+      if(sc.includes(pc)||(r.sp&&r.sp.byPc[pc]&&!n.orn&&!(r.orn||[]).includes(n.midi))||!goesUp(n.midi,a,b)) return n;
+      const l=(plainSpell(n.midi+1,prefs,key).l+6)%7; let ac=((n.midi-NAT[l])%12+12)%12; if(ac>6) ac-=12;
+      return Math.abs(ac)<=1?{...n,...spellMidi(n.midi,l,ac)}:n;
+    });
+  });
+}
 function analyzeProgression(steps,prefs){
   // the key comes from the chords' roots and notes, which do not depend on how they are spelled; the spelling then follows the key
   const first=steps.map(s=>resolveStep(s,prefs));
@@ -449,6 +474,7 @@ function analyzeProgression(steps,prefs){
   const rs=steps.map((s,i)=>resolveStep(s,prefs,key,{prev:first[i-1]&&first[i-1].c,next:first[i+1]&&first[i+1].c}));
   const romans=rs.map(r=>r.c?romanFor(r.c,key):null);
   chromaticReading(rs,romans,key,prefs);
+  spellByGoal(rs,steps,key,prefs);
   const toks=romans.map(r=>r?r.token:'?'), N=toks.length, found=[];
   for(const p of PATTERNS){
     const L=p.seq.length; if(L>N) continue;

@@ -7,7 +7,8 @@
 //   node tools/spelling-sim.mjs
 // Variants: orn, only the notes the app's chord leaves out (ornaments and notes it does not name); all, every note outside the key,
 // chord notes too; +from, when nothing follows a semitone away, the note it comes from a semitone away decides (from under, ♯;
-// from above, ♭); up, only the notes that go a semitone up (the ones going down keep the name they have)
+// from above, ♭); up, only the notes that go a semitone up (the ones going down keep the name they have); dest, only when the
+// note it goes to is in the scale (C → C♯ in C is not B♯ → C♯; E♯ → F♯ in D stays)
 import { analyzeProgression, plainSpell } from '../src/analysis.js';
 import { Tally, bootstrapCI, bootstrapDiff, isTest, listJson } from '../src/test/corpus-eval.js';
 
@@ -19,7 +20,7 @@ const stepOf = (notes, a, b) => {
   const on = notes.filter(n => n[1] < b && n[1] + n[2] > a), ms = [...new Set(on.map(n => n[0]))].sort((x, y) => x - y);
   return ms.length ? { notes: ms, dur: b - a, a, evs: on.map(n => ({ m: n[0], s: n[1], l: n[2] })) } : null;
 };
-const VARIANTS = [['orn', false, false], ['orn+from', false, true], ['all', true, false], ['all+from', true, true], ['orn up', false, false, true], ['all up', true, false, true]];
+const VARIANTS = [['orn', false, false], ['orn+from', false, true], ['all', true, false], ['all+from', true, true], ['orn up', false, false, true], ['all up', true, false, true], ['orn up dest', false, false, true, true]];
 const ROWS = ['por tramo | enarmonía (tramo con todas las notas bien)', 'por tramo | enarmonía (nota a nota)'];
 
 // +1 up, -1 down, 0 neither or both
@@ -34,14 +35,14 @@ function direction(notes, m, a, b, from) {
   }).filter(Boolean);
   return dirs.length && dirs.every(d => d === dirs[0]) ? dirs[0] : 0;
 }
-function respelled(r, key, notes, a, b, all, from, up) {
+function respelled(r, key, notes, a, b, all, from, up, dest) {
   const sc = STEPS[key.mode].map(x => (x + key.tonic) % 12), out = new Map();
   for (const s of r.spelled) {
     let name = spellName(s);
     const pc = s.midi % 12, chordNote = !!(r.sp && r.sp.byPc[pc]) && !s.orn && !(r.orn || []).includes(s.midi);
     if (!sc.includes(pc) && (all || !chordNote)) {
       const d = direction(notes, s.midi, a, b, from);
-      if (d > 0 || (d && !up)) {
+      if ((d > 0 || (d && !up)) && (!dest || sc.includes((s.midi + d) % 12))) {
         const t = plainSpell(s.midi + d, P, key), l = (t.l + (d > 0 ? 6 : 1)) % 7;
         let acc = ((s.midi - NAT[l]) % 12 + 12) % 12; if (acc > 6) acc -= 12;
         if (Math.abs(acc) <= 1) name = spellName({ l, a: acc });
@@ -75,8 +76,8 @@ for (const p of listJson('tavern').filter(p => !isTest(p.piece))) {
           return allOk;
         };
         const was = score(T.app, new Map(r.spelled.map(x => [x.midi, spellName(x)])));
-        for (const [v, all, from, up] of VARIANTS) {
-          const got = respelled(r, A.key, ph.notes, s.a, s.b, all, from, up), now = score(T[v], got);
+        for (const [v, all, from, up, dest] of VARIANTS) {
+          const got = respelled(r, A.key, ph.notes, s.a, s.b, all, from, up, dest), now = score(T[v], got);
           if (was !== now) {
             const c = change[v] || (change[v] = { won: 0, lost: 0, ex: [] });
             if (now) c.won++; else { c.lost++; if (c.ex.length < 4) c.ex.push(`${ph.id} (${who}) · ${ph.key.token} · ${s.label} · ${r.label} · ${r.notes.filter(m => got.get(m) !== spellName(r.spelled.find(x => x.midi === m))).map(m => `${[...(kern.get(m) || [])][0]} escrito ${got.get(m)} (antes ${spellName(r.spelled.find(x => x.midi === m))})`).join(', ')}`); }

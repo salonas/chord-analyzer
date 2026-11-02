@@ -137,3 +137,26 @@ describe('tension with context', () => {
     for (const x of [FN_TENSION.T, FN_TENSION.S, FN_TENSION.D, FN_TENSION.C, DISS.maj, DISS.dim, CTX.surprise, CTX.wait, CTX.waitMax, Math.abs(CTX.arrival)]) expect(h).toContain(n(x));
   });
 });
+
+// a note outside the key that the chord leaves out and that goes a semitone up takes the letter under its goal (decision 14)
+describe('spelling a chromatic ornament by where it goes', () => {
+  const held = (ms, a, l = 384) => ms.map(m => ({ m, s: a, l }));
+  // C E G with a note on the last beat, then the chord whose notes start when it ends
+  const prog = (orn, next, prefs = PREFS_BY.default, timed = true) => {
+    const steps = [{ notes: [48, 52, 55, orn], dur: 384, a: 0, evs: [...held([48, 52], 0), { m: 55, s: 0, l: 288 }, { m: orn, s: 288, l: 96 }] },
+      { notes: next, dur: 384, a: 384, evs: held(next, 384) }];
+    const A = analyzeProgression(timed ? steps : steps.map(({ notes, dur }) => ({ notes, dur })), prefs);
+    const n = A.rs[0].spelled.find(x => x.midi === orn);
+    return { name: 'CDEFGAB'[n.l] + ['b', '', '#'][n.a + 1], chord: A.rs[0].label };
+  };
+  it('writes G♯ when it goes to A, and leaves the chord as it was', () => {
+    expect(prog(56, [53, 57, 60])).toEqual({ name: 'G#', chord: 'C' });
+  });
+  it('keeps A♭ when it goes down to G', () => {
+    expect(prog(56, [48, 52, 55]).name).toBe('Ab');
+  });
+  it('keeps the accidentals the user chose and steps with no timing', () => {
+    expect(prog(56, [53, 57, 60], PREFS_BY.alt).name).toBe('Ab');
+    expect(prog(56, [53, 57, 60], PREFS_BY.default, false).name).toBe('Ab');
+  });
+});
