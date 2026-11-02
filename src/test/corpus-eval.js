@@ -226,6 +226,7 @@ export function evalTavern(pieces, { plain = false } = {}) {
         const mode = 'por tramo';
         T.add(mode + ' | tonalidad (tónica y modo)', keyOk, keyOk ? null : { sig: `se leyó ${keyRel}`, example: { phrase: ph.id, mode, key: ph.key.token, got: `${pcName(A.key.tonic)} ${A.key.mode}` } });
         T.add(mode + ' | tonalidad (solo la tónica)', A.key.tonic === expKey.tonic);
+        T.add(mode + ' | frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)', !!A.regions);
         idx.forEach((si, j) => {
           const s = mine[si]; if (!s.exp) { info.segsSkipped++; return; }
           info.segsConverted++; if (s.exp.complete) info.complete++; else info.incompleteSegs++;
@@ -240,6 +241,7 @@ export function evalTavern(pieces, { plain = false } = {}) {
         if (appA) {
           T.add(mode + ' | tonalidad (tónica y modo)', keyOk, keyOk ? null : { sig: `se leyó ${keyRel}`, example: { phrase: ph.id, mode, key: ph.key.token, got: `${pcName(appA.key.tonic)} ${appA.key.mode}` } });
           T.add(mode + ' | tonalidad (solo la tónica)', appA.key.tonic === expKey.tonic);
+          T.add(mode + ' | frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)', !!appA.regions);
         }
         const conv = mine.filter(s => s.exp);
         info.appChordsPerAnalystSeg.push([lane.length, mine.length]);
@@ -290,9 +292,13 @@ export function evalRock(songs) {
       const mod = a.regions.length > 1, modLong = a.regions.slice(1).some(r => r.to - r.from + 1 >= 4);
       if (mod) info.modulating++;
       if (modLong) info.modulatingLong++;
-      // the app returns one key per progression (no regions), so it reports no modulation: counted, not assumed
-      const reported = Array.isArray(A.regions) && A.regions.length > 1;
-      if (mod) T.add('modulación: de las canciones en que el corpus cambia de tonalidad, las que la app informa como cambio', reported);
+      // F11: the regions of the app against the annotated ones. Strict: a new region of the app has the tonic of an annotated new
+      // region and covers at least half of its chords; the false changes are the brake (decided 2 Nov 2026: at most 5 %)
+      const regs = A.regions || [], cover = (x, r) => Math.max(0, Math.min(x.to, r.to) - Math.max(x.from, r.from) + 1);
+      if (mod) {
+        T.add('modulación, estricta: de los análisis en que el corpus cambia de tonalidad, aquellos en que una región nueva de la app tiene la tónica de una región nueva anotada y cubre al menos su mitad', regs.slice(1).some(x => a.regions.slice(1).some(r => r.tonic === x.key.tonic && 2 * cover(x, r) >= r.to - r.from + 1)));
+        T.add('modulación, suplementaria: de los análisis en que el corpus cambia de tonalidad, aquellos en que la app informa algún cambio', regs.length > 1);
+      } else T.add('modulación falsa: de los análisis sin cambio de tonalidad anotado, aquellos en que la app informa uno (menos es mejor)', regs.length > 1);
       // the tonic the app reads for each region of 4 or more chords when it gets that region alone
       for (const r of a.regions) {
         if (r.to - r.from + 1 < 4) continue;

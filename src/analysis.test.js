@@ -159,4 +159,23 @@ describe('spelling a chromatic ornament by where it goes', () => {
     expect(prog(56, [53, 57, 60], PREFS_BY.alt).name).toBe('Ab');
     expect(prog(56, [53, 57, 60], PREFS_BY.default, false).name).toBe('Ab');
   });
+  // D – G – A7 – D with C on the last sixteenth of G, going to the C♯ of A7: the letter under C♯ would be B♯
+  it('keeps a natural note that goes up to its own letter: C → C♯ in D major, not B♯ → C♯', () => {
+    const steps = [{ notes: [50, 54, 57], dur: 384, a: 0, evs: held([50, 54, 57], 0) },
+      { notes: [43, 47, 50, 60], dur: 384, a: 384, evs: [...held([43, 47, 50], 384), { m: 60, s: 720, l: 48 }] },
+      { notes: [45, 49, 52, 55, 61], dur: 384, a: 768, evs: held([45, 49, 52, 55, 61], 768) },
+      { notes: [50, 54, 57], dur: 384, a: 1152, evs: held([50, 54, 57], 1152) }];
+    const A = analyzeProgression(steps, PREFS_BY.default), n = A.rs[1].spelled.find(x => x.midi === 60);
+    expect([A.key.tonic, A.key.mode, A.rs[1].label]).toEqual([2, 'major', 'G']);
+    expect([n.l, n.a]).toEqual([0, 0]);
+  });
+  // C7 – F7 – C7 with E♭ for a beat going to E: the blue note over the tonic I7 is ♭3, not ♯9
+  it('keeps the blue note E♭ over a tonic I7 when it goes up to E', () => {
+    const steps = [{ notes: [48, 52, 55, 58], dur: 384, a: 0, evs: held([48, 52, 55, 58], 0) },
+      { notes: [53, 57, 60, 63], dur: 384, a: 384, evs: held([53, 57, 60, 63], 384) },
+      { notes: [48, 52, 55, 58, 63, 64], dur: 384, a: 768, evs: [...held([48, 52, 55, 58], 768), { m: 63, s: 768, l: 48 }, { m: 64, s: 816, l: 336 }] }];
+    const A = analyzeProgression(steps, PREFS_BY.default), n = A.rs[2].spelled.find(x => x.midi === 63);
+    expect([A.key.tonic, A.key.mode, A.rs[2].label]).toEqual([0, 'major', 'C7']);
+    expect([n.l, n.a]).toEqual([2, -1]);
+  });
 });

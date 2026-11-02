@@ -295,6 +295,90 @@ function detectKey(items){
   }
   return res.sort((a,b)=>b.score-a.score);
 }
+// ---------- regions (F11, modulation) ----------
+// A progression changes key where an authentic cadence V(7) → I, with its leading tone, confirms another key, and the new region
+// lasts at least REGION.chords chords (and REGION.beats beats when the steps say how long they last): shorter, it is a
+// tonicization and stays a V/x. The region starts at its pivot, the last chord on the scale of both keys before the first chord
+// that is only on the new one; with no chord in common there, the change is direct. Variant B (opts.tonicSpan) also takes a
+// stretch of at least REGION.span beats that starts and ends on the tonic triad of another key and stays on its scale. Only the
+// chords' roots, qualities and notes are read; detectKey is not changed, only called on the stretch before the first cadence.
+const REGION={chords:4,beats:8,span:16};
+// the rule of the app (decided 2 Nov 2026, measured with tools/modulation-sim.mjs): a new region holds no tonic triad of the one before
+const REGION_RULE={noOldTonic:true};
+const regionScale=k=>(k.mode==='major'?MAJ:[...MIN,11]).map(x=>(x+k.tonic)%12);
+const sameKey=(a,b)=>!!a&&!!b&&a.tonic===b.tonic&&a.mode===b.mode;
+const onScale=(it,k)=>{ const sc=regionScale(k); return it.pcs.every(p=>sc.includes(p)); };
+const isTonic=(it,k)=>it.root===k.tonic&&it.q===(k.mode==='major'?'maj':'min');
+// a chord fits a key when its notes are on the scale, or it is the V (or V7) of the next chord and that one is on the scale
+const fits=(items,i,k)=>{ const it=items[i], nx=items[i+1]; return !it.q||onScale(it,k)||(['maj','dom'].includes(it.q)&&!!nx&&(nx.root-it.root+12)%12===5&&!!nx.q&&onScale(nx,k)); };
+function keyRegions(items,top,opts={}){
+  const N=items.length, R={...REGION,...opts}, timed=items.every(it=>it.timed);
+  const beats=(a,b)=>items.slice(a,b+1).reduce((n,it)=>n+(it.dur||0),0)/96;
+  // the cadences: a major V or V7 going to the tonic triad a fifth below, in major (I) or in minor (i)
+  const cads=[];
+  for(let i=0;i+1<N;i++){ const a=items[i], b=items[i+1];
+    if((R.v7?a.q==='dom':['maj','dom'].includes(a.q))&&(b.q==='maj'||b.q==='min')&&(a.root-b.root+12)%12===7) cads.push({i,key:{tonic:b.root,mode:b.q==='min'?'minor':'major'}}); }
+  // where a region in key k starts, coming from key old, given the cadence at i: back over the chords that fit k, then the pivot
+  const startOf=(i,k,old)=>{
+    let f=i; while(f>0&&fits(items,f-1,k)) f--;
+    const x=items.findIndex((it,j)=>j>=f&&j<=i&&it.q&&!onScale(it,old)); if(x<0) return null;
+    let pv=-1; for(let j=x-1;j>=f;j--) if(items[j].q&&onScale(items[j],k)&&onScale(items[j],old)){ pv=j; break; }
+    return pv>=0?{from:pv,pivot:pv}:{from:x,pivot:null};
+  };
+  let regs=[];
+  for(const c of cads){
+    const cur=regs.length?regs[regs.length-1]:null;
+    if(!cur){
+      // the opening stretch takes its own key when it is long enough to have one; else the first cadence names it
+      const pre=items.slice(0,c.i), pk=pre.length>=2?detectKey(pre)[0]:null;
+      if(!pk||sameKey(pk,c.key)){ regs.push({from:0,key:c.key,pivot:null}); continue; }
+      const st=startOf(c.i,c.key,pk);
+      if(!st||st.from===0){ regs.push({from:0,key:c.key,pivot:null}); continue; }
+      regs.push({from:0,key:{tonic:pk.tonic,mode:pk.mode},pivot:null},{from:st.from,key:c.key,pivot:st.pivot,cad:c.i});
+      continue;
+    }
+    if(sameKey(cur.key,c.key)) continue;
+    const st=startOf(c.i,c.key,cur.key); if(!st||st.from<=cur.from) continue;
+    regs.push({from:st.from,key:c.key,pivot:st.pivot,cad:c.i});
+  }
+  if(!regs.length) regs=[{from:0,key:{tonic:top.tonic,mode:top.mode},pivot:null}];
+  // variant B: inside a region, a stretch that opens and closes on the tonic of another key and stays on its scale
+  if(opts.tonicSpan&&timed){
+    const out=[];
+    regs.forEach((r,ri)=>{
+      const to=ri+1<regs.length?regs[ri+1].from-1:N-1; let at=r.from, i=r.from;
+      while(i<=to){
+        const it=items[i], k=it.q==='maj'||it.q==='min'?{tonic:it.root,mode:it.q==='min'?'minor':'major'}:null;
+        if(!k||sameKey(k,r.key)||i===r.from){ i++; continue; }
+        let j=i; while(j+1<=to&&fits(items,j+1,k)) j++;
+        while(j>i&&!isTonic(items[j],k)) j--;
+        const own=items.slice(i,j+1).some(x=>x.q&&!onScale(x,r.key));
+        if(j>i&&own&&beats(i,j)>=R.span){ out.push({from:at,key:r.key,pivot:at===r.from?r.pivot:null},{from:i,key:k,pivot:null}); at=j+1; i=j+1; }
+        else i++;
+      }
+      out.push({from:at,key:r.key,pivot:at===r.from?r.pivot:null});
+    });
+    regs=out.filter(r=>r.from<N);
+  }
+  // each region ends where the next starts; one too short goes back into its neighbour (the one before, or the next for the first)
+  const withTo=()=>regs.forEach((r,i)=>{ r.to=i+1<regs.length?regs[i+1].from-1:N-1; });
+  const ownCads=r=>cads.filter(c=>c.i>=r.from&&c.i<r.to&&sameKey(c.key,r.key)).length;
+  const short=(r,i)=>r.to-r.from+1<R.chords||(timed&&beats(r.from,r.to)<R.beats)||(i>0&&R.cads>1&&ownCads(r)<R.cads)||(i>0&&R.noOldTonic&&items.slice(r.from,r.to+1).some(it=>isTonic(it,regs[i-1].key)));
+  for(;;){
+    withTo();
+    for(let i=regs.length-1;i>0;i--) if(sameKey(regs[i].key,regs[i-1].key)) regs.splice(i,1);
+    withTo();
+    if(regs.length<2) break;
+    const k=regs.map((r,i)=>i).filter(i=>short(regs[i],i)).sort((a,b)=>(regs[a].to-regs[a].from)-(regs[b].to-regs[b].from))[0];
+    if(k==null) break;
+    if(k===0){ regs[1].from=0; regs[1].pivot=null; regs.splice(0,1); continue; }
+    // the region after the one taken out starts again from the key before it
+    regs.splice(k,1); const nx=regs[k], st=nx&&nx.cad!=null?startOf(nx.cad,nx.key,regs[k-1].key):null;
+    if(st&&st.from>regs[k-1].from){ nx.from=st.from; nx.pivot=st.pivot; }
+  }
+  withTo();
+  return regs;
+}
 // Why this key: the evidence of detectKey that applies to the one chosen, in order of weight, at most three, with no reason that another
 // one already says; the points go in the title. The mode adds its own reason
 const MODE_CHAR={dorian:[9,'6ª mayor','major 6th'],phrygian:[1,'2ª menor','minor 2nd'],lydian:[6,'4ª aumentada','augmented 4th'],mixolydian:[10,'7ª menor','minor 7th']};
@@ -441,49 +525,71 @@ function chromaticReading(rs,romans,key,prefs){
 // starting then a semitone down; the notes of every step of the progression count, so the goal may be in the next chord. A note
 // that goes down keeps its name (written by the semitone it goes to, B → B♭ came out C♭). Only with auto accidentals, and only
 // for steps that say when their notes sound. Fixed on the development set of TAVERN (2 Nov 2026; decision 14)
+// A natural note whose goal has its own letter (C → C♯ in D major) keeps it: the letter under the goal gave B♯ → C♯
+function goalSpell(n,a,b,evs,key,prefs,blue){
+  if(SCALE_STEPS[key.mode].some(x=>(x+key.tonic)%12===n.midi%12)) return n;
+  const d=evs.filter(x=>x.m===n.midi&&x.s<b&&x.s+x.l>a).map(x=>{const nx=new Set(evs.filter(y=>y.s===x.s+x.l&&Math.abs(y.m-n.midi)===1).map(y=>y.m-n.midi)); return nx.size===1?[...nx][0]:0;}).filter(Boolean);
+  if(!d.length||d.some(x=>x!==1)) return n;
+  const g=plainSpell(n.midi+1,prefs,key); if(!n.a&&g.l===n.l) return n;
+  if(blue) return n;
+  const l=(g.l+6)%7; let ac=((n.midi-NAT[l])%12+12)%12; if(ac>6) ac-=12;
+  return Math.abs(ac)<=1?{...n,...spellMidi(n.midi,l,ac)}:n;
+}
+const isBlue=(m,r,key)=>key.mode==='major'&&(m-key.tonic+12)%12===3&&!!r&&!!r.c&&r.c.root===key.tonic&&[4,10].every(x=>r.notes.some(y=>(y-key.tonic+12)%12===x));
+const autoAcc=prefs=>prefs.accPref!=='sharp'&&prefs.accPref!=='flat';
 function spellByGoal(rs,steps,key,prefs){
-  if(prefs.accPref==='sharp'||prefs.accPref==='flat') return;
+  if(!autoAcc(prefs)) return;
   const evs=[...new Map(steps.flatMap(s=>s.evs||[]).map(x=>[x.m+':'+x.s+':'+x.l,x])).values()];
   if(!evs.length) return;
-  const sc=SCALE_STEPS[key.mode].map(x=>(x+key.tonic)%12);
-  const goesUp=(m,a,b)=>{
-    const d=evs.filter(x=>x.m===m&&x.s<b&&x.s+x.l>a).map(x=>{const nx=new Set(evs.filter(y=>y.s===x.s+x.l&&Math.abs(y.m-m)===1).map(y=>y.m-m)); return nx.size===1?[...nx][0]:0;}).filter(Boolean);
-    return d.length>0&&d.every(x=>x===1);
-  };
   rs.forEach((r,i)=>{
     const st=steps[i]; if(!st.evs) return;
     const a=st.a||0, b=a+st.dur;
-    r.spelled=r.spelled.map(n=>{
-      const pc=n.midi%12;
-      if(sc.includes(pc)||(r.sp&&r.sp.byPc[pc]&&!n.orn&&!(r.orn||[]).includes(n.midi))||!goesUp(n.midi,a,b)) return n;
-      const l=(plainSpell(n.midi+1,prefs,key).l+6)%7; let ac=((n.midi-NAT[l])%12+12)%12; if(ac>6) ac-=12;
-      return Math.abs(ac)<=1?{...n,...spellMidi(n.midi,l,ac)}:n;
-    });
+    r.spelled=r.spelled.map(n=>r.sp&&r.sp.byPc[n.midi%12]&&!n.orn&&!(r.orn||[]).includes(n.midi)?n:goalSpell(n,a,b,evs,key,prefs,isBlue(n.midi,r,key)));
   });
 }
-function analyzeProgression(steps,prefs){
-  // the key comes from the chords' roots and notes, which do not depend on how they are spelled; the spelling then follows the key
+// The notes the lane shows apart from its chords (the added notes «+G♯3 at 2» and the melody) are spelled as the notes of a step:
+// a tone of the chord over them with the chord's letter, any other by the semitone it goes up to (decision 14), else by the key.
+// evs are every note of the pattern ({m,s,l}), so the goal may be in any voice
+function laneSpell(m,s,l,r,evs,key,prefs){
+  const own=r&&r.sp&&r.sp.byPc[m%12];
+  if(own) return spellMidi(m,own.l,own.a);
+  const n=plainSpell(m,prefs,key);
+  return autoAcc(prefs)&&key?goalSpell(n,s,s+l,evs,key,prefs,isBlue(m,r,key)):n;
+}
+// The key of a progression and its regions, from the chords' roots and notes (they do not depend on how they are spelled).
+// With more than one region, the main key is the one of the region that lasts longest (the first, on a tie)
+function progressionKeys(steps,prefs,opts){
   const first=steps.map(s=>resolveStep(s,prefs));
-  const items=first.map((r,i)=>({root:r.c?r.c.root:r.notes.length?r.notes[0]%12:0,q:r.c?r.c.type.q:null,pcs:[...new Set(r.notes.map(m=>m%12))],dur:steps[i].dur||1}));
-  if(!items.length) return {rs:first,romans:[],found:[]};
+  const items=first.map((r,i)=>({root:r.c?r.c.root:r.notes.length?r.notes[0]%12:0,q:r.c?r.c.type.q:null,pcs:[...new Set(r.notes.map(m=>m%12))],dur:steps[i].dur||1,timed:steps[i].dur!=null}));
+  if(!items.length) return {first,items};
   const keys=detectKey(items), plain=plainTonic(items), rank=k=>k.score+(k.tonic===plain?PLAIN_TONIC:0);
   // the weight of the plain tonic only picks the key; the alternate one still goes by the scores as measured. With only two chords
   // the margin takes the point of the plain V triad too: G → C is V–I in C or I–IV in G, as C → G
-  const top=keys.reduce((b,k)=>rank(k)>rank(b)?k:b), alt=keys.find(k=>k!==top&&top.score-k.score<(items.length===2?3:2)), modal=modeOf(top,items), key=modal?{...top,modal}:top;
+  const top=keys.reduce((b,k)=>rank(k)>rank(b)?k:b), alt=keys.find(k=>k!==top&&top.score-k.score<(items.length===2?3:2));
+  const regions=keyRegions(items,top,opts);
+  const span=r=>items.slice(r.from,r.to+1).reduce((n,it)=>n+it.dur,0);
+  const main=regions.length>1?regions.reduce((b,r)=>span(r)>span(b)?r:b):null;
+  return {first,items,keys,plain,top,alt,regions,main};
+}
+// The chords lo..hi read in one key: degrees, chromatic readings, spelling, patterns and the final cadence. whole is the whole
+// progression in its key (patterns may loop and are looked for in the other tonality too); a region reads only its own chords
+function inKey(steps,first,items,lo,hi,key,alt,prefs,whole){
   // the lane's chords read again with the key and their neighbours (readWithMelody); the neighbours are the first reading
-  const rs=steps.map((s,i)=>resolveStep(s,prefs,key,{prev:first[i-1]&&first[i-1].c,next:first[i+1]&&first[i+1].c}));
+  const S=steps.slice(lo,hi+1);
+  const rs=S.map((s,j)=>{ const i=lo+j; return resolveStep(s,prefs,key,{prev:first[i-1]&&first[i-1].c,next:first[i+1]&&first[i+1].c}); });
   const romans=rs.map(r=>r.c?romanFor(r.c,key):null);
   chromaticReading(rs,romans,key,prefs);
-  spellByGoal(rs,steps,key,prefs);
+  spellByGoal(rs,S,key,prefs);
   const toks=romans.map(r=>r?r.token:'?'), N=toks.length, found=[];
   for(const p of PATTERNS){
     const L=p.seq.length; if(L>N) continue;
     for(let i=0;i<N;i++){
-      if(i+L>N&&N<3) break;
+      if(i+L>N&&(N<3||!whole)) break;
       let ok=true; for(let j=0;j<L;j++){ if(toks[(i+j)%N]!==p.seq[j]){ok=false;break;} }
       if(ok){ found.push({name:p.name,from:i,to:(i+L-1)%N,wrap:i+L>N}); break; }
     }
   }
+  if(whole){
   // the patterns are read in the other tonality too, as they would be in the main one: a progression that fits one in the key it
   // was not read in (IV–V–iii–vi in C when A minor was chosen) is still found, and says in which key. The other tonality is the
   // alternate key when there is one, and always the relative key, the usual ambiguity (the alternate shows only within 2 points, 3 with only two chords).
@@ -503,9 +609,7 @@ function analyzeProgression(steps,prefs){
       }
     }
   }
-  let run=1, best=1;
-  for(let i=1;i<N;i++){ if(items[i-1].q&&items[i].q&&(items[i].root-items[i-1].root+12)%12===5){run++;best=Math.max(best,run);} else run=1; }
-  if(best>=3) found.push({name:tr(`Ciclo de quintas (${best} acordes seguidos)`,`Circle of fifths (${best} chords in a row)`),cycle:true});
+  }
   let cad='';
   if(N>=2&&romans[N-1]&&romans[N-2]){
     const ad=romans[N-2].deg, bd=romans[N-1].deg;
@@ -522,13 +626,75 @@ function analyzeProgression(steps,prefs){
     else if(bd===7) cad=tr('Semicadencia (termina en V)','Half cadence (ends on V)');
   }
   const fn=romans.map((ro,i)=>harmonicFunction(ro,rs[i].c,key));
-  // tension: what the chord is (function and dissonance) plus what came before it (Meyer's expectation)
-  const tenBase=rs.map((r,i)=>+(.5*FN_TENSION[fn[i]]+.5*dissonance(r)).toFixed(2));
   const lead=rs.map((r,i)=>fn[i]==='D'&&leadingD(r.c,romans[i],key));
+  return {rs,romans,found,cad,fn,lead};
+}
+function analyzeProgression(steps,prefs){
+  // the key comes from the chords' roots and notes, which do not depend on how they are spelled; the spelling then follows the key
+  const {first,items,plain,top,alt,regions}=progressionKeys(steps,prefs,REGION_RULE);
+  if(!items.length) return {rs:first,romans:[],found:[]};
+  const modal=modeOf(top,items), key=modal?{...top,modal}:top, N=items.length;
+  let A;
+  if(regions.length<2) A={...inKey(steps,first,items,0,N-1,key,alt,prefs,true),key,alt,why:keyWhy(items,key,alt,plain,prefs)};
+  else {
+    // F11: each region is read in its own key (degrees, spelling, mode, patterns, the reasons for its key); the main key stays the
+    // one of the whole progression, and there is no alternate. The pivot is read in both keys: «vi = ii»
+    const R=regions.map((g,k)=>{
+      const its=items.slice(g.from,g.to+1), md=modeOf(g.key,its), sc=detectKey(its).find(x=>sameKey(x,g.key)), gk={tonic:g.key.tonic,mode:g.key.mode,score:sc.score,...(md&&{modal:md})};
+      return {...g,key:gk,part:inKey(steps,first,items,g.from,g.to,gk,null,prefs,false),why:keyWhy(its,gk,null,plainTonic(its),prefs)};
+    });
+    const rs=R.flatMap(g=>g.part.rs), romans=R.flatMap(g=>g.part.romans), fn=R.flatMap(g=>g.part.fn), lead=R.flatMap(g=>g.part.lead), cad=R[R.length-1].part.cad;
+    const found=R.flatMap(g=>g.part.found.map(f=>({...f,name:`${f.name} (${tr('en','in')} ${keyName(g.key,prefs)})`,from:f.from+g.from,to:f.to+g.from})));
+    R.forEach((g,k)=>{
+      if(k&&g.pivot!=null&&romans[g.pivot]&&rs[g.pivot].c) romans[g.pivot]={...romans[g.pivot],pivotOld:romanFor(rs[g.pivot].c,R[k-1].key),pivotKeys:[R[k-1].key,g.key]};
+      // the cadence that confirms the region: its first V (or V7) going to its tonic
+      for(let i=g.from;k&&i<g.to;i++){ const a=romans[i], b=romans[i+1];
+        if(a&&b&&a.deg===7&&['maj','dom'].includes(rs[i].c.type.q)&&b.deg===0&&!a.secondary){ g.confirm={at:i,chords:`${rs[i].label} → ${rs[i+1].label}`,degrees:`${a.short} → ${b.short}`}; break; } }
+      delete g.part;
+    });
+    A={rs,romans,found,cad,fn,lead,key,alt:null,why:keyWhy(items,key,null,plain,prefs),regions:R};
+  }
+  // the circle of fifths does not depend on the key
+  let run=1, best=1;
+  for(let i=1;i<N;i++){ if(items[i-1].q&&items[i].q&&(items[i].root-items[i-1].root+12)%12===5){run++;best=Math.max(best,run);} else run=1; }
+  if(best>=3) A.found.push({name:tr(`Ciclo de quintas (${best} acordes seguidos)`,`Circle of fifths (${best} chords in a row)`),cycle:true});
+  // tension: what the chord is (function and dissonance) plus what came before it (Meyer's expectation); the arrival is measured
+  // in the key of the region of the chord that arrives
+  const {rs,romans,fn,lead}=A;
+  const tenBase=rs.map((r,i)=>+(.5*FN_TENSION[fn[i]]+.5*dissonance(r)).toFixed(2));
   const tenCtx=rs.map((r,i)=>contextTension(rs,romans,fn,lead,i));
   const ten=tenBase.map((b,i)=>Math.min(1,Math.max(0,+(b+(tenCtx[i]?tenCtx[i].val:0)).toFixed(2))));
-  return {rs,romans,key,alt,found,cad,fn,ten,tenBase,tenCtx,why:keyWhy(items,key,alt,plain,prefs)};
+  const {lead:_,...out}=A;
+  return {...out,ten,tenBase,tenCtx};
 }
+// The words of the regions (F11; texts approved on 2 Nov 2026), shared by the sheet and the text export. Chords are numbered from 1.
+// key: «C mayor → G mayor»; at: «modula en el acorde 5»; line: «acordes 1–4 en C mayor · acordes 5–9 en G mayor (pivote Am: vi en
+// C mayor = ii en G mayor; la confirma D7 → G, V7 → I)»; sheet: one sentence per change; whys: the reasons for each region's key
+function regionTexts(A,prefs){
+  const R=A.regions; if(!R) return null;
+  const kn=k=>keyName(k,prefs), span=g=>g.from===g.to?tr(`acorde ${g.from+1}`,`chord ${g.from+1}`):tr(`acordes ${g.from+1}–${g.to+1}`,`chords ${g.from+1}–${g.to+1}`);
+  const at=R.slice(1).map(g=>g.from+1), nums=at.length>1?at.slice(0,-1).join(', ')+tr(' y ',' and ')+at[at.length-1]:String(at[0]);
+  const pivotOf=(g,k)=>{ const ro=A.romans[g.pivot]; return g.pivot!=null&&ro&&ro.pivotOld?{label:A.rs[g.pivot].label,was:ro.pivotOld.text,is:ro.text,from:kn(R[k-1].key),to:kn(g.key)}:null; };
+  const line=R.map((g,k)=>{
+    const head=tr(`${span(g)} en ${keyText(g.key,null,prefs)}`,`${span(g)} in ${keyText(g.key,null,prefs)}`);
+    if(!k) return head;
+    const pv=pivotOf(g,k), cf=g.confirm;
+    const how=pv?tr(`pivote ${pv.label}: ${pv.was} en ${pv.from} = ${pv.is} en ${pv.to}`,`pivot ${pv.label}: ${pv.was} in ${pv.from} = ${pv.is} in ${pv.to}`):tr('directa','direct');
+    return `${head} (${how}${cf?tr(`; la confirma ${cf.chords}, ${cf.degrees}`,`; confirmed by ${cf.chords}, ${cf.degrees}`):''})`;
+  }).join(' · ');
+  const sheet=R.slice(1).map((g,j)=>{
+    const k=j+1, pv=pivotOf(g,k), cf=g.confirm;
+    const how=pv?tr(`Modula en el acorde ${g.from+1} (${pv.label}: ${pv.was} en ${pv.from} = ${pv.is} en ${pv.to})`,`Modulates at chord ${g.from+1} (${pv.label}: ${pv.was} in ${pv.from} = ${pv.is} in ${pv.to})`)
+      :tr(`Modula en el acorde ${g.from+1}, sin acorde pivote (modulación directa)`,`Modulates at chord ${g.from+1}, with no pivot chord (direct modulation)`);
+    return how+(cf?tr(`; la confirma ${cf.chords} (${cf.degrees}).`,`; confirmed by ${cf.chords} (${cf.degrees}).`):'.');
+  });
+  return {key:R.map(g=>keyText(g.key,null,prefs)).join(' → '),
+    at:at.length>1?tr(`modula en los acordes ${nums}`,`modulates at chords ${nums}`):tr(`modula en el acorde ${nums}`,`modulates at chord ${nums}`),
+    line,sheet,whys:R.filter(g=>g.why).map(g=>({text:`${kn(g.key)} (${span(g)}): ${g.why.reasons.join(' · ')}`,title:g.why.title}))};
+}
+// The degree of a chord as the sheet and the text write it: a pivot is read in both keys, «vi = ii»
+const degreeText=ro=>ro?(ro.pivotOld?`${ro.pivotOld.text} = ${ro.text}`:ro.text):'?';
+const pivotTitle=(ro,prefs)=>ro&&ro.pivotOld?tr(`Acorde pivote: ${ro.pivotOld.text} en ${keyName(ro.pivotKeys[0],prefs)} = ${ro.text} en ${keyName(ro.pivotKeys[1],prefs)}`,`Pivot chord: ${ro.pivotOld.text} in ${keyName(ro.pivotKeys[0],prefs)} = ${ro.text} in ${keyName(ro.pivotKeys[1],prefs)}`):'';
 // Harmonic function in the detected key: T tonic, S subdominant, D dominant, C color (borrowed or chromatic)
 const FN_TENSION={T:.1,S:.4,D:.8,C:.5,'?':.5};
 // Context (Meyer, Emotion and Meaning in Music, 1956): tension is expectation. A dominant leaves a tendency waiting; the chord it
@@ -628,4 +794,4 @@ function dissonance(r){
   return Math.min(1,v);
 }
 
-export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, RANK, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, letterName, melodyText, modeName, noteText, octOff, ornamentText, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp, rankHelp, scoreDetail, keyWhy, bookends, resolution };
+export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, RANK, analyze, analyzeProgression, candSymbol, defaultSpell, degreeText, detectKey, inversionText, pivotTitle, progressionKeys, keyRegions, regionTexts, keyName, keyText, laneSpell, letterName, melodyText, modeName, noteText, octOff, ornamentText, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp, rankHelp, scoreDetail, keyWhy, bookends, resolution };

@@ -43,7 +43,7 @@ describe.skipIf(!process.env.CORPUS_REPORT)('corpus report', () => {
       ['Tonalidad (tónica y modo)', '82 %', 'por tramo | tonalidad (tónica y modo)', 82, 'TAVERN, por tramo anotado'],
       ['Tónica, sin aceptar la relativa', '75 %', 'tónica (acepta ambos analistas)', 75, 'Rock Corpus'],
       ['Enarmonía (tramo con todas las notas bien)', '95 %', 'por tramo | enarmonía (tramo con todas las notas bien)', 95, 'TAVERN, por tramo anotado'],
-      ['Modulación: canciones con cambio de tonalidad que la app informa', 'la mitad (50 %)', 'modulación: de las canciones en que el corpus cambia de tonalidad, las que la app informa como cambio', 50, 'Rock Corpus'],
+      ['Modulación: análisis con cambio de tonalidad en que la app encuentra la región nueva (medida estricta)', 'una de cada cuatro (25 %; la mitad a largo plazo)', 'modulación, estricta: de los análisis en que el corpus cambia de tonalidad, aquellos en que una región nueva de la app tiene la tónica de una región nueva anotada y cubre al menos su mitad', 25, 'Rock Corpus'],
     ].map(([n, m, cat, goal, c]) => { const rock = c === 'Rock Corpus'; return [n, m, num(rock ? rT : tT, cat), goal, c, (rock ? CI.rT : CI.tT)[cat] || null]; });
     const md = `# Línea base sobre corpus externos
 
@@ -85,7 +85,7 @@ ${CMP_ROWS.map(cat => `| ${cat.replace(' | ', ' — ')} | ${cmpCells(CMP.dev, ca
 | Tonalidad (tónica y modo) | ${both(tT, tD, 'por tramo', 'tonalidad (tónica y modo)')} | ${both(tT, tD, 'de punta a punta', 'tonalidad (tónica y modo)')} | solo la tónica: ${pair(rT, rD, 'tónica (acepta ambos analistas)')} |
 | Enarmonía (tramo con todas las notas bien) | ${both(tT, tD, 'por tramo', 'enarmonía (tramo con todas las notas bien)')} | ${both(tT, tD, 'de punta a punta', 'enarmonía (tramo con todas las notas bien)')} | excluida (circular) |
 | Cadencia | sin corpus | sin corpus | sin corpus |
-| Modulación | sin dato: ${tavSkipped.stats['phrase skipped: more than one key'] || 0} frases con más de una tonalidad quedaron fuera | sin dato | ${pair(rT, rD, 'modulación: de las canciones en que el corpus cambia de tonalidad, las que la app informa como cambio')} (la app no reporta cambios de tonalidad) |
+| Modulación | ${tavSkipped.stats['phrase skipped: more than one key'] || 0} frases con más de una tonalidad quedaron fuera; frases que la app parte en regiones (freno: ≤ 5 %): ${both(tT, tD, 'por tramo', 'frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)')} | frases partidas: ${both(tT, tD, 'de punta a punta', 'frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)')} | estricta: ${pair(rT, rD, 'modulación, estricta: de los análisis en que el corpus cambia de tonalidad, aquellos en que una región nueva de la app tiene la tónica de una región nueva anotada y cubre al menos su mitad')}<br>algún cambio: ${pair(rT, rD, 'modulación, suplementaria: de los análisis en que el corpus cambia de tonalidad, aquellos en que la app informa algún cambio')}<br>falsas (freno: ≤ 5 %): ${pair(rT, rD, 'modulación falsa: de los análisis sin cambio de tonalidad anotado, aquellos en que la app informa uno (menos es mejor)')} |
 
 ## Cómo se midió
 
@@ -99,6 +99,7 @@ ${CMP_ROWS.map(cat => `| ${cat.replace(' | ', ' — ')} | ${cmpCells(CMP.dev, ca
 - **Enarmonía:** nombre de cada nota que escribe la app contra la ortografía del Humdrum, nota a nota y por tramo completo.
 - **Tonalidad:** tónica y modo de la frase contra \`*X:\` del Humdrum.
 - **Rock Corpus:** solo la tónica (sin modo) y la modulación. La tónica esperada es la que cubre más duración en cada análisis; se acepta la de cualquiera de los dos analistas. Los acordes se realizaron en posición fundamental desde los numerales.
+- **Modulación:** se cuenta por análisis (canción × analista). La medida estricta pide que una región nueva de la app tenga la tónica de una región nueva anotada y cubra al menos la mitad de sus acordes; la suplementaria acepta cualquier cambio. Las modulaciones falsas (la app informa un cambio en un análisis sin cambio anotado) y las frases de TAVERN que la app parte en regiones son frenos: menos es mejor.
 
 ## Conversión
 

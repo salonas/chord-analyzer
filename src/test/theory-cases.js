@@ -122,6 +122,8 @@ const runProg = chs => {
     key: keyName(A.key, P), alt: A.alt ? keyName(A.alt, P) : '', mode: modeName(A.key), keyText: keyText(A.key, A.alt, P),
     labels: A.rs.map(r => r.label), romans: A.romans.map(r => r ? r.text : '?'), shorts: A.romans.map(r => r ? r.short : '?'), fn: A.fn, ten: A.ten, ctx: A.tenCtx, why: A.why ? A.why.text : '',
     spelled: A.rs.map(r => r.spelled.map(spellName)), cad: A.cad || '', found: A.found.map(f => f.name),
+    // until the app reads regions (F11), the whole progression is one region in its key
+    regions: (A.regions || [{ key: A.key }]).map(r => keyName(r.key, P)).join(' → '), pivots: (A.regions || []).slice(1).map(r => r.pivot == null ? 0 : r.pivot + 1),
   };
 };
 const progCases = [];
@@ -148,7 +150,7 @@ prog('C16', 1, 'Do menor V7 y ♭VI', ['C3 Eb3 G3', 'Ab2 C3 Eb3', 'G2 B2 D3 F3',
 prog('C17', 1, 'Fa menor V7 y ♭II (D♭)', ['F3 Ab3 C4', 'Db3 F3 Ab3', 'C3 E3 G3 Bb3', 'F3 Ab3 C4'], { key: 'F menor', spell: { 1: 'Db F Ab', 2: 'C E G Bb' } });
 prog('C18', 2, 'Si♭ menor V7 y VI (G♭)', ['Bb2 Db3 F3', 'Gb2 Bb2 Db3', 'F2 A2 C3 Eb3', 'Bb2 Db3 F3'], { key: 'Bb menor', spell: { 1: 'Gb Bb Db', 2: 'F A C Eb' } });
 prog('C19', 3, 'Mi♭ menor VI (C♭ mayor)', ['Eb3 Gb3 Bb3', 'Cb3 Eb3 Gb3', 'Bb2 D3 F3 Ab3', 'Eb3 Gb3 Bb3'], { key: 'Eb menor', spell: { 1: 'Cb Eb Gb', 2: 'Bb D F Ab' } });
-prog('C20', 2, 'Do mayor V7/V (F♯)', ['C3 E3 G3', 'D3 F#3 A3 C4', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', spell: { 1: 'D F# A C' } });
+prog('C20', 2, 'Do mayor V7/V (F♯)', ['C3 E3 G3', 'D3 F#3 A3 C4', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', spell: { 1: 'D F# A C' }, reg: 'C mayor' });
 prog('C21', 2, 'Do mayor vii°7/ii (C♯)', ['C3 E3 G3', 'C#3 E3 G3 Bb3', 'D3 F3 A3', 'G2 B2 D3 F3', 'C3 E3 G3'], { key: 'C mayor', spell: { 1: 'C# E G Bb' } });
 prog('C22', 3, 'Do menor sexta aumentada alemana (F♯, no G♭)', ['C3 Eb3 G3', 'Ab2 C3 Eb3 F#3', 'G2 B2 D3 F3', 'C3 Eb3 G3'], { key: 'C menor', spell: { 1: 'Ab C Eb F#' } });
 prog('C23', 3, 'Do mayor sexta aumentada francesa', ['C3 E3 G3', 'Ab2 C3 D3 F#3', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', spell: { 1: 'Ab C D F#' } });
@@ -169,8 +171,8 @@ prog('D05', 1, 'Menor i–iv–V–i', ['A2 C3 E3', 'D3 F3 A3', 'E2 G#2 B2', 'A2
 prog('D06', 2, 'Menor iiø7–V7–i', ['D3 F3 Ab3 C4', 'G2 B2 D3 F3', 'C3 Eb3 G3'], { key: 'C menor', romans: ['iiø7', 'V7', 'i'], found: ['ii–V–i menor'] });
 prog('D07', 2, 'Menor III y VII naturales', ['C3 Eb3 G3', 'Bb2 D3 F3', 'Eb3 G3 Bb3', 'Ab2 C3 Eb3', 'G2 B2 D3', 'C3 Eb3 G3'], { key: 'C menor', romans: ['i', ['♭VII', 'VII'], ['♭III', 'III'], ['♭VI', 'VI'], 'V', 'i'] });
 prog('D08', 2, 'Dominante secundaria V/V', ['C3 E3 G3', 'D3 F#3 A3', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', romans: ['I', 'V/V', 'V', 'I'], fn: ['T', 'D', 'D', 'T'] });
-prog('D09', 2, 'Cadena de dominantes secundarias', ['C3 E3 G3', 'E3 G#3 B3 D4', 'A2 C#3 E3 G3', 'D3 F#3 A3 C4', 'G2 B2 D3 F3', 'C3 E3 G3'], { key: 'C mayor', romans: ['I', 'V7/vi', 'V7/ii', 'V7/V', 'V7', 'I'] }, 'Aldwell & Schachter, cap. 16; Kostka & Payne, cap. 15');
-prog('D10', 2, 'V7/IV', ['C3 E3 G3', 'C3 E3 G3 Bb3', 'F3 A3 C4', 'C3 E3 G3'], { key: 'C mayor', romans: ['I', 'V7/IV', 'IV', 'I'] });
+prog('D09', 2, 'Cadena de dominantes secundarias', ['C3 E3 G3', 'E3 G#3 B3 D4', 'A2 C#3 E3 G3', 'D3 F#3 A3 C4', 'G2 B2 D3 F3', 'C3 E3 G3'], { key: 'C mayor', romans: ['I', 'V7/vi', 'V7/ii', 'V7/V', 'V7', 'I'], reg: 'C mayor' }, 'Aldwell & Schachter, cap. 16; Kostka & Payne, cap. 15');
+prog('D10', 2, 'V7/IV', ['C3 E3 G3', 'C3 E3 G3 Bb3', 'F3 A3 C4', 'C3 E3 G3'], { key: 'C mayor', romans: ['I', 'V7/IV', 'IV', 'I'], reg: 'C mayor' });
 prog('D11', 3, 'vii°7/V (sensible secundaria)', ['C3 E3 G3', 'F#3 A3 C4 Eb4', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', romans: ['I', 'vii°7/V', 'V', 'I'], fn: ['T', 'D', 'D', 'T'] }, 'Kostka & Payne, cap. 16');
 prog('D12', 2, 'Napolitana ♭II⁶ en menor', ['C3 Eb3 G3', 'F3 Ab3 Db4', 'G2 B2 D3 F3', 'C3 Eb3 G3'], { key: 'C menor', romans: ['i', '♭II⁶', 'V7', 'i'], fn: ['T', 'S', 'D', 'T'] });
 prog('D13', 3, 'Sexta aumentada alemana', ['C3 Eb3 G3', 'Ab2 C3 Eb3 F#3', 'G2 B2 D3 F3', 'C3 Eb3 G3'], { key: 'C menor', romans: ['i', ['Ger+6', 'Ger⁶₅', '+6 al.'], 'V7', 'i'], fn: ['T', 'S', 'D', 'T'] }, 'Aldwell & Schachter, cap. 26');
@@ -233,9 +235,16 @@ prog('F26', 2, 'Sin dominante que resuelva, empatan: la tónica es el primero (M
 prog('F27', 2, 'Sin dominante, el primero cuando empatan: Sol menor y no Si♭ mayor', ['G2 Bb2 D3', 'Ab2 C3 Eb3', 'Bb2 D3 F3'], { key: 'G menor' });
 prog('F28', 2, 'Sin dominante, ni abre y cierra: el que más dura (La menor dura 3 de 6)', ['F2 A2 C3', 'G2 B2 D3', 'A2 C3 E3*3', 'G2 B2 D3'], { key: 'A menor', why: ['el acorde que más dura es la tónica'] });
 prog('F29', 2, 'En contra: ♭VI–♭VII–I prestado (el A♭ no es mixolidio), Do mayor sin etiqueta', ['C3 E3 G3', 'Ab2 C3 Eb3', 'Bb2 D3 F3', 'C3 E3 G3'], { key: 'C mayor', mode: '' });
-prog('F30', 2, 'C – D – G es ambiguo: I–V/V–V (semicadencia en Do) o IV–V–I en Sol; la tonalidad no elegida sale como alternativa, sin etiqueta lidia', ['C3 E3 G3', 'D3 F#3 A3', 'G2 B2 D3'], { key: ['C mayor', 'G mayor'], alt: ['C mayor', 'G mayor'], mode: '' });
+prog('F30', 2, 'C – D – G es ambiguo: I–V/V–V (semicadencia en Do) o IV–V–I en Sol; la tonalidad no elegida sale como alternativa, sin etiqueta lidia', ['C3 E3 G3', 'D3 F#3 A3', 'G2 B2 D3'], { key: ['C mayor', 'G mayor'], alt: ['C mayor', 'G mayor'], mode: '', reg: ['C mayor', 'G mayor'] });
 prog('F31', 2, 'G – C, solo dos acordes, es ambiguo: V–I en Do o I–IV en Sol; gana Do, y Sol sale como alternativa', ['G2 B2 D3', 'C3 E3 G3'], { key: ['C mayor'], alt: ['G mayor'] });
-prog('F11', 3, 'Modulación Do → Sol (dos regiones)', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3 F3', 'C3 E3 G3', 'A2 C3 E3', 'D3 F#3 A3 C4', 'G2 B2 D3', 'D3 F#3 A3 C4', 'G2 B2 D3'], { key: ['G mayor', 'C mayor → G mayor'], regions: true });
+prog('F11', 3, 'Modulación Do → Sol (dos regiones)', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3 F3', 'C3 E3 G3', 'A2 C3 E3', 'D3 F#3 A3 C4', 'G2 B2 D3', 'D3 F#3 A3 C4', 'G2 B2 D3'], { key: ['G mayor', 'C mayor → G mayor'], regions: true, reg: 'C mayor → G mayor', pivot: 5 });
+// F11, modulation: two regions, each confirmed by an authentic cadence in its key. The pivot is read in both keys
+prog('F32', 3, 'Modulación a la relativa menor, Do → La menor, con pivote (Dm: ii en Do = iv en La menor)', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3 F3', 'C3 E3 G3', 'D3 F3 A3', 'E2 G#2 B2 D3', 'A2 C3 E3', 'D3 F3 A3', 'E2 G#2 B2 D3', 'A2 C3 E3'], { reg: 'C mayor → A menor', pivot: 5 });
+prog('F33', 3, 'Modulación a la subdominante, Do → Fa, con pivote (Dm: ii en Do = vi en Fa)', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3 F3', 'C3 E3 G3', 'D3 F3 A3', 'Bb2 D3 F3', 'C3 E3 G3 Bb3', 'F3 A3 C4', 'Bb2 D3 F3', 'C3 E3 G3 Bb3', 'F3 A3 C4'], { reg: 'C mayor → F mayor', pivot: 5 });
+prog('F34', 3, 'Modulación directa un tono arriba, Do → Re, sin acorde común en el cambio', ['C3 E3 G3', 'F3 A3 C4', 'G2 B2 D3 F3', 'C3 E3 G3', 'D3 F#3 A3', 'G2 B2 D3', 'A2 C#3 E3 G3', 'D3 F#3 A3', 'G2 B2 D3', 'A2 C#3 E3 G3', 'D3 F#3 A3'], { reg: 'C mayor → D mayor', pivot: 0 });
+// against: a brief tonicization is not a modulation
+prog('F35', 2, 'En contra: tonicización breve de V (V7/V), sigue en Do', ['C3 E3 G3', 'D3 F#3 A3 C4', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', reg: 'C mayor' });
+prog('F36', 2, 'En contra: tonicización breve de ii (V7/ii), sigue en Do', ['C3 E3 G3', 'A2 C#3 E3 G3', 'D3 F3 A3', 'G2 B2 D3 F3', 'C3 E3 G3'], { key: 'C mayor', reg: 'C mayor' });
 prog('F12', 2, 'Re♭ mayor (nombre de tonalidad)', ['Db3 F3 Ab3', 'Gb2 Bb2 Db3', 'Ab2 C3 Eb3 Gb3', 'Db3 F3 Ab3'], { key: 'Db mayor' });
 prog('F13', 2, 'Sol♯ menor (nombre de tonalidad)', ['G#2 B2 D#3', 'C#3 E3 G#3', 'D#3 F##3 A#3 C#4', 'G#2 B2 D#3'], { key: ['G# menor', 'Ab menor'] });
 prog('F14', 2, 'Mi♭ menor (nombre de tonalidad)', ['Eb3 Gb3 Bb3', 'Ab2 Cb3 Eb3', 'Bb2 D3 F3 Ab3', 'Eb3 Gb3 Bb3'], { key: ['Eb menor', 'D# menor'] });
@@ -256,7 +265,7 @@ prog('G09', 2, 'Rota en menor V–♭VI', ['C3 Eb3 G3', 'F3 Ab3 C4', 'G2 B2 D3 F
 prog('G10', 2, 'I⁶₄–I no es cadencia', ['C3 E3 G3', 'G2 C3 E3', 'C3 E3 G3'], { cad: { none: true } });
 prog('G11', 2, 'Plagal menor iv–I en mayor', ['C3 E3 G3', 'F3 Ab3 C4', 'C3 E3 G3'], { key: 'C mayor', cad: { has: 'plagal' } });
 // ambiguous: Sol mayor with an authentic cadence (IV–V7–I) or Do mayor with a half cadence (I–V/V–V); the app shows the other as the alternative
-prog('G12', 2, 'V/V–V: Sol mayor auténtica o Do mayor semicadencia', ['C3 E3 G3', 'D3 F#3 A3 C4', 'G2 B2 D3'], { key: ['C mayor', 'G mayor'], cad: { has: ['Semicadencia', 'auténtica'] } });
+prog('G12', 2, 'V/V–V: Sol mayor auténtica o Do mayor semicadencia', ['C3 E3 G3', 'D3 F#3 A3 C4', 'G2 B2 D3'], { key: ['C mayor', 'G mayor'], cad: { has: ['Semicadencia', 'auténtica'] }, reg: ['C mayor', 'G mayor'] });
 prog('G13', 3, 'Cadencia en menor: el texto usa mayúsculas (V → I)', ['A2 C3 E3', 'E2 G#2 B2 D3', 'A2 C3 E3'], { key: 'A menor', cad: { has: ['V → i', '(V → i)'] } });
 
 prog('G14', 2, 'Cadencia ♭VII → i en menor: sin «backdoor / mixolidia»', ['D3 F3 A3', 'G2 B2 D3', 'C3 E3 G3', 'D3 F3 A3'], { key: 'D menor', cad: { has: '♭VII → i', not: 'backdoor' } });
@@ -273,7 +282,10 @@ for (const c of progCases) {
   const ch = c.checks;
   ALL_ROMANS.push(...o.romans); ALL_TEN.push({ id: c.id, ten: o.ten, ctx: o.ctx });
   const head = `${c.desc}: ${o.labels.join(' – ')}`;
-  if (ch.key) add('tonalidad', c.id, c.level, head, ch.key, o.key + (o.alt ? ` (alt ${o.alt})` : ''), acc(ch.key, o.key) && !ch.regions, c.ref, ch.regions ? 'la app da una sola tonalidad para todo el pattern' : '');
+  if (ch.key) add('tonalidad', c.id, c.level, head, ch.key, o.key + (o.alt ? ` (alt ${o.alt})` : ''), acc(ch.key, o.key) && (!ch.regions || o.pivots.length > 0), c.ref, ch.regions && !o.pivots.length ? 'la app da una sola tonalidad para todo el pattern' : '');
+  // regions (F11): the keys in order, joined by « → »; pivot is the number of the chord read in both keys (0, a direct change)
+  if (ch.reg) add('tonalidad', c.id + '-regiones', c.level, head + ' · regiones', ch.reg, o.regions, acc(ch.reg, o.regions), c.ref);
+  if (ch.pivot != null) add('tonalidad', c.id + '-pivote', c.level, head + ' · acorde pivote', ch.pivot ? `acorde ${ch.pivot}` : '(directa)', o.pivots.length ? (o.pivots[0] ? `acorde ${o.pivots[0]}` : '(directa)') : '(sin cambio)', o.pivots[0] === ch.pivot, c.ref);
   if (ch.mode != null) add('modo', c.id + '-modo', c.level, head, ch.mode || '(sin etiqueta)', o.mode || '(sin etiqueta)', o.mode === ch.mode, c.ref);
   if (ch.text) add('modo', c.id + '-texto', c.level, head, ch.text, o.keyText, o.keyText === ch.text, c.ref);
   // the alternate must be one of the listed keys and not the one chosen
@@ -391,6 +403,12 @@ mc('J36', 2, 'Bajo en octavas con melodía en corcheas encima: forma acordes', [
 // a struck chord that goes on after its notes stop is read again where the broken accompaniment goes on; a chord that still sounds is not
 mc('J37', 2, 'C atacado una vez y después bajo Alberti en G con melodía: el C no sigue sonando', [], [['C3', 0, 1], ['E3', 0, 1], ['G3', 0, 1], ['E5', 0, 1], ['G2', 1, .5], ['D3', 1.5, .5], ['B2', 2, .5], ['D3', 2.5, .5], ['G2', 3, .5], ['D3', 3.5, .5], ['D5', 1, 2], ['B4', 3, 1]], { chords: ['C', 'G'] });
 mc('J38', 2, 'C sostenido cuatro tiempos con melodía en corcheas que arpegia otro acorde: sigue siendo C', [['C3 E3 G3', 4]], [['F4', 0, .5], ['A4', .5, .5], ['D5', 1, .5], ['B4', 1.5, .5], ['F4', 2, .5], ['A4', 2.5, .5], ['D5', 3, .5], ['B4', 3.5, .5]], { chords: ['C'] });
+// the notes the lane shows apart from its chords are spelled by the semitone they go up to, as the notes of a step (decision 14)
+mc('J39', 2, 'Paso cromático en la melodía, G♯ → A: se escribe por la nota a la que sube (decisión 14)', [['C3 E3 G3', 4], ['F3 A3 C4', 4]], [['E4', 0, 1], ['G4', 1, 1], ['G#4', 2, 1], ['A4', 3, 1], ['A4', 4, 4]], { textHas: ['G♯4 (68)'], textNot: ['A♭4 (68)'] });
+mc('J40', 2, 'Nota agregada del carril, G♯3 → A3: se escribe por la nota a la que sube (decisión 14)', [['C3 E3', 4], ['F3 C4', 4]], [['G3', 0, 2], ['G#3', 2, 2], ['A3', 4, 4], ['E5', 0, 4], ['F5', 4, 4]], { textHas: ['+G♯3 en 2'], textNot: ['+A♭3'] });
+mc('J41', 3, 'C natural que sube a C♯ en Re mayor: sigue siendo C, no B♯ (semitono cromático, misma letra)', [['D3 F#3 A3', 4], ['G2 B2 D3', 4], ['A2 C#3 E3 G3', 4], ['D3 F#3 A3', 4]], [['F#4', 0, 2], ['A4', 2, 2], ['B4', 4, 2], ['C5', 6, 2], ['C#5', 8, 4], ['D5', 12, 4]], { key: 'D mayor', textHas: ['C5 (72)'], textNot: ['B♯4'] });
+// F11 in the text export: the key line, the regions with their pivot and cadence, the pivot's degree and the patterns of each region
+mc('J42', 2, 'Modulación Do → Sol en el texto exportado: regiones, pivote y patrones por región', [['C3 E3 G3', 4], ['F3 A3 C4', 4], ['G2 B2 D3 F3', 4], ['C3 E3 G3', 4], ['A2 C3 E3', 4], ['D3 F#3 A3 C4', 4], ['G2 B2 D3', 4], ['D3 F#3 A3 C4', 4], ['G2 B2 D3', 4]], [], { textHas: ['Tonalidad estimada: C mayor → G mayor (modula en el acorde 5)', '# Regiones: acordes 1–4 en C mayor · acordes 5–9 en G mayor (pivote Am: vi en C mayor = ii en G mayor; la confirma D7 → G, V7 → I)', 'vi = ii (pivote)', 'ii–V–I (en G mayor)'] });
 
 for (const c of melCases) {
   const p = pat(c.id, c.chords, c.mel);
