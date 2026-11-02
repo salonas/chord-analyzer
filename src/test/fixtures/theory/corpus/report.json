@@ -14,40 +14,46 @@
     "pct": 81
    },
    {
+    "cat": "por tramo | frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)",
+    "n": 580,
+    "ok": 29,
+    "pct": 5
+   },
+   {
     "cat": "por tramo | acorde: raíz (solo la lectura propia)",
     "n": 5586,
-    "ok": 4468,
+    "ok": 4467,
     "pct": 80
    },
    {
     "cat": "por tramo | acorde: raíz (acepta A o B)",
     "n": 5586,
-    "ok": 4522,
-    "pct": 81
+    "ok": 4521,
+    "pct": 80.9
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (solo la lectura propia)",
     "n": 5586,
-    "ok": 3826,
+    "ok": 3829,
     "pct": 68.5
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B)",
     "n": 5586,
-    "ok": 3970,
+    "ok": 3973,
     "pct": 71.1
    },
    {
     "cat": "por tramo | acorde: nombre exacto, sin extensiones (acepta A o B)",
     "n": 5586,
-    "ok": 2839,
+    "ok": 2840,
     "pct": 50.8
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde",
     "n": 1468,
-    "ok": 653,
-    "pct": 44.5
+    "ok": 655,
+    "pct": 44.6
    },
    {
     "cat": "por tramo | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)",
@@ -58,44 +64,44 @@
    {
     "cat": "por tramo | inversión (cruda)",
     "n": 5586,
-    "ok": 4374,
-    "pct": 78.3
+    "ok": 4371,
+    "pct": 78.2
    },
    {
     "cat": "por tramo | grado (crudo)",
     "n": 5586,
-    "ok": 3518,
-    "pct": 63
+    "ok": 3487,
+    "pct": 62.4
    },
    {
     "cat": "por tramo | grado (dada la tonalidad correcta)",
     "n": 4247,
-    "ok": 3450,
-    "pct": 81.2
+    "ok": 3381,
+    "pct": 79.6
    },
    {
     "cat": "por tramo | enarmonía (nota a nota)",
     "n": 36114,
-    "ok": 35846,
-    "pct": 99.3
+    "ok": 35742,
+    "pct": 99
    },
    {
     "cat": "por tramo | enarmonía (tramo con todas las notas bien)",
     "n": 5586,
-    "ok": 5404,
-    "pct": 96.7
+    "ok": 5316,
+    "pct": 95.2
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable",
     "n": 5388,
-    "ok": 3970,
+    "ok": 3973,
     "pct": 73.7
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando",
     "n": 4118,
-    "ok": 3317,
-    "pct": 80.5
+    "ok": 3318,
+    "pct": 80.6
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)",
@@ -105,8 +111,8 @@
    },
    {
     "cat": "por tramo | inversión (dado el acorde correcto)",
-    "n": 3970,
-    "ok": 3760,
+    "n": 3973,
+    "ok": 3763,
     "pct": 94.7
    },
    {
@@ -122,6 +128,12 @@
     "pct": 74.1
    },
    {
+    "cat": "de punta a punta | frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)",
+    "n": 580,
+    "ok": 28,
+    "pct": 4.8
+   },
+   {
     "cat": "de punta a punta | segmentación: cortes del analista que la app también corta (±48 ticks)",
     "n": 5204,
     "ok": 4720,
@@ -129,9 +141,9 @@
    },
    {
     "cat": "de punta a punta | segmentación: cortes de la app que el analista también corta (±48 ticks)",
-    "n": 7746,
+    "n": 7748,
     "ok": 5605,
-    "pct": 72.4
+    "pct": 72.3
    },
    {
     "cat": "de punta a punta | tramo del analista cubierto por un acorde de la app (≥ la mitad)",
@@ -147,21 +159,21 @@
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app, sin contar los de calidad no determinable",
-    "n": 5550,
+    "n": 5548,
     "ok": 2976,
     "pct": 53.6
    },
    {
     "cat": "de punta a punta | acorde: raíz (solo la lectura propia)",
     "n": 5004,
-    "ok": 3375,
-    "pct": 67.4
+    "ok": 3377,
+    "pct": 67.5
    },
    {
     "cat": "de punta a punta | acorde: raíz (acepta A o B)",
     "n": 5004,
-    "ok": 3449,
-    "pct": 68.9
+    "ok": 3451,
+    "pct": 69
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (solo la lectura propia)",
@@ -184,25 +196,25 @@
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde",
     "n": 1320,
-    "ok": 546,
-    "pct": 41.4
+    "ok": 544,
+    "pct": 41.2
    },
    {
     "cat": "de punta a punta | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)",
     "n": 5004,
-    "ok": 36,
-    "pct": 0.7
+    "ok": 38,
+    "pct": 0.8
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable",
-    "n": 4968,
+    "n": 4966,
     "ok": 2976,
     "pct": 59.9
    },
    {
     "cat": "de punta a punta | inversión (cruda)",
     "n": 5004,
-    "ok": 3603,
+    "ok": 3605,
     "pct": 72
    },
    {
@@ -214,31 +226,31 @@
    {
     "cat": "de punta a punta | grado (crudo)",
     "n": 5004,
-    "ok": 2689,
-    "pct": 53.7
+    "ok": 2621,
+    "pct": 52.4
    },
    {
     "cat": "de punta a punta | grado (dada la tonalidad correcta)",
     "n": 3497,
-    "ok": 2516,
-    "pct": 71.9
+    "ok": 2464,
+    "pct": 70.5
    },
    {
     "cat": "de punta a punta | enarmonía (nota a nota)",
     "n": 20747,
-    "ok": 20588,
-    "pct": 99.2
+    "ok": 20549,
+    "pct": 99
    },
    {
     "cat": "de punta a punta | enarmonía (tramo con todas las notas bien)",
     "n": 5004,
-    "ok": 4882,
-    "pct": 97.6
+    "ok": 4839,
+    "pct": 96.7
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando",
     "n": 3684,
-    "ok": 2430,
+    "ok": 2432,
     "pct": 66
    },
    {
@@ -274,16 +286,28 @@
     "pct": 70.5
    },
    {
+    "cat": "modulación falsa: de los análisis sin cambio de tonalidad anotado, aquellos en que la app informa uno (menos es mejor)",
+    "n": 63,
+    "ok": 3,
+    "pct": 4.8
+   },
+   {
     "cat": "tónica por región de ≥ 4 acordes (la app recibe la región sola)",
     "n": 132,
     "ok": 105,
     "pct": 79.5
    },
    {
-    "cat": "modulación: de las canciones en que el corpus cambia de tonalidad, las que la app informa como cambio",
+    "cat": "modulación, estricta: de los análisis en que el corpus cambia de tonalidad, aquellos en que una región nueva de la app tiene la tónica de una región nueva anotada y cubre al menos su mitad",
     "n": 15,
-    "ok": 0,
-    "pct": 0
+    "ok": 6,
+    "pct": 40
+   },
+   {
+    "cat": "modulación, suplementaria: de los análisis en que el corpus cambia de tonalidad, aquellos en que la app informa algún cambio",
+    "n": 15,
+    "ok": 6,
+    "pct": 40
    }
   ]
  },
@@ -302,40 +326,46 @@
     "pct": 81
    },
    {
+    "cat": "por tramo | frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)",
+    "n": 1622,
+    "ok": 77,
+    "pct": 4.7
+   },
+   {
     "cat": "por tramo | acorde: raíz (solo la lectura propia)",
     "n": 16398,
-    "ok": 13151,
+    "ok": 13150,
     "pct": 80.2
    },
    {
     "cat": "por tramo | acorde: raíz (acepta A o B)",
     "n": 16398,
-    "ok": 13277,
+    "ok": 13276,
     "pct": 81
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (solo la lectura propia)",
     "n": 16398,
-    "ok": 11422,
-    "pct": 69.7
+    "ok": 11413,
+    "pct": 69.6
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B)",
     "n": 16398,
-    "ok": 11668,
-    "pct": 71.2
+    "ok": 11660,
+    "pct": 71.1
    },
    {
     "cat": "por tramo | acorde: nombre exacto, sin extensiones (acepta A o B)",
     "n": 16398,
-    "ok": 8735,
-    "pct": 53.3
+    "ok": 8730,
+    "pct": 53.2
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando",
     "n": 11992,
-    "ok": 9680,
-    "pct": 80.7
+    "ok": 9671,
+    "pct": 80.6
    },
    {
     "cat": "por tramo | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)",
@@ -346,7 +376,7 @@
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable",
     "n": 15909,
-    "ok": 11668,
+    "ok": 11660,
     "pct": 73.3
    },
    {
@@ -357,39 +387,39 @@
    },
    {
     "cat": "por tramo | inversión (dado el acorde correcto)",
-    "n": 11668,
-    "ok": 11082,
+    "n": 11660,
+    "ok": 11074,
     "pct": 95
    },
    {
     "cat": "por tramo | grado (crudo)",
     "n": 16398,
-    "ok": 11150,
-    "pct": 68
+    "ok": 10808,
+    "pct": 65.9
    },
    {
     "cat": "por tramo | grado (dada la tonalidad correcta)",
     "n": 13349,
-    "ok": 10989,
-    "pct": 82.3
+    "ok": 10575,
+    "pct": 79.2
    },
    {
     "cat": "por tramo | enarmonía (nota a nota)",
     "n": 101735,
-    "ok": 100902,
+    "ok": 100942,
     "pct": 99.2
    },
    {
     "cat": "por tramo | enarmonía (tramo con todas las notas bien)",
     "n": 16398,
-    "ok": 15739,
-    "pct": 96
+    "ok": 15755,
+    "pct": 96.1
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)",
     "n": 5331,
-    "ok": 5134,
-    "pct": 96.3
+    "ok": 5131,
+    "pct": 96.2
    },
    {
     "cat": "de punta a punta | tonalidad (tónica y modo)",
@@ -404,6 +434,12 @@
     "pct": 79.4
    },
    {
+    "cat": "de punta a punta | frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)",
+    "n": 1622,
+    "ok": 58,
+    "pct": 3.6
+   },
+   {
     "cat": "de punta a punta | segmentación: cortes del analista que la app también corta (±48 ticks)",
     "n": 15266,
     "ok": 13430,
@@ -411,122 +447,122 @@
    },
    {
     "cat": "de punta a punta | segmentación: cortes de la app que el analista también corta (±48 ticks)",
-    "n": 21132,
+    "n": 21136,
     "ok": 15539,
     "pct": 73.5
    },
    {
     "cat": "de punta a punta | tramo del analista cubierto por un acorde de la app (≥ la mitad)",
     "n": 16404,
-    "ok": 14785,
+    "ok": 14783,
     "pct": 90.1
    },
    {
     "cat": "de punta a punta | acorde: raíz (solo la lectura propia)",
-    "n": 14785,
-    "ok": 10357,
-    "pct": 70.1
+    "n": 14783,
+    "ok": 10355,
+    "pct": 70
    },
    {
     "cat": "de punta a punta | acorde: raíz (acepta A o B)",
-    "n": 14785,
-    "ok": 10515,
+    "n": 14783,
+    "ok": 10513,
     "pct": 71.1
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (solo la lectura propia)",
-    "n": 14785,
-    "ok": 8784,
+    "n": 14783,
+    "ok": 8778,
     "pct": 59.4
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
-    "n": 14785,
-    "ok": 9045,
-    "pct": 61.2
+    "n": 14783,
+    "ok": 9039,
+    "pct": 61.1
    },
    {
     "cat": "de punta a punta | acorde: nombre exacto, sin extensiones (acepta A o B)",
-    "n": 14785,
-    "ok": 7841,
+    "n": 14783,
+    "ok": 7835,
     "pct": 53
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando",
-    "n": 10815,
-    "ok": 7407,
-    "pct": 68.5
+    "n": 10813,
+    "ok": 7401,
+    "pct": 68.4
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)",
-    "n": 5204,
-    "ok": 4408,
+    "n": 5202,
+    "ok": 4406,
     "pct": 84.7
    },
    {
     "cat": "de punta a punta | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)",
-    "n": 14785,
+    "n": 14783,
     "ok": 206,
     "pct": 1.4
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable",
-    "n": 14579,
-    "ok": 9045,
+    "n": 14577,
+    "ok": 9039,
     "pct": 62
    },
    {
     "cat": "de punta a punta | inversión (cruda)",
-    "n": 14785,
-    "ok": 10714,
-    "pct": 72.5
+    "n": 14783,
+    "ok": 10708,
+    "pct": 72.4
    },
    {
     "cat": "de punta a punta | inversión (dado el acorde correcto)",
-    "n": 9045,
-    "ok": 8216,
+    "n": 9039,
+    "ok": 8210,
     "pct": 90.8
    },
    {
     "cat": "de punta a punta | grado (crudo)",
-    "n": 14785,
-    "ok": 8984,
-    "pct": 60.8
+    "n": 14783,
+    "ok": 8829,
+    "pct": 59.7
    },
    {
     "cat": "de punta a punta | grado (dada la tonalidad correcta)",
-    "n": 11876,
-    "ok": 8692,
-    "pct": 73.2
+    "n": 11874,
+    "ok": 8470,
+    "pct": 71.3
    },
    {
     "cat": "de punta a punta | enarmonía (nota a nota)",
-    "n": 60481,
-    "ok": 59943,
+    "n": 60473,
+    "ok": 59941,
     "pct": 99.1
    },
    {
     "cat": "de punta a punta | enarmonía (tramo con todas las notas bien)",
-    "n": 14785,
-    "ok": 14428,
+    "n": 14783,
+    "ok": 14426,
     "pct": 97.6
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app",
     "n": 16404,
-    "ok": 9045,
+    "ok": 9039,
     "pct": 55.1
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app, sin contar los de calidad no determinable",
     "n": 16198,
-    "ok": 9045,
+    "ok": 9039,
     "pct": 55.8
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde",
     "n": 4406,
-    "ok": 1988,
+    "ok": 1989,
     "pct": 45.1
    },
    {
@@ -562,16 +598,28 @@
     "pct": 78.6
    },
    {
+    "cat": "modulación falsa: de los análisis sin cambio de tonalidad anotado, aquellos en que la app informa uno (menos es mejor)",
+    "n": 258,
+    "ok": 5,
+    "pct": 1.9
+   },
+   {
     "cat": "tónica por región de ≥ 4 acordes (la app recibe la región sola)",
     "n": 457,
     "ok": 339,
     "pct": 74.2
    },
    {
-    "cat": "modulación: de las canciones en que el corpus cambia de tonalidad, las que la app informa como cambio",
+    "cat": "modulación, estricta: de los análisis en que el corpus cambia de tonalidad, aquellos en que una región nueva de la app tiene la tónica de una región nueva anotada y cubre al menos su mitad",
     "n": 46,
-    "ok": 0,
-    "pct": 0
+    "ok": 12,
+    "pct": 26.1
+   },
+   {
+    "cat": "modulación, suplementaria: de los análisis en que el corpus cambia de tonalidad, aquellos en que la app informa algún cambio",
+    "n": 46,
+    "ok": 16,
+    "pct": 34.8
    }
   ]
  },
@@ -586,28 +634,32 @@
      68.7,
      94.1
     ],
+    "por tramo | frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)": [
+     0.6,
+     12
+    ],
     "por tramo | acorde: raíz (solo la lectura propia)": [
      76.6,
-     83.8
+     83.7
     ],
     "por tramo | acorde: raíz (acepta A o B)": [
-     77.1,
+     77.2,
      84.6
     ],
     "por tramo | acorde: raíz + calidad (solo la lectura propia)": [
-     65,
+     65.1,
      74.6
     ],
     "por tramo | acorde: raíz + calidad (acepta A o B)": [
-     67.2,
-     76
+     67.3,
+     76.1
     ],
     "por tramo | acorde: nombre exacto, sin extensiones (acepta A o B)": [
-     43.7,
+     43.8,
      56.8
     ],
     "por tramo | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde": [
-     39.1,
+     39.3,
      56.1
     ],
     "por tramo | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)": [
@@ -619,27 +671,27 @@
      82.1
     ],
     "por tramo | grado (crudo)": [
-     52.7,
-     77
+     52.3,
+     76
     ],
     "por tramo | grado (dada la tonalidad correcta)": [
-     77.1,
-     86
+     72.8,
+     85
     ],
     "por tramo | enarmonía (nota a nota)": [
-     99,
-     99.5
+     98.6,
+     99.3
     ],
     "por tramo | enarmonía (tramo con todas las notas bien)": [
-     95.4,
-     97.5
+     93.7,
+     96.8
     ],
     "por tramo | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable": [
-     68.4,
+     68.6,
      78.7
     ],
     "por tramo | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando": [
-     73.8,
+     73.9,
      86
     ],
     "por tramo | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)": [
@@ -658,6 +710,10 @@
      61.6,
      87.7
     ],
+    "de punta a punta | frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)": [
+     0.6,
+     13.3
+    ],
     "de punta a punta | segmentación: cortes del analista que la app también corta (±48 ticks)": [
      89.1,
      92.6
@@ -671,19 +727,19 @@
      93.2
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app": [
-     47.3,
-     60.2
+     47.5,
+     60.1
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app, sin contar los de calidad no determinable": [
      47.7,
-     60.7
+     60.6
     ],
     "de punta a punta | acorde: raíz (solo la lectura propia)": [
      62.1,
      73.4
     ],
     "de punta a punta | acorde: raíz (acepta A o B)": [
-     62.6,
+     62.7,
      75
     ],
     "de punta a punta | acorde: raíz + calidad (solo la lectura propia)": [
@@ -699,11 +755,11 @@
      60.5
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde": [
-     34.6,
-     49.4
+     34.5,
+     48.8
     ],
     "de punta a punta | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)": [
-     0.3,
+     0.4,
      1.1
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable": [
@@ -711,7 +767,7 @@
      68.7
     ],
     "de punta a punta | inversión (cruda)": [
-     66.6,
+     66.7,
      78
     ],
     "de punta a punta | inversión (dado el acorde correcto)": [
@@ -719,24 +775,24 @@
      94
     ],
     "de punta a punta | grado (crudo)": [
-     45.3,
-     67.7
+     45,
+     64.1
     ],
     "de punta a punta | grado (dada la tonalidad correcta)": [
-     65.8,
-     78.3
+     64.4,
+     76.3
     ],
     "de punta a punta | enarmonía (nota a nota)": [
-     98.9,
+     98.7,
      99.5
     ],
     "de punta a punta | enarmonía (tramo con todas las notas bien)": [
-     97.1,
-     98.3
+     95.3,
+     98.4
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando": [
      59.9,
-     73.6
+     73.9
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)": [
      79.5,
@@ -760,13 +816,21 @@
      56.4,
      83.5
     ],
+    "modulación falsa: de los análisis sin cambio de tonalidad anotado, aquellos en que la app informa uno (menos es mejor)": [
+     0,
+     12.5
+    ],
     "tónica por región de ≥ 4 acordes (la app recibe la región sola)": [
      70.6,
      87.3
     ],
-    "modulación: de las canciones en que el corpus cambia de tonalidad, las que la app informa como cambio": [
+    "modulación, estricta: de los análisis en que el corpus cambia de tonalidad, aquellos en que una región nueva de la app tiene la tónica de una región nueva anotada y cubre al menos su mitad": [
      0,
-     0
+     78.3
+    ],
+    "modulación, suplementaria: de los análisis en que el corpus cambia de tonalidad, aquellos en que la app informa algún cambio": [
+     0,
+     78.3
     ]
    }
   },
@@ -780,20 +844,24 @@
      75.7,
      85.8
     ],
+    "por tramo | frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)": [
+     2.4,
+     7.4
+    ],
     "por tramo | acorde: raíz (solo la lectura propia)": [
      78.3,
-     82
+     81.9
     ],
     "por tramo | acorde: raíz (acepta A o B)": [
-     79.2,
+     79.1,
      82.7
     ],
     "por tramo | acorde: raíz + calidad (solo la lectura propia)": [
      67.6,
-     71.5
+     71.4
     ],
     "por tramo | acorde: raíz + calidad (acepta A o B)": [
-     69.3,
+     69.2,
      73
     ],
     "por tramo | acorde: nombre exacto, sin extensiones (acepta A o B)": [
@@ -802,7 +870,7 @@
     ],
     "por tramo | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando": [
      79.5,
-     81.8
+     81.7
     ],
     "por tramo | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)": [
      2.2,
@@ -810,7 +878,7 @@
     ],
     "por tramo | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable": [
      71.7,
-     74.9
+     74.8
     ],
     "por tramo | inversión (cruda)": [
      77.2,
@@ -821,20 +889,20 @@
      96
     ],
     "por tramo | grado (crudo)": [
-     63.9,
-     71.8
+     61.7,
+     69.8
     ],
     "por tramo | grado (dada la tonalidad correcta)": [
-     80.7,
-     84.2
+     77.3,
+     81.3
     ],
     "por tramo | enarmonía (nota a nota)": [
-     99,
-     99.3
+     99.1,
+     99.4
     ],
     "por tramo | enarmonía (tramo con todas las notas bien)": [
-     95.2,
-     96.7
+     95.4,
+     96.8
     ],
     "por tramo | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)": [
      95.2,
@@ -847,6 +915,10 @@
     "de punta a punta | tonalidad (solo la tónica)": [
      74.2,
      84.4
+    ],
+    "de punta a punta | frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)": [
+     1.8,
+     5.9
     ],
     "de punta a punta | segmentación: cortes del analista que la app también corta (±48 ticks)": [
      85.6,
@@ -870,7 +942,7 @@
     ],
     "de punta a punta | acorde: raíz + calidad (solo la lectura propia)": [
      57,
-     61.8
+     61.7
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B)": [
      58.9,
@@ -881,11 +953,11 @@
      55.9
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando": [
-     66.1,
-     70.9
+     66,
+     70.8
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)": [
-     82.5,
+     82.4,
      86.9
     ],
     "de punta a punta | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)": [
@@ -898,19 +970,19 @@
     ],
     "de punta a punta | inversión (cruda)": [
      70.7,
-     74.3
+     74.2
     ],
     "de punta a punta | inversión (dado el acorde correcto)": [
      89.4,
      92.3
     ],
     "de punta a punta | grado (crudo)": [
-     56.9,
-     64.1
+     56.4,
+     62.5
     ],
     "de punta a punta | grado (dada la tonalidad correcta)": [
-     70.8,
-     75.5
+     68.9,
+     73.7
     ],
     "de punta a punta | enarmonía (nota a nota)": [
      98.6,
@@ -921,7 +993,7 @@
      98.2
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app": [
-     52.7,
+     52.6,
      57.5
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app, sin contar los de calidad no determinable": [
@@ -930,7 +1002,7 @@
     ],
     "por tramo | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde": [
      40.5,
-     48.9
+     49
     ],
     "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde": [
      38,
@@ -954,13 +1026,21 @@
      72.3,
      84.3
     ],
+    "modulación falsa: de los análisis sin cambio de tonalidad anotado, aquellos en que la app informa uno (menos es mejor)": [
+     0,
+     4.6
+    ],
     "tónica por región de ≥ 4 acordes (la app recibe la región sola)": [
      68.3,
      79.8
     ],
-    "modulación: de las canciones en que el corpus cambia de tonalidad, las que la app informa como cambio": [
-     0,
-     0
+    "modulación, estricta: de los análisis en que el corpus cambia de tonalidad, aquellos en que una región nueva de la app tiene la tónica de una región nueva anotada y cubre al menos su mitad": [
+     10.5,
+     43.9
+    ],
+    "modulación, suplementaria: de los análisis en que el corpus cambia de tonalidad, aquellos en que la app informa algún cambio": [
+     18,
+     53.1
     ]
    }
   }
@@ -980,40 +1060,46 @@
     "pct": 81
    },
    {
+    "cat": "por tramo | frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)",
+    "n": 2202,
+    "ok": 106,
+    "pct": 4.8
+   },
+   {
     "cat": "por tramo | acorde: raíz (solo la lectura propia)",
     "n": 21984,
-    "ok": 17619,
+    "ok": 17617,
     "pct": 80.1
    },
    {
     "cat": "por tramo | acorde: raíz (acepta A o B)",
     "n": 21984,
-    "ok": 17799,
+    "ok": 17797,
     "pct": 81
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (solo la lectura propia)",
     "n": 21984,
-    "ok": 15248,
-    "pct": 69.4
+    "ok": 15242,
+    "pct": 69.3
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B)",
     "n": 21984,
-    "ok": 15638,
+    "ok": 15633,
     "pct": 71.1
    },
    {
     "cat": "por tramo | acorde: nombre exacto, sin extensiones (acepta A o B)",
     "n": 21984,
-    "ok": 11574,
+    "ok": 11570,
     "pct": 52.6
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando",
     "n": 16110,
-    "ok": 12997,
-    "pct": 80.7
+    "ok": 12989,
+    "pct": 80.6
    },
    {
     "cat": "por tramo | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)",
@@ -1024,49 +1110,49 @@
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable",
     "n": 21297,
-    "ok": 15638,
+    "ok": 15633,
     "pct": 73.4
    },
    {
     "cat": "por tramo | inversión (cruda)",
     "n": 21984,
-    "ok": 17336,
-    "pct": 78.9
+    "ok": 17333,
+    "pct": 78.8
    },
    {
     "cat": "por tramo | inversión (dado el acorde correcto)",
-    "n": 15638,
-    "ok": 14842,
+    "n": 15633,
+    "ok": 14837,
     "pct": 94.9
    },
    {
     "cat": "por tramo | grado (crudo)",
     "n": 21984,
-    "ok": 14668,
-    "pct": 66.7
+    "ok": 14295,
+    "pct": 65
    },
    {
     "cat": "por tramo | grado (dada la tonalidad correcta)",
     "n": 17596,
-    "ok": 14439,
-    "pct": 82.1
+    "ok": 13956,
+    "pct": 79.3
    },
    {
     "cat": "por tramo | enarmonía (nota a nota)",
     "n": 137849,
-    "ok": 136748,
+    "ok": 136684,
     "pct": 99.2
    },
    {
     "cat": "por tramo | enarmonía (tramo con todas las notas bien)",
     "n": 21984,
-    "ok": 21143,
-    "pct": 96.2
+    "ok": 21071,
+    "pct": 95.8
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)",
     "n": 7023,
-    "ok": 6751,
+    "ok": 6748,
     "pct": 96.1
    },
    {
@@ -1082,6 +1168,12 @@
     "pct": 78
    },
    {
+    "cat": "de punta a punta | frases que la app parte en regiones (TAVERN anota una tonalidad por frase; menos es mejor)",
+    "n": 2202,
+    "ok": 86,
+    "pct": 3.9
+   },
+   {
     "cat": "de punta a punta | segmentación: cortes del analista que la app también corta (±48 ticks)",
     "n": 20470,
     "ok": 18150,
@@ -1089,129 +1181,129 @@
    },
    {
     "cat": "de punta a punta | segmentación: cortes de la app que el analista también corta (±48 ticks)",
-    "n": 28878,
+    "n": 28884,
     "ok": 21144,
     "pct": 73.2
    },
    {
     "cat": "de punta a punta | tramo del analista cubierto por un acorde de la app (≥ la mitad)",
     "n": 21990,
-    "ok": 19789,
+    "ok": 19787,
     "pct": 90
    },
    {
     "cat": "de punta a punta | acorde: raíz (solo la lectura propia)",
-    "n": 19789,
+    "n": 19787,
     "ok": 13732,
     "pct": 69.4
    },
    {
     "cat": "de punta a punta | acorde: raíz (acepta A o B)",
-    "n": 19789,
+    "n": 19787,
     "ok": 13964,
     "pct": 70.6
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (solo la lectura propia)",
-    "n": 19789,
-    "ok": 11615,
+    "n": 19787,
+    "ok": 11609,
     "pct": 58.7
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
-    "n": 19789,
-    "ok": 12021,
+    "n": 19787,
+    "ok": 12015,
     "pct": 60.7
    },
    {
     "cat": "de punta a punta | acorde: nombre exacto, sin extensiones (acepta A o B)",
-    "n": 19789,
-    "ok": 10326,
+    "n": 19787,
+    "ok": 10320,
     "pct": 52.2
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando",
-    "n": 14499,
-    "ok": 9837,
+    "n": 14497,
+    "ok": 9833,
     "pct": 67.8
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)",
-    "n": 6898,
-    "ok": 5837,
+    "n": 6896,
+    "ok": 5835,
     "pct": 84.6
    },
    {
     "cat": "de punta a punta | acorde: raíz correcta, calidad no determinable (power chord o una sola nota)",
-    "n": 19789,
-    "ok": 242,
+    "n": 19787,
+    "ok": 244,
     "pct": 1.2
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable",
-    "n": 19547,
-    "ok": 12021,
+    "n": 19543,
+    "ok": 12015,
     "pct": 61.5
    },
    {
     "cat": "de punta a punta | inversión (cruda)",
-    "n": 19789,
-    "ok": 14317,
+    "n": 19787,
+    "ok": 14313,
     "pct": 72.3
    },
    {
     "cat": "de punta a punta | inversión (dado el acorde correcto)",
-    "n": 12021,
-    "ok": 10909,
+    "n": 12015,
+    "ok": 10903,
     "pct": 90.7
    },
    {
     "cat": "de punta a punta | grado (crudo)",
-    "n": 19789,
-    "ok": 11673,
-    "pct": 59
+    "n": 19787,
+    "ok": 11450,
+    "pct": 57.9
    },
    {
     "cat": "de punta a punta | grado (dada la tonalidad correcta)",
-    "n": 15373,
-    "ok": 11208,
-    "pct": 72.9
+    "n": 15371,
+    "ok": 10934,
+    "pct": 71.1
    },
    {
     "cat": "de punta a punta | enarmonía (nota a nota)",
-    "n": 81228,
-    "ok": 80531,
+    "n": 81220,
+    "ok": 80490,
     "pct": 99.1
    },
    {
     "cat": "de punta a punta | enarmonía (tramo con todas las notas bien)",
-    "n": 19789,
-    "ok": 19310,
-    "pct": 97.6
+    "n": 19787,
+    "ok": 19265,
+    "pct": 97.4
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app",
     "n": 21990,
-    "ok": 12021,
-    "pct": 54.7
+    "ok": 12015,
+    "pct": 54.6
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app, sin contar los de calidad no determinable",
-    "n": 21748,
-    "ok": 12021,
+    "n": 21746,
+    "ok": 12015,
     "pct": 55.3
    },
    {
     "cat": "por tramo | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde",
     "n": 5874,
-    "ok": 2641,
+    "ok": 2644,
     "pct": 45
    },
    {
     "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde",
     "n": 5290,
-    "ok": 2184,
-    "pct": 41.3
+    "ok": 2182,
+    "pct": 41.2
    }
   ],
   "rock": [
@@ -1240,16 +1332,28 @@
     "pct": 77
    },
    {
+    "cat": "modulación falsa: de los análisis sin cambio de tonalidad anotado, aquellos en que la app informa uno (menos es mejor)",
+    "n": 321,
+    "ok": 8,
+    "pct": 2.5
+   },
+   {
     "cat": "tónica por región de ≥ 4 acordes (la app recibe la región sola)",
     "n": 589,
     "ok": 444,
     "pct": 75.4
    },
    {
-    "cat": "modulación: de las canciones en que el corpus cambia de tonalidad, las que la app informa como cambio",
+    "cat": "modulación, estricta: de los análisis en que el corpus cambia de tonalidad, aquellos en que una región nueva de la app tiene la tónica de una región nueva anotada y cubre al menos su mitad",
     "n": 61,
-    "ok": 0,
-    "pct": 0
+    "ok": 18,
+    "pct": 29.5
+   },
+   {
+    "cat": "modulación, suplementaria: de los análisis en que el corpus cambia de tonalidad, aquellos en que la app informa algún cambio",
+    "n": 61,
+    "ok": 22,
+    "pct": 36.1
    }
   ]
  },
@@ -1279,7 +1383,7 @@
    "goal": "75 %",
    "test": 73.7,
    "ci95": [
-    68.4,
+    68.6,
     78.7
    ]
   },
@@ -1288,8 +1392,8 @@
    "goal": "56 %",
    "test": 53.3,
    "ci95": [
-    47.3,
-    60.2
+    47.5,
+    60.1
    ]
   },
   {
@@ -1322,19 +1426,19 @@
   {
    "measure": "Enarmonía (tramo con todas las notas bien)",
    "goal": "95 %",
-   "test": 96.7,
+   "test": 95.2,
    "ci95": [
-    95.4,
-    97.5
+    93.7,
+    96.8
    ]
   },
   {
-   "measure": "Modulación: canciones con cambio de tonalidad que la app informa",
-   "goal": "la mitad (50 %)",
-   "test": 0,
+   "measure": "Modulación: análisis con cambio de tonalidad en que la app encuentra la región nueva (medida estricta)",
+   "goal": "una de cada cuatro (25 %; la mitad a largo plazo)",
+   "test": 40,
    "ci95": [
     0,
-    0
+    78.3
    ]
   }
  ],
@@ -1409,7 +1513,7 @@
   {
    "cat": "por tramo | enarmonía (nota a nota)",
    "sig": "G# escrito Ab",
-   "n": 173,
+   "n": 176,
    "example": {
     "phrase": "B065_05_02b",
     "label": "viio/V",
@@ -1452,12 +1556,12 @@
    "sig": "C# escrito Db",
    "n": 155,
    "example": {
-    "phrase": "B068_03_01a",
-    "label": "IV+",
-    "key": "C",
-    "note": "C# (61)",
+    "phrase": "B065_20_01a",
+    "label": "Ib",
+    "key": "D",
+    "note": "C# (85)",
     "app": "Db",
-    "appChord": "C♯maj7♯5/1ª inversión"
+    "appChord": "Em11"
    }
   },
   {
@@ -1479,7 +1583,7 @@
   {
    "cat": "de punta a punta | acorde: raíz + calidad (acepta A o B)",
    "sig": "raíz equivocada: mayor leído con raíz en su 3ª (m)",
-   "n": 411,
+   "n": 409,
    "example": {
     "phrase": "B063_02_01a",
     "mode": "de punta a punta",
