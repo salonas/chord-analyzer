@@ -2,6 +2,7 @@ node_modules/
 dist/
 docs/*
 !docs/TRAZABILIDAD.md
+!docs/HISTORIAL.md
 page.js
 *.b64
 __pycache__/
