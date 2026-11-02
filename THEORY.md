@@ -125,24 +125,20 @@ Rama `feat/broken-accompaniment`, desde `main` (`52a2eea`): 572 de 573; las 3 co
 
 ### Retomar desde main
 
-Punto de partida: `feat/ornament-tones` fusionada en `main`; la sonda da 569 de 570 y queda un solo fallo:
+Punto de partida: `feat/broken-accompaniment` fusionada en `main` (decisiones 9, 10 y 11); la sonda da 574 de 575 y queda un solo fallo:
 
 - C10: F11 (una modulación se lee como una sola tonalidad; hay que decidir cómo se parte la progresión en regiones). Es de otro tamaño: no es un ajuste de pesos.
 
 Corpus externos (detalle, método, intervalos y errores más frecuentes en `src/test/fixtures/theory/corpus/REPORT.md`). Fuentes: TAVERN (CC BY-SA 4.0; 27 obras, 1101 frases, dos anotadores) y Rock Corpus RS 200 (CC BY 4.0; 382 análisis). Los casos no entran al ratchet (`passing.json`).
 
-Cifras del 2 nov 2026, antes → después de la regla de notas de adorno. Desarrollo = 21 obras de TAVERN; prueba = 6 obras, mirada una sola vez, al final. Entre paréntesis, el intervalo de confianza del 95 % (bootstrap por obra); Δ en puntos, pareado por obra.
+Cifras de la etapa del 2 nov 2026 (segmentación y raíz por contexto), antes → después: «antes» es `main` con el evaluador corregido (`965e9d6`), «después» la rama con las decisiones 9, 10 y 11. Desarrollo = 21 obras de TAVERN; prueba = 6 obras, mirada una sola vez, al final. Entre paréntesis, el intervalo de confianza del 95 % (bootstrap por obra); Δ en puntos, pareado por obra (`node tools/paired-eval.mjs <worktree de 965e9d6> [--test]`).
 
-- Acorde por tramo anotado (raíz + calidad, acepta A o B): desarrollo 51,3 % → 67,4 % (Δ +16,1; 13,6 a 19,0); prueba 49,4 % → 67,0 % (63,2–72,2; Δ +17,6; 13,9 a 21,3).
-- Acorde por tramo, nombre exacto sin extensiones: desarrollo 39,0 % → 52,8 %; prueba 35,8 % → 50,6 %.
-- Control (tramos cuyas notas son exactamente las del acorde): desarrollo 97,6 % → 96,9 %; prueba 96,5 % → 95,9 %.
-- **Para revisar la próxima vez que se toque la regla, solo con desarrollo:** sin los pesos de tiempo y bajo, el nombre exacto por tramo baja (52,8 % contra 55,4 % con ellos, en desarrollo).
-- Acorde de punta a punta, contando como fallo los tramos sin acorde de la app: desarrollo 37,2 % → 37,3 %; prueba 39,0 % → 39,0 % (31,8–45,5). **No cambió:** la app ya separa la melodía (`splitHarmony`), así que cada acorde de `harmonySegs` trae solo las notas que suenan al empezar y la regla casi no encuentra adornos que descartar (en desarrollo acierta 10 tramos más de 15 095). La app cubre con un acorde el 68,9 % de los tramos del analista (desarrollo). El 74,8 % que figuraba aquí salía de un error del evaluador, que dejaba fuera las frases sin ningún acorde de la app; con la cuenta corregida, el acorde de punta a punta de `main` en desarrollo es 34,3 %, no 37,3 % (ver la rama `feat/broken-accompaniment`).
-- Inversión, dado el acorde correcto (por tramo): desarrollo 94,3 % → 95,1 %; prueba 95,0 % → 95,4 %.
-- Tonalidad de TAVERN (tónica y modo, por tramo): desarrollo 73,4 % → 78,0 %; prueba 72,4 % → 77,1 % (66,2–88,2). Rock Corpus, solo la tónica: 69,2 % en prueba (55,1–82,3), sin cambio.
-- Enarmonía (tramo con todas las notas bien, por tramo): desarrollo 91,5 % → 91,0 %; prueba 91,0 % → 91,0 %.
-- Función: no comparable (TAVERN la etiqueta por frase). Cadencia: sin corpus. Modulación: 0 de 61 canciones del Rock Corpus; la app no informa cambios de tonalidad.
-- Lo que más falla ahora (desarrollo, por tramo): la enarmonía de notas alteradas (G♯ escrito A♭, 542 veces; C♯ escrito D♭, 523), maj7 donde el corpus tiene una tríada mayor (379), tramos de una sola clase de altura sin acorde (323) y raíz equivocada con una nota ajena al acorde (302 y 178).
+- Acorde de punta a punta (raíz + calidad, acepta A o B; los tramos sin acorde de la app cuentan como fallo): desarrollo 34,3 % (30,5–37,9) → 53,2 % (50,1–55,9), Δ +18,9 (15,5 a 22,6); prueba 33,6 % (28,6–40,5) → 49,0 % (41,6–55,9), Δ +15,4 (11,4 a 18,3). Por regla, en desarrollo: decisión 9 +10,8, decisión 10 +3,1, decisión 11 +5,0 (Δ medidos uno tras otro; ver las ramas en Estado).
+- Tramos del analista cubiertos por un acorde de la app: desarrollo 68,9 % → 87,7 % (Δ 14,4 a 24,0); prueba 68,3 % → 85,4 % (Δ 5,6 a 27,6).
+- Cortes del analista que la app también corta: desarrollo 58,7 % → 88,5 %; prueba 60,8 % → 91,3 % (Δ 18,0 a 41,0).
+- Tonalidad de punta a punta (tónica y modo): desarrollo 70,7 % → 76,2 % (Δ 2,3 a 9,0); prueba 69,4 % → 72,1 % (Δ −3,5 a 9,8).
+- Lo que costó, sobre los tramos cubiertos, que ahora son más: enarmonía del tramo completo, desarrollo 98,3 % → 96,5 % (Δ −2,6 a −0,5), prueba 99,2 % → 96,3 % (Δ −4,3 a −1,1); inversión dado el acorde correcto, desarrollo 90,1 % → 90,4 % (Δ −0,9 a 1,4), prueba 92,4 % → 89,7 % (Δ −5,4 a −0,3). La de prueba es la única fila de la etapa que baja en prueba sin bajar en desarrollo; con 6 obras, mirarla de nuevo en la próxima etapa antes de atribuirla a una regla.
+- Las filas por tramo anotado (la app recibe los cortes del analista) no cambian: acorde 67,4 % en desarrollo y 67,0 % en prueba.
 
 Conjunto de prueba: nunca se usa para ajustar reglas. Se separan obras completas de TAVERN (6 de 27: B066, B075, B080, Opus76, K354 y K573; 290 de 1101 frases) y canciones completas del Rock Corpus (40 de 198; 78 de 382 análisis) por un hash fijo de su nombre (`split.json`, regla en `src/test/corpus-eval.js`). Las reglas se ajustan y los errores se analizan solo con el desarrollo; las metas se miden en la prueba. Con 6 obras, el intervalo del acorde por tramo en la prueba abarca unos 9 puntos y el de la tonalidad unos 22; aun así es optimista, porque no ve la variación de obras que no conoce.
 
@@ -151,18 +147,20 @@ Metas acordadas con Joaquín (2026-11-01), medidas en el conjunto de prueba, con
 | Medida | Meta | Hoy (prueba, IC 95 %) |
 |---|---|---|
 | Acorde por tramo anotado (raíz + calidad, acepta A o B) | 80 % | 67,0 % (63,2–72,2) |
-| Acorde de punta a punta (los tramos sin acorde de la app cuentan como fallo) | 70 % | 39,0 % (31,8–45,5) |
+| Acorde de punta a punta (los tramos sin acorde de la app cuentan como fallo) | 70 % | 49,0 % (41,6–55,9) |
 | Inversión, dado el acorde correcto | ≥ 94 % | 95,4 % (92,7–97,2; ya cumple) |
 | Tonalidad de TAVERN (tónica y modo) | 85 % | 77,1 % (66,2–88,2) |
 | Tónica del Rock Corpus, sin aceptar la relativa | 82 % | 69,2 % (55,1–82,3) |
 | Enarmonía (tramo con todas las notas bien) | 95 % | 91,0 % (88,1–94,7) |
 | Modulación: canciones del Rock Corpus con cambio de tonalidad que la app informa | la mitad | 0 de 15 |
 
-La fila de punta a punta (39,0 %) se calculó con el evaluador que dejaba fuera las frases sin ningún acorde de la app; la cobertura de esa fila es 68,9 % en desarrollo, no 74,8 %. La base corregida de prueba se calcula en la mirada final, junto al después.
-
 Cómo se leyeron las metas ambiguas: «acorde de punta a punta» es la versión que cuenta como fallo los tramos sin acorde de la app; «enarmonía» es por tramo completo, no nota a nota; «inversión» se mide por tramo anotado; la modulación cuenta las canciones donde el corpus cambia de tonalidad. Función y cadencia no tienen meta: sin corpus comparable.
 
-Lo siguiente para el acorde: la **segmentación** de punta a punta (cobertura del 68,9 % en desarrollo, con la cuenta corregida) y la **raíz por contexto** (los fallos de raíz equivocada y las notas sueltas piden mirar los acordes vecinos). La regla de notas de adorno sola llega a ~67 % por tramo. Queda medida, y fuera de esta rama, la variante en que el análisis de la app ve todas las notas que suenan durante el acorde, melodía incluida: con los pesos anteriores daba +3,0 puntos de punta a punta en desarrollo (49,7 % → 52,7 %), pero cambia qué notas forman el acorde en la app y bajaba la enarmonía de punta a punta de 98,3 % a 84,7 %.
+**¿Es alcanzable el 70 % de punta a punta?** No con la lectura de hoy, y no en la próxima etapa. La cuenta, en desarrollo: con los cortes del analista la app acierta el 67,4 % de los tramos (fila por tramo), así que una segmentación perfecta con la lectura actual quedaría cerca de 67 %, bajo la meta. De punta a punta conserva hoy 53,2 / 67,4 = 0,79 de esa lectura (en prueba, 49,0 / 67,0 = 0,73). Para llegar a 70 % hacen falta las dos cosas: con la meta por tramo cumplida (80 %), conservar 70 / 80 = 0,875 de la lectura; o, conservando 0,79, leer 70 / 0,79 = 88,6 % por tramo, cerca del acuerdo entre los dos anotadores (92,0 % en raíz + calidad), que es el techo. Es una cota aproximada (la lectura de punta a punta no es exactamente la por tramo sobre otros cortes), pero dice dónde está el trabajo: primero la lectura por tramo (raíz equivocada con nota ajena, maj7 por tríada, tramos de una clase de altura), después la segmentación. Una meta intermedia razonable para la próxima etapa es ~60 % de punta a punta en desarrollo.
+
+Lo siguiente para el acorde, solo con desarrollo: la **lectura por tramo** (meta 80 %; los errores más frecuentes están en `REPORT.md`) y, para la segmentación, los cortes de la app que el analista no hace (69,4 % de los cortes de la app coinciden, sin cambio en la etapa). La rejilla pura, sin la segmentación por ataques, daba 50,2 % en desarrollo antes de las decisiones 10 y 11; falta medirla de nuevo y contra la sonda. `tools/context-sim.mjs` y `tools/segment-sim.mjs` guardan las simulaciones de la etapa (su «base» es el `harmonySegs` actual).
+
+**Para revisar la próxima vez que se toque la regla de adornos (decisión 8), solo con desarrollo:** sin los pesos de tiempo y bajo, el nombre exacto por tramo baja (52,8 % contra 55,4 % con ellos, en desarrollo).
 
 Límite conocido de la regla de acompañamiento (decisión 9), para la próxima etapa: un bajo en octavas con una sola nota de melodía por tiempo deja 2 clases de altura por tiempo y sigue sin acorde. Leerlo pide decidir cuándo un bajo y una nota bastan para nombrar un acorde (C y E pueden ser C o Am sin quinta); medirlo solo con desarrollo.
 
