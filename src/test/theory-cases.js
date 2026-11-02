@@ -62,6 +62,10 @@ const chordCases = [
   ['A41', 3, 'Séptima 7♯11 sin 5ª (ambigua con 7♭5)', 'C3 E3 Bb3 F#4', ['C7♯11', 'C7♭5']],
   ['A42', 3, 'Mayor con 7ª menor y 6ª (13 sin 9)', 'C3 E3 Bb3 A4', ['C13', 'C7(13)', 'C7/6']],
   ['A43', 3, 'Dominante alterado (7♯5♯9)', 'C3 E3 Bb3 D#4 G#4', ['C7♯5♯9', 'C7alt', 'C+7♯9']],
+  ['A46', 3, 'Dominante alterado 7♭5♭9', 'C3 E3 Gb3 Bb3 Db4', ['C7♭5♭9', 'C7alt']],
+  ['A47', 3, 'Dominante alterado 7♯5♭9', 'C3 E3 G#3 Bb3 Db4', ['C7♯5♭9', 'C7alt', 'C+7♭9']],
+  ['A48', 3, 'Séptima con 9ª menor y 11ª aumentada', 'C3 E3 G3 Bb3 Db4 F#4', ['C7♭9♯11']],
+  ['A49', 3, 'Trecena con 9ª menor', 'C3 E3 G3 Bb3 Db4 A4', ['C13♭9']],
   ['A44', 1, 'Nota sola', 'C4', 'C4'],
   ['A45', 1, 'Octava', 'C4 C5', ['C', 'C (8ª)', 'C4+C5', 'C–C']],
   ['A46', 2, 'Díada de 3ª mayor', 'C4 E4', ['C–E', 'C(no5)', 'C']],
@@ -238,6 +242,7 @@ prog('G11', 2, 'Plagal menor iv–I en mayor', ['C3 E3 G3', 'F3 Ab3 C4', 'C3 E3 
 prog('G12', 2, 'V/V–V: Sol mayor auténtica o Do mayor semicadencia', ['C3 E3 G3', 'D3 F#3 A3 C4', 'G2 B2 D3'], { key: ['C mayor', 'G mayor'], cad: { has: ['Semicadencia', 'auténtica'] } });
 prog('G13', 3, 'Cadencia en menor: el texto usa mayúsculas (V → I)', ['A2 C3 E3', 'E2 G#2 B2 D3', 'A2 C3 E3'], { key: 'A menor', cad: { has: ['V → i', '(V → i)'] } });
 
+prog('G14', 2, 'Cadencia ♭VII → i en menor: sin «backdoor / mixolidia»', ['D3 F3 A3', 'G2 B2 D3', 'C3 E3 G3', 'D3 F3 A3'], { key: 'D menor', cad: { has: '♭VII → i', not: 'backdoor' } });
 prog('H01', 1, 'Pop I–V–vi–IV', ['C3 E3 G3', 'G2 B2 D3', 'A2 C3 E3', 'F2 A2 C3'], { found: ['I–V–vi–IV'] });
 prog('H02', 1, 'Doo-wop I–vi–IV–V', ['C3 E3 G3', 'A2 C3 E3', 'F2 A2 C3', 'G2 B2 D3'], { found: ['Años 50'] });
 prog('H03', 2, '12 compases de blues', ['C3 E3 G3 Bb3', 'C3 E3 G3 Bb3', 'C3 E3 G3 Bb3', 'C3 E3 G3 Bb3', 'F3 A3 C4 Eb4', 'F3 A3 C4 Eb4', 'C3 E3 G3 Bb3', 'C3 E3 G3 Bb3', 'G2 B2 D3 F3', 'F3 A3 C4 Eb4', 'C3 E3 G3 Bb3', 'C3 E3 G3 Bb3'], { key: 'C mayor', found: ['Blues de 12 compases'] });
@@ -269,8 +274,8 @@ for (const c of progCases) {
   if (ch.cad) {
     const cd = ch.cad; let ok, exp;
     if (cd.none) { ok = !o.cad; exp = '(ninguna)'; }
-    else if (cd.not) { ok = !o.cad.includes(cd.not); exp = `no "${cd.not}"`; }
-    else { const hs = Array.isArray(cd.has) ? cd.has : [cd.has]; ok = hs.some(h => o.cad.includes(h)); exp = hs.join(' | '); }
+    else if (cd.not && !cd.has) { ok = !o.cad.includes(cd.not); exp = `no "${cd.not}"`; }
+    else { const hs = Array.isArray(cd.has) ? cd.has : [cd.has]; ok = hs.some(h => o.cad.includes(h)) && !(cd.not && o.cad.includes(cd.not)); exp = hs.join(' | ') + (cd.not ? ` sin "${cd.not}"` : ''); }
     add('cadencia', c.id, c.level, head, exp, o.cad || '(ninguna)', ok, c.ref);
   }
   if (ch.found) {

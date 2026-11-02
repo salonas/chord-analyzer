@@ -56,11 +56,17 @@ const TYPES=[
  ['7♯11', '', 'séptima con 11ª aumentada', 'seventh sharp eleven', '1 3 5 b7 #11', .7],
  ['9♯11', '', 'novena con 11ª aumentada', 'ninth sharp eleven', '1 3 5 b7 9 #11', .8],
  ['maj7♯11', 'Δ7♯11', 'séptima mayor con 11ª aumentada', 'major seventh sharp eleven', '1 3 5 7 #11', .7],
+ ['maj9♯11', 'Δ9♯11', 'novena mayor con 11ª aumentada', 'major ninth sharp eleven', '1 3 5 7 9 #11', .8],
  ['13', '', 'trecena', 'thirteenth', '1 3 5 b7 9 13', .6],
  ['m13', '', 'menor trecena', 'minor thirteenth', '1 b3 5 b7 9 13', .7],
  ['maj13', 'Δ13', 'trecena mayor', 'major thirteenth', '1 3 5 7 9 13', .75],
  ['7♭13', '', 'séptima con 13ª menor', 'seventh flat thirteen', '1 3 5 b7 b13', .8],
  ['13♯11', '', 'trecena con 11ª aumentada', 'thirteenth sharp eleven', '1 3 5 b7 9 #11 13', .85],
+ ['7♯5♯9', '+7♯9', 'séptima con 5ª y 9ª aumentadas', 'seventh sharp five sharp nine', '1 3 #5 b7 #9', .85],
+ ['7♭5♭9', '', 'séptima con 5ª disminuida y 9ª menor', 'seventh flat five flat nine', '1 3 b5 b7 b9', .85],
+ ['7♯5♭9', '+7♭9', 'séptima con 5ª aumentada y 9ª menor', 'seventh sharp five flat nine', '1 3 #5 b7 b9', .85],
+ ['7♭9♯11', '', 'séptima con 9ª menor y 11ª aumentada', 'seventh flat nine sharp eleven', '1 3 5 b7 b9 #11', .85],
+ ['13♭9', '', 'trecena con 9ª menor', 'thirteenth flat nine', '1 3 5 b7 b9 13', .85],
  ['7(no3)', '', 'séptima sin 3ª', 'seventh no third', '1 5 b7', .9],
 ].map(([sym,alt,es,en,f,rank])=>{
   const degs=f.split(' ').map(parseDeg);
