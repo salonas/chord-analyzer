@@ -382,6 +382,12 @@ mc('J32', 3, 'F♯ sobre C es ♯11', [['C3 E3 G3', 4]], [['E4', 0, 1], ['F#4', 
 // the ornament rule through the app's own chords: a 7th struck with the chord for a sixteenth does not make it a seventh chord
 mc('J33', 2, 'B3 breve atacado con C (adorno): el acorde es C', [['C3 E3 G3', 4]], [['B3', 0, .25]], { chords: ['C'] });
 mc('J34', 1, 'B3 que dura lo mismo que C: el acorde es Cmaj7', [['C3 E3 G3 B3', 4]], [], { chords: ['Cmaj7'] });
+// broken accompaniment under a tune: where no chord starts, the stretch is read beat by beat (three or more pitch classes, two sounding together)
+mc('J35', 2, 'Bajo Alberti en la izquierda con melodía encima: forma acordes', [], [['C3', 0, .5], ['G3', 0.5, .5], ['E3', 1, .5], ['G3', 1.5, .5], ['C3', 2, .5], ['G3', 2.5, .5], ['E3', 3, .5], ['G3', 3.5, .5], ['G2', 4, .5], ['D3', 4.5, .5], ['B2', 5, .5], ['D3', 5.5, .5], ['G2', 6, .5], ['D3', 6.5, .5], ['B2', 7, .5], ['D3', 7.5, .5], ['E5', 0, 2], ['G5', 2, 2], ['D5', 4, 2], ['B4', 6, 2]], { chords: ['C', 'G'], melody: ['E5', 'G5', 'D5', 'B4'] });
+mc('J36', 2, 'Bajo en octavas con melodía en corcheas encima: forma acordes', [], [['C2', 0, 4], ['C3', 0, 4], ['E4', 0, .5], ['G4', 0.5, .5], ['G4', 1, .5], ['E4', 1.5, .5], ['E4', 2, .5], ['G4', 2.5, .5], ['G4', 3, .5], ['E4', 3.5, .5], ['G2', 4, 4], ['G3', 4, 4], ['B3', 4, .5], ['D4', 4.5, .5], ['D4', 5, .5], ['B3', 5.5, .5], ['B3', 6, .5], ['D4', 6.5, .5], ['D4', 7, .5], ['B3', 7.5, .5]], { chords: ['C', 'G'] });
+// a struck chord that goes on after its notes stop is read again where the broken accompaniment goes on; a chord that still sounds is not
+mc('J37', 2, 'C atacado una vez y después bajo Alberti en G con melodía: el C no sigue sonando', [], [['C3', 0, 1], ['E3', 0, 1], ['G3', 0, 1], ['E5', 0, 1], ['G2', 1, .5], ['D3', 1.5, .5], ['B2', 2, .5], ['D3', 2.5, .5], ['G2', 3, .5], ['D3', 3.5, .5], ['D5', 1, 2], ['B4', 3, 1]], { chords: ['C', 'G'] });
+mc('J38', 2, 'C sostenido cuatro tiempos con melodía en corcheas que arpegia otro acorde: sigue siendo C', [['C3 E3 G3', 4]], [['F4', 0, .5], ['A4', .5, .5], ['D5', 1, .5], ['B4', 1.5, .5], ['F4', 2, .5], ['A4', 2.5, .5], ['D5', 3, .5], ['B4', 3.5, .5]], { chords: ['C'] });
 
 for (const c of melCases) {
   const p = pat(c.id, c.chords, c.mel);

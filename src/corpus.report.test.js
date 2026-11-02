@@ -63,9 +63,9 @@ Se separan obras completas (TAVERN) y canciones completas (Rock Corpus), una de 
 |---|---|---|---|---|---|
 ${G.map(([n, m, v, goal, c, ci]) => `| ${n} | ${m} | ${v === null ? 'sin datos' : v + ' %'} | ${ci ? `${ci[0]}–${ci[1]} %` : 'sin datos'} | ${ok(v, goal)} | ${c} |`).join('\n')}
 
-## Antes y después de la regla de notas de adorno
+## Antes y después de las reglas que leen el tiempo y la melodía
 
-«Antes» es la misma evaluación con los pasos sin el inicio y la duración de sus notas, como leía la app hasta el 2026-11-01; «después», con ellos (la regla de \`THEORY.md\`). Δ en puntos, con su IC 95 % pareado: cada remuestreo toma las mismas obras en los dos lados. La regla se fijó mirando solo desarrollo; la prueba se miró una vez, al final.
+«Antes» es la misma evaluación con los pasos sin el inicio y la duración de sus notas y sin las notas de la melodía, como los leía la app hasta el 2026-11-01; «después», con ellos (decisiones 8 y 11 de \`THEORY.md\`). La segmentación de la app (decisiones 9 y 10) es la misma en los dos lados, así que esta tabla no mide la de punta a punta de la etapa: esa comparación, contra la base corregida \`965e9d6\`, está en \`THEORY.md\`. Δ en puntos, con su IC 95 % pareado: cada remuestreo toma las mismas obras en los dos lados. La regla se fijó mirando solo desarrollo; la prueba se miró una vez, al final.
 
 | Medida | Desarrollo antes | Desarrollo después | Δ desarrollo | Prueba antes | Prueba después | Δ prueba |
 |---|---|---|---|---|---|---|

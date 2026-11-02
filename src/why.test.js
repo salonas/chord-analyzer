@@ -1,5 +1,5 @@
 import { TYPES } from './data.js';
-import { analyze, analyzeProgression, bookends, ornamentText, rankHelp, resolveStep, scoreDetail } from './analysis.js';
+import { analyze, analyzeProgression, bookends, melodyText, ornamentText, rankHelp, resolveStep, scoreDetail } from './analysis.js';
 import { setLang } from './i18n.js';
 import { PREFS } from './test/helpers.js';
 
@@ -12,8 +12,8 @@ const why = (chords, durs) => run(chords, durs).why;
 describe('row 5: the points of a candidate name', () => {
   const cand = (notes, root, sym, locked = null) => analyze(notes, locked).find(c => c.root === root && c.type.sym === sym);
   it('writes the rule of the order from the constants', () => {
-    expect(rankHelp()).toBe('Se ordenan por puntos y gana el menor: +3 si el bajo no es la fundamental, +2 por nota omitida, de 0 a 0,9 según el tipo (más raro, más puntos); la raíz que eliges resta 10.');
-    expect(inEnglish(rankHelp)).toBe('They are ordered by points and the lowest wins: +3 if the bass is not the root, +2 per omitted note, 0 to 0.9 by type (the rarer, the more points); the root you choose subtracts 10.');
+    expect(rankHelp()).toBe('Se ordenan por puntos y gana el menor: +3 si el bajo no es la fundamental, +2 por nota omitida, de 0 a 0,9 según el tipo (más raro, más puntos); la raíz que eliges resta 10. En la franja también cuentan la melodía y el contexto: −1 si va a su acorde siguiente como V → I, +1 si queda fuera de la tonalidad, −0,5 si llega desde su dominante.');
+    expect(inEnglish(rankHelp)).toBe('They are ordered by points and the lowest wins: +3 if the bass is not the root, +2 per omitted note, 0 to 0.9 by type (the rarer, the more points); the root you choose subtracts 10. In the lane, the melody and the context count too: −1 if it goes to the next chord as V → I, +1 if it falls outside the key, −0.5 if it arrives from its dominant.');
   });
   it('gives the type its rank and nothing else for a chord with its bass and all its notes', () => {
     expect(scoreDetail(cand([48, 52, 55, 58], 0, '7'))).toBe('0,2 tipo = 0,2');
@@ -113,5 +113,35 @@ describe('ornaments in words', () => {
     const r = resolveStep({ notes: step.notes }, PREFS);
     expect(r.label).toBe('Cmaj7');
     expect(ornamentText(r.orn, r.spelled, PREFS)).toBe('');
+  });
+});
+
+// Root by context (readWithMelody): a lane chord under a tune may take notes of the tune, and its neighbours weigh on it
+describe('row 5: a lane chord read with the tune and its neighbours', () => {
+  const step = (harm, tune, a = 0, dur = 384) => ({ notes: harm, dur, a, evs: harm.map(m => ({ m, s: a, l: dur })), all: [...harm, ...tune].map(m => ({ m, s: a, l: dur })) });
+  it('a note of the tune completes the chord, and the step still spells its own notes', () => {
+    const r = resolveStep(step([48, 64], [67]), PREFS);
+    expect([r.label, r.mel, r.spelled.map(n => n.midi)]).toEqual(['C', [67], [48, 64]]);
+    expect(melodyText(r.mel, r.sp, PREFS)).toBe('G (en la melodía) completa el acorde');
+    expect(inEnglish(() => melodyText(r.mel, r.sp, PREFS))).toBe('G (in the melody) completes the chord');
+  });
+  it('names two notes of the tune in the plural', () => {
+    expect(melodyText([47, 50], { byPc: { 11: { l: 6, a: 0 }, 2: { l: 1, a: 0 } } }, PREFS)).toBe('B y D (en la melodía) completan el acorde');
+    expect(inEnglish(() => melodyText([47, 50], { byPc: { 11: { l: 6, a: 0 }, 2: { l: 1, a: 0 } } }, PREFS))).toBe('B and D (in the melody) complete the chord');
+  });
+  it('a tune that would make another chord with more notes stays out of the name', () => {
+    expect(resolveStep(step([48, 52, 55], [53, 57, 62, 59]), PREFS).label).toBe('C');
+  });
+  it('the context terms go in the tooltip of the points', () => {
+    const A = analyzeProgression([step([43, 47, 50], []), step([48, 52, 55], [], 384)], PREFS);
+    expect(scoreDetail(A.rs[0].c)).toBe('0 tipo = 0 · contexto: −1 va al acorde siguiente (V → I)');
+    expect(inEnglish(() => scoreDetail(A.rs[0].c))).toBe('0 type = 0 · context: −1 goes to the next chord (V → I)');
+    expect(scoreDetail(A.rs[1].c)).toBe('0 tipo = 0 · contexto: −0,5 llega desde su dominante');
+    expect(inEnglish(() => scoreDetail(A.rs[1].c))).toBe('0 type = 0 · context: −0.5 arrives from its dominant');
+  });
+  it('a reading off the key costs one more', () => {
+    const A = analyzeProgression([step([48, 52, 55], []), step([53, 57, 60], [], 384), step([51, 55, 58], [], 768), step([43, 47, 50], [], 1152), step([48, 52, 55], [], 1536)], PREFS);
+    expect(scoreDetail(A.rs[2].c)).toBe('0 tipo = 0 · contexto: +1 fuera de la tonalidad');
+    expect(inEnglish(() => scoreDetail(A.rs[2].c))).toBe('0 type = 0 · context: +1 outside the key');
   });
 });

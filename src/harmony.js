@@ -2,7 +2,7 @@
 // Heuristics from the rules the user wrote down (session 14), not measurements.
 import { T, sigOf } from './data.js';
 import { isBlock, isMulti, progEnd, segs } from './model.js';
-import { analyze } from './analysis.js';
+import { analyze, resolveStep } from './analysis.js';
 
 const TOL=Math.round(.05*T); // notes that start within ±0.05 beats start together
 const SHORT=T/2;             // a passing bass lasts half a beat or less
@@ -98,6 +98,61 @@ function arpeggioChords(p){
   return null;
 }
 
+// A broken accompaniment under a tune (an Alberti bass, a bass in octaves): where no chord has started, the stretch is read
+// beat by beat with every note that sounds, and the timing of the notes tells ornaments from chord tones (decision 8).
+// A stretch makes a chord only when it holds three or more pitch classes and one note sounds within another of a different
+// pitch class (one voice holds while another moves, or both start and end together), so a tune or a scale on its own,
+// legato too, and two short notes stay notes. A beat short of that joins the chord before it when its
+// notes belong to that chord (the other half of an Alberti figure), or else gathers the next beats, up to a bar, until it
+// makes one. Neighbours with the same reading merge. The notes keep their roles; own holds the ones under the top voice,
+// so that deleting the chord leaves the tune.
+const NAMING={naming:'letters',accPref:'auto',octConv:'sci',midiShift:0};
+function gridChords(ns,a,b){
+  const sounding=(x,y)=>ns.filter(n=>n.s<y&&n.s+n.l>x), pcsOf=on=>new Set(on.map(n=>n.m%12));
+  const makes=on=>pcsOf(on).size>=3&&on.some(n=>on.some(o=>o!==n&&o.m%12!==n.m%12&&o.s>=n.s-TOL&&o.s+o.l<=n.s+n.l+TOL));
+  const read=(x,y)=>{
+    const on=sounding(x,y), notes=[...new Set(on.map(n=>n.m))].sort((u,v)=>u-v);
+    const c=resolveStep({notes,dur:y-x,a:x,evs:on.map(n=>({m:n.m,s:n.s,l:n.l}))},NAMING).c;
+    return c?{k:c.root+c.type.sym,pcs:new Set(c.type.degs.map(d=>(d.pc+c.root)%12))}:{k:null,pcs:new Set()};
+  };
+  const out=[]; let w=null;
+  for(let t=Math.floor(a/T)*T;t<b;t+=T){
+    const x=Math.max(a,t), y=Math.min(b,t+T), on=sounding(x,y), prev=out[out.length-1];
+    if(!on.length){ w=null; continue; }
+    if(!w&&!makes(on)&&prev&&prev.b===x&&[...pcsOf(on)].every(pc=>prev.pcs.has(pc))){ prev.b=y; continue; }
+    w=w||{a:x}; w.b=y;
+    if(makes(sounding(w.a,w.b))){
+      const r=read(w.a,w.b);
+      if(prev&&prev.b===w.a&&prev.k===r.k) prev.b=w.b; else out.push({a:w.a,b:w.b,...r});
+      w=null;
+    } else if(w.b-w.a>=4*T) w=null;
+  }
+  return out.map(g=>{
+    const notes=[...new Set(sounding(g.a,g.b).map(n=>n.m))].sort((u,v)=>u-v);
+    const own=new Set(ns.filter(n=>n.s>=g.a&&n.s<g.b&&ns.some(o=>o!==n&&o.s<=n.s+TOL&&o.s+o.l>n.s&&o.m>n.m)).map(n=>n.id));
+    return {a:g.a,b:g.b,notes,pcs:new Set(notes.map(m=>m%12)),bass:[{m:notes[0],s:g.a}],adds:[],own};
+  });
+}
+
+// A struck chord longer than two beats that goes on after its notes stop (the accompaniment broke into a figure and no
+// chord was struck again) is read again beat by beat as a broken accompaniment (gridChords), but only where half or more
+// of the pitch classes struck with it no longer sound: a chord held under a tune, or over a passing bass, stays one chord.
+// The beats left keep the old chord.
+const LONG=2*T;
+function staleChord(ns,c,role){
+  if(c.b-c.a<=LONG) return [c];
+  const own=ns.filter(n=>role.get(n.id)!=='mel'&&n.s>=c.a-TOL&&n.s<c.b-TOL), pcs=[...new Set(c.notes.map(m=>m%12))];
+  const gone=g=>2*pcs.filter(pc=>!own.some(n=>n.m%12===pc&&n.s<g.b&&n.s+n.l>g.a)).length>=pcs.length;
+  const G=gridChords(ns,c.a,c.b).filter(gone);
+  if(!G.length) return [c];
+  const piece=(a,b)=>{ const bass=c.bass.filter(x=>x.s>=a-TOL&&x.s<b);
+    return {...c,a,b,pcs:new Set(c.pcs),bass:bass.length?bass:[{m:c.notes[0],s:a}],adds:c.adds.filter(x=>x.s>=a-TOL&&x.s<b)}; };
+  const out=[]; let t=c.a;
+  for(const g of G){ if(g.a>t) out.push(piece(t,g.a)); out.push(g); t=g.b; }
+  if(t<c.b) out.push(piece(t,c.b));
+  return out;
+}
+
 // Chords change when the pitch classes above the bass change, the bass changes, or the whole chord is struck again.
 // Returns {chords:[{a,b,notes,bass:[{m,s,pass}],adds:[{m,s}]}], mel:[{notes:[...],s,l}]} in ticks.
 function splitHarmony(p){
@@ -155,7 +210,15 @@ function splitHarmony(p){
     if(r==='inner'){ if(c&&!c.notes.includes(n.m)&&!c.adds.some(x=>x.m===n.m)) c.adds.push({m:n.m,s:n.s}); else if(!c) role.set(n.id,'mel'); }
     if(r==='pass'){ if(c) c.bass.push({m:n.m,s:n.s,pass:true}); else role.set(n.id,'mel'); }
   });
+  // after the one-voice arpeggio (arpeggioChords, above) and the struck chords: the stretch before the first chord, or the
+  // whole pattern when none started, may be a broken accompaniment
+  const first=chords.length?chords[0].a:progEnd(p);
+  chords.splice(0,chords.length,...chords.flatMap(c=>staleChord(ns,c,role)));
+  if(ns.length&&first>ns[0].s) chords.unshift(...gridChords(ns,ns[0].s,first));
   chords.forEach(c=>{
+    // a chord with the tune around it: its name may take notes of the tune (readWithMelody); plain blocks (decision 2) and the
+    // one-voice arpeggio do not
+    c.withMel=true;
     c.bass.sort((x,y)=>x.s-y.s);
     c.bass=c.bass.filter((x,i,a)=>i===0||x.pass||a[i-1].pass||x.m!==a[i-1].m);
     c.adds.sort((x,y)=>x.s-y.s||x.m-y.m);
@@ -173,8 +236,8 @@ function splitHarmony(p){
 // ids are the chord's own notes (not the tune), so deleting a chord leaves the melody
 function harmonySegs(p){
   const H=splitHarmony(p);
-  return H.chords.map(c=>({a:c.a,b:c.b,notes:c.notes,sig:sigOf(c.notes),
-    ids:new Set(p.notes.filter(n=>H.role.get(n.id)!=='mel'&&n.s>=c.a-TOL&&n.s<c.b-TOL).map(n=>n.id))}));
+  return H.chords.map(c=>({a:c.a,b:c.b,notes:c.notes,sig:sigOf(c.notes),...(c.withMel&&{withMel:true}),
+    ids:c.own||new Set(p.notes.filter(n=>H.role.get(n.id)!=='mel'&&n.s>=c.a-TOL&&n.s<c.b-TOL).map(n=>n.id))}));
 }
 
-export { arpeggioChords, blockMelody, harmonySegs, noteRoles, splitHarmony };
+export { arpeggioChords, blockMelody, gridChords, harmonySegs, noteRoles, splitHarmony };

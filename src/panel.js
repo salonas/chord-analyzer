@@ -1,6 +1,6 @@
 // What the inspector says about the active chord, as pure functions so that each label has a rule and a test.
 import { freq } from './data.js';
-import { analyze, inversionText, noteText, plainSpell, spellCandidate } from './analysis.js';
+import { analyze, inversionText, letterName, noteText, plainSpell, spellCandidate } from './analysis.js';
 import { tr } from './i18n.js';
 
 // The notes of the active chord and their spelling: a chord taken from the progression is spelled in the key the lane
@@ -37,8 +37,11 @@ function intervalText(lo,hi,a,b){
 // leaves out); the readings with every note stay below as alternatives: the rule orders the names, it does not take any away.
 // When the user named the chord with all its notes (after), the reading without the ornaments goes last instead.
 // A root you choose is your reading, so the list is then the plain one
-function activeCands(notes,lockedRoot,orn,after){
+function activeCands(notes,lockedRoot,orn,after,lane){
   const all=analyze(notes,lockedRoot);
+  // a lane chord whose name takes notes of the tune or weighed its neighbours (readWithMelody) goes first as the lane reads it;
+  // the readings of the chord's own notes stay below, C(no5) under the C the tune completes too
+  if(lane&&(lane.mel||lane.ctx)&&lockedRoot==null) return [{...lane,...(orn&&orn.length&&{orn})},...all.filter(c=>c.root!==lane.root||c.type.sym!==lane.type.sym||c.missing.length!==lane.missing.length)];
   if(!orn||!orn.length||lockedRoot!=null) return all;
   const top=analyze(notes.filter(m=>!orn.includes(m)),null)[0];
   if(!top) return all;
@@ -49,7 +52,8 @@ function activeCands(notes,lockedRoot,orn,after){
 function candTags(c,csp,lockedRoot,prefs){
   const t=[];
   if(c.orn) t.push({text:(c.orn.length>1?tr('Adornos','Ornaments'):tr('Adorno','Ornament'))+': '+c.orn.map(m=>noteText(csp.notes.find(n=>n.midi===m),prefs)).join(', ')});
-  if(!c.missing.length&&!c.slash&&!c.orn) t.push({exact:true,text:tr('coincidencia exacta','exact match')});
+  if(c.mel) t.push({text:tr('Con la melodía','With the melody')+': '+[...new Set(c.mel.map(m=>m%12))].map(pc=>letterName(csp.byPc[pc].l,csp.byPc[pc].a,prefs)).join(', ')});
+  if(!c.missing.length&&!c.slash&&!c.orn&&!c.mel) t.push({exact:true,text:tr('coincidencia exacta','exact match')});
   if(!c.slash) t.push({text:tr('bajo = fundamental','bass is the root')});
   if(c.missing.length) t.push({text:`${tr('sin','no')} ${c.missing.map(d=>d.label).join(', ')}`});
   if(c.slash) t.push({text:inversionText(c)});
@@ -87,8 +91,13 @@ function warningText(w,nm,ref){
   }
 }
 
-// What the empty sheet says when a pattern has notes but no chord; each clause is a rule of harmony.js (splitHarmony, arpeggioChords)
-const emptySheetText=()=>tr('Solo melodía: ningún acorde. Un acorde empieza con tres notas a la vez, con dos si las dos duran un tiempo o más, o con un arpegio: una sola voz que salta entre tres o más notas de un acorde, por medio compás o por compás.',
-  'Melody only: no chord. A chord starts with three notes at once, or with two if both last a beat or more, or with an arpeggio: a single voice that leaps between three or more notes of a chord, by half a bar or by the bar.');
+// What the empty sheet says when a pattern has notes but no chord: a head and one item per rule of harmony.js
+// (splitHarmony, arpeggioChords, gridChords)
+const emptySheetText=()=>({
+  head:tr('Solo melodía: no hay acordes. La app arma un acorde cuando hay:','Melody only: no chords. The app builds a chord when there are:'),
+  items:[tr('tres notas a la vez','three notes at once'),
+    tr('dos notas a la vez que duran un tiempo o más','two notes at once that last a beat or more'),
+    tr('un arpegio: una sola voz que salta entre tres o más notas de un acorde','an arpeggio: a single voice leaping between three or more notes of a chord'),
+    tr('un acompañamiento: tres o más notas distintas en un tiempo mientras otra voz se sostiene','an accompaniment: three or more different notes in a beat while another voice holds')]});
 
 export { LIMITS, MUDDY, activeCands, candTags, chordWarnings, emptySheetText, intervalText, spellActive, warningText };

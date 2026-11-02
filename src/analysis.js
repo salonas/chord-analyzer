@@ -114,6 +114,52 @@ function readOrnaments(notes,evs,a,dur){
   }
   return best;
 }
+// Root by context: a chord of the app's own lane (a step with all, every note that sounds in it, the tune too) is named from
+// every note above its bass, with the costs of the ornament rule for its own notes and the four best readings of each set of
+// notes left out. Leaving out a note that only the tune plays costs nothing, so the tune completes the chord (a missing third or
+// fifth) but does not change it into another with more notes. Once the key is known, a reading off the key costs 1 more, one that goes to the next
+// chord as V → I (or vii° → I) in the key costs 1 less, and one that the previous chord goes to that way, half a point less.
+// The notes the step shows and spells are still its own; mel holds the notes of the tune the name takes, and the reading
+// keeps the context terms it got (ctx) for its tooltip. Fixed on the development set of TAVERN (2 Nov 2026).
+const NB={key:1,next:1,prev:.5};
+function readWithMelody(step,key,nb){
+  const harm=[...step.notes].sort((a,b)=>a-b), bass=harm[0], a=step.a||0, dur=step.dur;
+  const ev=step.all.filter(x=>x.s<a+dur&&x.s+x.l>a&&x.m>=bass); if(!ev.length||!(dur>0)) return null;
+  const own=new Set(harm.map(m=>m%12)), notes=[...new Set([...harm,...ev.map(x=>x.m)])].sort((x,y)=>x-y);
+  const W=ornWeights(ev.filter(x=>own.has(x.m%12)),a,dur), tune=[...new Set(ev.map(x=>x.m%12))].filter(pc=>!own.has(pc));
+  const free=[...W.keys(),...tune].filter(pc=>pc!==bass%12), sets=[[]];
+  for(const x of free) for(const s of [...sets]) if(s.length<ORN.maxDrop) sets.push([...s,x]);
+  const it=c=>c&&{root:c.root,q:c.type.q};
+  let best=null;
+  for(const D of sets){
+    const keep=notes.filter(m=>!D.includes(m%12)); if(new Set(keep.map(m=>m%12)).size<2) continue;
+    for(const c of analyze(keep,null).slice(0,4)){
+      const ext=c.type.degs.filter(d=>d.n>=7).map(d=>(d.pc+c.root)%12).filter(pc=>W.has(pc)&&!D.includes(pc)&&W.get(pc)<ORN.extUnder).length;
+      const ctx={};
+      if(key){
+        const ek=expFor(key), inKey=x=>{const e=ek[(x.root-key.tonic+12)%12]; return !!e&&e.includes(x.type.q);};
+        if(nb.next&&inKey(nb.next)&&leads(it(c),it(nb.next))) ctx.next=-NB.next;
+        if(!inKey(c)) ctx.key=NB.key;
+        if(nb.prev&&inKey(c)&&leads(it(nb.prev),it(c))) ctx.prev=-NB.prev;
+      }
+      const cost=c.score+ORN.drop*10*D.reduce((s,pc)=>s+(W.get(pc)||0),0)+ORN.ext*ext+Object.values(ctx).reduce((s,v)=>s+v,0);
+      if(!best||cost<best.cost-1e-9) best={c:Object.keys(ctx).length?{...c,ctx}:c,cost,D};
+    }
+  }
+  if(!best) return null;
+  const pcs=new Set(best.c.type.degs.map(d=>(d.pc+best.c.root)%12));
+  best.mel=[...new Set(ev.map(x=>x.m))].filter(m=>!own.has(m%12)&&pcs.has(m%12)).sort((x,y)=>x-y);
+  if(best.mel.length) best.c={...best.c,mel:best.mel};
+  return best;
+}
+// The notes of the tune a name takes, in words: «G (en la melodía) completa el acorde», «G y B (en la melodía) completan el acorde»
+function melodyText(mel,sp,prefs){
+  if(!mel||!mel.length) return '';
+  const ns=[...new Set(mel.map(m=>m%12))].map(pc=>{const s=sp.byPc[pc]; return s?letterName(s.l,s.a,prefs):letterName(...defaultSpell(pc,prefs),prefs);});
+  const list=(and)=>ns.length>1?ns.slice(0,-1).join(', ')+` ${and} `+ns[ns.length-1]:ns[0];
+  return ns.length>1?tr(`${list('y')} (en la melodía) completan el acorde`,`${list('and')} (in the melody) complete the chord`)
+    :tr(`${ns[0]} (en la melodía) completa el acorde`,`${ns[0]} (in the melody) completes the chord`);
+}
 // The ornaments a step left out, in words: «Adorno: B3 (dura poco; no cambia el nombre del acorde)»
 function ornamentText(orn,spelled,prefs){
   if(!orn||!orn.length) return '';
@@ -136,13 +182,13 @@ function candSymbol(c,sp,prefs){
   const b=sp.byPc[c.bass];
   return {main:s,slash:c.slash?'/'+letterName(b.l,b.a,prefs):''};
 }
-function resolveStep(step,prefs,key){
+function resolveStep(step,prefs,key,nb){
   const notes=[...step.notes].sort((a,b)=>a-b);
   const cands=analyze(notes,null);
   // a chord the user named keeps its name; otherwise the timing of the notes, when the step has it, may leave some out.
   // The reading without the ornaments is kept either way (orn when it names the step, ornAlt when the user named another)
   const named=cands.find(x=>x.root===step.root&&x.type.sym===step.sym);
-  const o=step.evs?readOrnaments(notes,step.evs,step.a||0,step.dur):null;
+  const o=step.all?readWithMelody(step,key,nb||{}):step.evs?readOrnaments(notes,step.evs,step.a||0,step.dur):null;
   const c=named||(o&&o.c)||cands[0]||null;
   const sp=c?spellCandidate(c,notes,prefs,key):null;
   const spelled=sp?sp.notes:notes.map(m=>plainSpell(m,prefs,key));
@@ -152,7 +198,7 @@ function resolveStep(step,prefs,key){
   else if(notes.length===2) label=letterName(spelled[0].l,spelled[0].a,prefs)+'–'+letterName(spelled[1].l,spelled[1].a,prefs);
   else label=notes.length?'?':'—';
   const drop=o?notes.filter(m=>o.D.includes(m%12)):[];
-  return {notes,c,sp,spelled,label,...(drop.length&&(o.c===c?{orn:drop}:{ornAlt:drop}))};
+  return {notes,c,sp,spelled,label,...(drop.length&&(o.c===c?{orn:drop}:{ornAlt:drop})),...(o&&o.c===c&&o.mel&&o.mel.length&&{mel:o.mel})};
 }
 
 // ---------- progression analysis ----------
@@ -378,7 +424,8 @@ function analyzeProgression(steps,prefs){
   const keys=detectKey(items), plain=plainTonic(items), rank=k=>k.score+(k.tonic===plain?PLAIN_TONIC:0);
   // the weight of the plain tonic only picks the key; the alternate one still goes by the scores as measured
   const top=keys.reduce((b,k)=>rank(k)>rank(b)?k:b), alt=keys.find(k=>k!==top&&top.score-k.score<2), modal=modeOf(top,items), key=modal?{...top,modal}:top;
-  const rs=steps.map(s=>resolveStep(s,prefs,key));
+  // the lane's chords read again with the key and their neighbours (readWithMelody); the neighbours are the first reading
+  const rs=steps.map((s,i)=>resolveStep(s,prefs,key,{prev:first[i-1]&&first[i-1].c,next:first[i+1]&&first[i+1].c}));
   const romans=rs.map(r=>r.c?romanFor(r.c,key):null);
   chromaticReading(rs,romans,key,prefs);
   const toks=romans.map(r=>r?r.token:'?'), N=toks.length, found=[];
@@ -478,13 +525,19 @@ function scoreDetail(c){
   const f=x=>tenNum(+x.toFixed(2)).replace('-','−');
   let s=rows.length?rows.map(([k,l],i)=>`${i?'+ ':''}${f(P[k])} ${l}`).join(' '):`0 ${tr('tipo','type')}`;
   if(P.locked) s+=` − ${f(-P.locked)} ${tr('raíz elegida','chosen root')}`;
-  return `${s} = ${f(c.score)}`;
+  s=`${s} = ${f(c.score)}`;
+  // a lane chord read with its neighbours (readWithMelody): the context terms that weighed on it
+  const X=c.ctx||{}, sg=x=>(x>0?'+':'')+f(x);
+  const ctx=[X.next&&`${sg(X.next)} ${tr('va al acorde siguiente (V → I)','goes to the next chord (V → I)')}`,
+    X.key&&`${sg(X.key)} ${tr('fuera de la tonalidad','outside the key')}`,
+    X.prev&&`${sg(X.prev)} ${tr('llega desde su dominante','arrives from its dominant')}`].filter(Boolean);
+  return ctx.length?`${s} · ${tr('contexto','context')}: ${ctx.join(', ')}`:s;
 }
 // The rule of the order, written from the constants of analyze
 function rankHelp(){
   const n=tenNum, top=Math.max(...TYPES.map(t=>t.rank));
-  return tr(`Se ordenan por puntos y gana el menor: +${n(RANK.bass)} si el bajo no es la fundamental, +${n(RANK.missing)} por nota omitida, de 0 a ${n(top)} según el tipo (más raro, más puntos); la raíz que eliges resta ${n(RANK.locked)}.`,
-    `They are ordered by points and the lowest wins: +${n(RANK.bass)} if the bass is not the root, +${n(RANK.missing)} per omitted note, ${n(0)} to ${n(top)} by type (the rarer, the more points); the root you choose subtracts ${n(RANK.locked)}.`);
+  return tr(`Se ordenan por puntos y gana el menor: +${n(RANK.bass)} si el bajo no es la fundamental, +${n(RANK.missing)} por nota omitida, de 0 a ${n(top)} según el tipo (más raro, más puntos); la raíz que eliges resta ${n(RANK.locked)}. En la franja también cuentan la melodía y el contexto: −${n(NB.next)} si va a su acorde siguiente como V → I, +${n(NB.key)} si queda fuera de la tonalidad, −${n(NB.prev)} si llega desde su dominante.`,
+    `They are ordered by points and the lowest wins: +${n(RANK.bass)} if the bass is not the root, +${n(RANK.missing)} per omitted note, ${n(0)} to ${n(top)} by type (the rarer, the more points); the root you choose subtracts ${n(RANK.locked)}. In the lane, the melody and the context count too: −${n(NB.next)} if it goes to the next chord as V → I, +${n(NB.key)} if it falls outside the key, −${n(NB.prev)} if it arrives from its dominant.`);
 }
 const tenNum=x=>tr(String(x).replace('.',','),String(x));
 // «base 0,13 + sorpresa 0,15 = 0,28», for the tooltip of the sheet
@@ -521,4 +574,4 @@ function dissonance(r){
   return Math.min(1,v);
 }
 
-export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, RANK, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, letterName, modeName, noteText, octOff, ornamentText, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp, rankHelp, scoreDetail, keyWhy, bookends, resolvesToTonic };
+export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, RANK, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, letterName, melodyText, modeName, noteText, octOff, ornamentText, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp, rankHelp, scoreDetail, keyWhy, bookends, resolvesToTonic };

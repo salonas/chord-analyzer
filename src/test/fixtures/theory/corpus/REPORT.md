@@ -15,16 +15,16 @@ Se separan obras completas (TAVERN) y canciones completas (Rock Corpus), una de 
 | Medida | Meta | Hoy (prueba) | IC 95 % | Estado | Corpus |
 |---|---|---|---|---|---|
 | Acorde por tramo (raíz + calidad, acepta A o B) | 80 % | 67 % | 63.2–72.2 % | no cumple | TAVERN, por tramo anotado |
-| Acorde de punta a punta (los tramos sin acorde de la app cuentan como fallo) | 70 % | 39 % | 31.8–45.5 % | no cumple | TAVERN, de punta a punta |
+| Acorde de punta a punta (los tramos sin acorde de la app cuentan como fallo) | 70 % | 49 % | 41.6–55.9 % | no cumple | TAVERN, de punta a punta |
 | Inversión, dado el acorde correcto | ≥ 94 % | 95.4 % | 92.7–97.2 % | cumple | TAVERN, por tramo anotado |
 | Tonalidad (tónica y modo) | 85 % | 77.1 % | 66.2–88.2 % | no cumple | TAVERN, por tramo anotado |
 | Tónica, sin aceptar la relativa | 82 % | 69.2 % | 55.1–82.3 % | no cumple | Rock Corpus |
 | Enarmonía (tramo con todas las notas bien) | 95 % | 91 % | 88.1–94.7 % | no cumple | TAVERN, por tramo anotado |
 | Modulación: canciones con cambio de tonalidad que la app informa | la mitad (50 %) | 0 % | 0–0 % | no cumple | Rock Corpus |
 
-## Antes y después de la regla de notas de adorno
+## Antes y después de las reglas que leen el tiempo y la melodía
 
-«Antes» es la misma evaluación con los pasos sin el inicio y la duración de sus notas, como leía la app hasta el 2026-11-01; «después», con ellos (la regla de `THEORY.md`). Δ en puntos, con su IC 95 % pareado: cada remuestreo toma las mismas obras en los dos lados. La regla se fijó mirando solo desarrollo; la prueba se miró una vez, al final.
+«Antes» es la misma evaluación con los pasos sin el inicio y la duración de sus notas y sin las notas de la melodía, como los leía la app hasta el 2026-11-01; «después», con ellos (decisiones 8 y 11 de `THEORY.md`). La segmentación de la app (decisiones 9 y 10) es la misma en los dos lados, así que esta tabla no mide la de punta a punta de la etapa: esa comparación, contra la base corregida `965e9d6`, está en `THEORY.md`. Δ en puntos, con su IC 95 % pareado: cada remuestreo toma las mismas obras en los dos lados. La regla se fijó mirando solo desarrollo; la prueba se miró una vez, al final.
 
 | Medida | Desarrollo antes | Desarrollo después | Δ desarrollo | Prueba antes | Prueba después | Δ prueba |
 |---|---|---|---|---|---|---|
@@ -34,22 +34,22 @@ Se separan obras completas (TAVERN) y canciones completas (Rock Corpus), una de 
 | por tramo — tonalidad (tónica y modo) | 73.4 % | 78 % | 4.6 (2.5 a 7.2) | 72.4 % | 77.1 % | 4.7 (1.6 a 8.2) |
 | por tramo — inversión (dado el acorde correcto) | 94.3 % | 95.1 % | 0.8 (0.1 a 1.4) | 95 % | 95.4 % | 0.4 (-0.7 a 1.3) |
 | por tramo — enarmonía (tramo con todas las notas bien) | 91.5 % | 91 % | -0.5 (-1 a 0) | 91 % | 91 % | 0.0 (-1 a 2.1) |
-| de punta a punta — acorde: raíz + calidad (acepta A o B) | 49.7 % | 49.8 % | 0.1 (0 a 0.2) | 49.2 % | 49.2 % | 0.0 (-0.3 a 0.2) |
-| de punta a punta — acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app | 37.2 % | 37.3 % | 0.1 (0 a 0.2) | 39 % | 39 % | 0.0 (-0.2 a 0.1) |
-| de punta a punta — tonalidad (tónica y modo) | 70.7 % | 70.7 % | 0.0 (0 a 0) | 69 % | 69.4 % | 0.4 (0 a 1.6) |
+| de punta a punta — acorde: raíz + calidad (acepta A o B) | 52 % | 60.7 % | 8.7 (7.3 a 10.2) | 50.3 % | 57.4 % | 7.1 (6.1 a 8) |
+| de punta a punta — acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app | 45.6 % | 53.2 % | 7.6 (6.4 a 9) | 42.9 % | 49 % | 6.1 (4.8 a 6.9) |
+| de punta a punta — tonalidad (tónica y modo) | 75.5 % | 76.2 % | 0.7 (-1.1 a 2.5) | 69.7 % | 72.1 % | 2.4 (0 a 5.5) |
 
 ## Resumen por categoría
 
 | Categoría | TAVERN, por tramo anotado | TAVERN, de punta a punta | Rock Corpus |
 |---|---|---|---|
-| Acorde (raíz + calidad, acepta A o B) | 67 % (3742/5586), IC 95 % 63.2–72.2<br>67.4 % (11048/16398), IC 95 % 65.3–69.3 | 49.2 % (1876/3816), IC 95 % 40.6–56.7<br>49.8 % (5624/11295), IC 95 % 46.6–53.7 | excluida (circular) |
-| Acorde, nombre exacto, sin extensiones (F7♭9 no cuenta como F7) | 50.6 % (2827/5586), IC 95 % 43.5–57<br>52.8 % (8655/16398), IC 95 % 49.6–55.6 | 46.1 % (1760/3816), IC 95 % 36.9–54.6<br>46.6 % (5265/11295), IC 95 % 43.6–50.4 | excluida (circular) |
-| Acorde, contando como fallo los tramos que la app no cubre | 67 % (3742/5586), IC 95 % 63.2–72.2<br>67.4 % (11048/16398), IC 95 % 65.3–69.3 | 39 % (1876/4812), IC 95 % 31.8–45.5<br>37.3 % (5624/15095), IC 95 % 33.9–40.8 | excluida (circular) |
-| Inversión (dado el acorde correcto) | 95.4 % (3569/3742), IC 95 % 92.7–97.2<br>95.1 % (10507/11048), IC 95 % 93.9–96.1 | 92.4 % (1734/1876), IC 95 % 89.4–94.6<br>90.1 % (5069/5624), IC 95 % 88.3–92.1 | excluida (circular) |
-| Grado (crudo; deriva de la raíz y la tonalidad) | 57.1 % (3187/5586), IC 95 % 47.9–69<br>63.1 % (10355/16398), IC 95 % 58.8–66.9 | 47.8 % (1824/3816), IC 95 % 39.8–53.6<br>50.9 % (5744/11295), IC 95 % 48–53.2 | excluida (circular) |
+| Acorde (raíz + calidad, acepta A o B) | 67 % (3742/5586), IC 95 % 63.2–72.2<br>67.4 % (11048/16398), IC 95 % 65.3–69.3 | 57.4 % (2735/4768), IC 95 % 50.7–65.8<br>60.7 % (8727/14380), IC 95 % 58.2–63.4 | excluida (circular) |
+| Acorde, nombre exacto, sin extensiones (F7♭9 no cuenta como F7) | 50.6 % (2827/5586), IC 95 % 43.5–57<br>52.8 % (8655/16398), IC 95 % 49.6–55.6 | 48.2 % (2297/4768), IC 95 % 41.6–58.6<br>52.6 % (7565/14380), IC 95 % 49.7–55.5 | excluida (circular) |
+| Acorde, contando como fallo los tramos que la app no cubre | 67 % (3742/5586), IC 95 % 63.2–72.2<br>67.4 % (11048/16398), IC 95 % 65.3–69.3 | 49 % (2735/5586), IC 95 % 41.6–55.9<br>53.2 % (8727/16404), IC 95 % 50.1–55.9 | excluida (circular) |
+| Inversión (dado el acorde correcto) | 95.4 % (3569/3742), IC 95 % 92.7–97.2<br>95.1 % (10507/11048), IC 95 % 93.9–96.1 | 89.7 % (2452/2735), IC 95 % 87.1–92.7<br>90.4 % (7887/8727), IC 95 % 89–91.9 | excluida (circular) |
+| Grado (crudo; deriva de la raíz y la tonalidad) | 57.1 % (3187/5586), IC 95 % 47.9–69<br>63.1 % (10355/16398), IC 95 % 58.8–66.9 | 50.5 % (2410/4768), IC 95 % 40.9–66.8<br>59.2 % (8516/14380), IC 95 % 55.3–62.7 | excluida (circular) |
 | Función | no comparable (el corpus etiqueta a nivel de frase, modelo de Laitz) | no comparable | no tiene |
-| Tonalidad (tónica y modo) | 77.1 % (447/580), IC 95 % 66.2–88.2<br>78 % (1265/1622), IC 95 % 72.9–82.6 | 69.4 % (354/510), IC 95 % 58.3–80.8<br>70.7 % (1030/1456), IC 95 % 66.2–75.4 | solo la tónica: 69.2 % (54/78), IC 95 % 55.1–82.3<br>73 % (222/304), IC 95 % 66.4–79.4 |
-| Enarmonía (tramo con todas las notas bien) | 91 % (5086/5586), IC 95 % 88.1–94.7<br>91 % (14917/16398), IC 95 % 89.2–92.5 | 99.2 % (3784/3816), IC 95 % 98.6–99.6<br>98.3 % (11100/11295), IC 95 % 97.2–99.1 | excluida (circular) |
+| Tonalidad (tónica y modo) | 77.1 % (447/580), IC 95 % 66.2–88.2<br>78 % (1265/1622), IC 95 % 72.9–82.6 | 72.1 % (418/580), IC 95 % 58.1–87<br>76.2 % (1236/1622), IC 95 % 70.7–81.5 | solo la tónica: 69.2 % (54/78), IC 95 % 55.1–82.3<br>73 % (222/304), IC 95 % 66.4–79.4 |
+| Enarmonía (tramo con todas las notas bien) | 91 % (5086/5586), IC 95 % 88.1–94.7<br>91 % (14917/16398), IC 95 % 89.2–92.5 | 96.3 % (4592/4768), IC 95 % 95.2–97.5<br>96.5 % (13877/14380), IC 95 % 95.7–97.2 | excluida (circular) |
 | Cadencia | sin corpus | sin corpus | sin corpus |
 | Modulación | sin dato: 5 frases con más de una tonalidad quedaron fuera | sin dato | 0 % (0/15), IC 95 % 0–0<br>0 % (0/46), IC 95 % 0–0 (la app no reporta cambios de tonalidad) |
 
@@ -101,30 +101,30 @@ Se separan obras completas (TAVERN) y canciones completas (Rock Corpus), una de 
 
 ## TAVERN, de punta a punta (todo el corpus)
 
-La app produjo 24440 acordes para 20539 tramos de analista (suma sobre frases y anotadores).
+La app produjo 34218 acordes para 22672 tramos de analista (suma sobre frases y anotadores).
 
 | Medida | n | aciertos | % |
 |---|---|---|---|
-| tonalidad (tónica y modo) | 1966 | 1384 | 70.4 % |
-| tonalidad (solo la tónica) | 1966 | 1400 | 71.2 % |
-| segmentación: cortes del analista que la app también corta (±48 ticks) | 18573 | 12122 | 65.3 % |
-| segmentación: cortes de la app que el analista también corta (±48 ticks) | 22474 | 15586 | 69.4 % |
-| tramo del analista cubierto por un acorde de la app (≥ la mitad) | 19907 | 15111 | 75.9 % |
-| acorde: raíz (solo la lectura propia) | 15111 | 9032 | 59.8 % |
-| acorde: raíz (acepta A o B) | 15111 | 9173 | 60.7 % |
-| acorde: raíz + calidad (solo la lectura propia) | 15111 | 7262 | 48.1 % |
-| acorde: raíz + calidad (acepta A o B) | 15111 | 7500 | 49.6 % |
-| acorde: nombre exacto, sin extensiones (acepta A o B) | 15111 | 7025 | 46.5 % |
-| acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando | 11345 | 6103 | 53.8 % |
-| acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control) | 5223 | 4097 | 78.4 % |
-| inversión (cruda) | 15111 | 10118 | 67 % |
-| inversión (dado el acorde correcto) | 7500 | 6803 | 90.7 % |
-| grado (crudo) | 15111 | 7568 | 50.1 % |
-| grado (dada la tonalidad correcta) | 10840 | 6997 | 64.5 % |
-| enarmonía (nota a nota) | 48033 | 47675 | 99.3 % |
-| enarmonía (tramo con todas las notas bien) | 15111 | 14884 | 98.5 % |
-| acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app | 19907 | 7500 | 37.7 % |
-| acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde | 3766 | 1397 | 37.1 % |
+| tonalidad (tónica y modo) | 2202 | 1654 | 75.1 % |
+| tonalidad (solo la tónica) | 2202 | 1668 | 75.7 % |
+| segmentación: cortes del analista que la app también corta (±48 ticks) | 20470 | 18257 | 89.2 % |
+| segmentación: cortes de la app que el analista también corta (±48 ticks) | 32016 | 22224 | 69.4 % |
+| tramo del analista cubierto por un acorde de la app (≥ la mitad) | 21990 | 19148 | 87.1 % |
+| acorde: raíz (solo la lectura propia) | 19148 | 13167 | 68.8 % |
+| acorde: raíz (acepta A o B) | 19148 | 13388 | 69.9 % |
+| acorde: raíz + calidad (solo la lectura propia) | 19148 | 11066 | 57.8 % |
+| acorde: raíz + calidad (acepta A o B) | 19148 | 11462 | 59.9 % |
+| acorde: nombre exacto, sin extensiones (acepta A o B) | 19148 | 9862 | 51.5 % |
+| acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando | 13905 | 9312 | 67 % |
+| acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control) | 6556 | 5541 | 84.5 % |
+| inversión (cruda) | 19148 | 13463 | 70.3 % |
+| inversión (dado el acorde correcto) | 11462 | 10339 | 90.2 % |
+| grado (crudo) | 19148 | 10926 | 57.1 % |
+| grado (dada la tonalidad correcta) | 14470 | 10468 | 72.3 % |
+| enarmonía (nota a nota) | 78989 | 78161 | 99 % |
+| enarmonía (tramo con todas las notas bien) | 19148 | 18469 | 96.5 % |
+| acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app | 21990 | 11462 | 52.1 % |
+| acorde: raíz + calidad (acepta A o B), tramos a los que les falta alguna nota del acorde | 5243 | 2150 | 41 % |
 
 ## Rock Corpus (todo el corpus)
 
@@ -156,16 +156,16 @@ Cada error se cuenta una sola vez, en la medida que le corresponde (acorde: raí
 
 ## Los 10 errores más frecuentes (TAVERN, de punta a punta, solo desarrollo)
 
-1. **de punta a punta | acorde: raíz + calidad (acepta A o B)**: raíz bien; esperado mayor, la app leyó 5. 538 veces. Ejemplo: `{"phrase":"B063_00_02b","mode":"de punta a punta","label":"IV/III","key":"c","notes":"Ab (56) Eb (63)","expected":"A♭","got":"A♭5"}`
-2. **de punta a punta | acorde: raíz + calidad (acepta A o B)**: raíz equivocada: mayor leído con raíz en su 3ª (m). 536 veces. Ejemplo: `{"phrase":"B063_00_03c","mode":"de punta a punta","label":"Vb/iv","key":"c","notes":"E (52) G (55)","expected":"C/1ª inversión","got":"Em"}`
-3. **de punta a punta | acorde: raíz + calidad (acepta A o B)**: la app no leyó acorde (el tramo tiene 2 clases de altura). 521 veces. Ejemplo: `{"phrase":"B063_02_02b","mode":"de punta a punta","label":"V7d/III","key":"c","notes":"Ab (56) Bb (58)","expected":"B♭7/3ª inversión","got":"(sin acorde)"}`
-4. **de punta a punta | acorde: raíz + calidad (acepta A o B)**: raíz bien; esperado 7, la app leyó mayor. 317 veces. Ejemplo: `{"phrase":"B064_03_02b","mode":"de punta a punta","label":"V7/iv","key":"f","notes":"F (53) A (69) C (72)","expected":"F7","got":"F"}`
-5. **de punta a punta | acorde: raíz + calidad (acepta A o B)**: raíz equivocada: mayor leído con raíz en una nota ajena al acorde (m). 252 veces. Ejemplo: `{"phrase":"B063_00_04d","mode":"de punta a punta","label":"V","key":"c","notes":"G (43) C (72) Eb (75)","expected":"G","got":"Cm/2ª inversión"}`
-6. **de punta a punta | acorde: raíz + calidad (acepta A o B)**: raíz equivocada: mayor leído con raíz en una nota ajena al acorde (mayor). 241 veces. Ejemplo: `{"phrase":"B063_00_02b","mode":"de punta a punta","label":"V/III","key":"c","notes":"Bb (46) Eb (75) G (79)","expected":"B♭","got":"E♭/2ª inversión"}`
-7. **de punta a punta | tonalidad (tónica y modo)**: se leyó la tonalidad de la dominante. 232 veces. Ejemplo: `{"phrase":"B063_09_01a","mode":"de punta a punta","key":"C","got":"G major"}`
-8. **de punta a punta | acorde: raíz + calidad (acepta A o B)**: raíz equivocada: mayor leído con raíz en su 5ª (mayor). 231 veces. Ejemplo: `{"phrase":"B063_09_04d","mode":"de punta a punta","label":"IV","key":"C","notes":"E (52) G (55) C (60)","expected":"F","got":"C/1ª inversión"}`
-9. **de punta a punta | inversión (dado el acorde correcto)**: con el acorde bien: esperado fundamental, la app dio 1ª inversión. 226 veces. Ejemplo: `{"phrase":"B063_00_01a","mode":"de punta a punta","label":"V","key":"c","notes":"B (47) D (50) G (55)","expected":"G","got":"G/1ª inversión"}`
-10. **de punta a punta | acorde: raíz + calidad (acepta A o B)**: raíz equivocada: m leído con raíz en su 3ª (mayor). 177 veces. Ejemplo: `{"phrase":"B063_00_04d","mode":"de punta a punta","label":"ib","key":"c","notes":"Eb (51) G (55)","expected":"Cm/1ª inversión","got":"E♭"}`
+1. **de punta a punta | acorde: raíz + calidad (acepta A o B)**: raíz equivocada: mayor leído con raíz en su 3ª (m). 384 veces. Ejemplo: `{"phrase":"B063_02_02b","mode":"de punta a punta","label":"Ib/III","key":"c","notes":"G (55) Bb (58)","expected":"E♭/1ª inversión","got":"Gm"}`
+2. **de punta a punta | acorde: raíz + calidad (acepta A o B)**: raíz bien; esperado 7, la app leyó mayor. 347 veces. Ejemplo: `{"phrase":"B064_03_03c","mode":"de punta a punta","label":"V7","key":"f","notes":"C (36) E (64) G (67)","expected":"C7","got":"C"}`
+3. **de punta a punta | inversión (dado el acorde correcto)**: con el acorde bien: esperado fundamental, la app dio 1ª inversión. 248 veces. Ejemplo: `{"phrase":"B063_00_01a","mode":"de punta a punta","label":"V","key":"c","notes":"B (47) D (50) G (55)","expected":"G","got":"G/1ª inversión"}`
+4. **de punta a punta | tonalidad (tónica y modo)**: se leyó la tonalidad de la dominante. 200 veces. Ejemplo: `{"phrase":"B063_05_03c","mode":"de punta a punta","key":"c","got":"G major"}`
+5. **de punta a punta | acorde: raíz + calidad (acepta A o B)**: raíz bien; esperado mayor, la app leyó maj7. 189 veces. Ejemplo: `{"phrase":"B063_06_01a","mode":"de punta a punta","label":"Vb","key":"c","notes":"B (59) D (62) G (67) F# (78) G (79)","expected":"G/1ª inversión","got":"Gmaj7/1ª inversión"}`
+6. **de punta a punta | inversión (dado el acorde correcto)**: con el acorde bien: esperado fundamental, la app dio 2ª inversión. 166 veces. Ejemplo: `{"phrase":"B064_02_01a","mode":"de punta a punta","label":"I","key":"F","notes":"C (48) F (53) A (69)","expected":"F","got":"F/2ª inversión"}`
+7. **de punta a punta | inversión (dado el acorde correcto)**: con el acorde bien: esperado 1ª inversión, la app dio fundamental. 150 veces. Ejemplo: `{"phrase":"B064_02_01a","mode":"de punta a punta","label":"Vb","key":"F","notes":"C (48) E (52) F (53) C (60) F (65) G (67)","expected":"C/1ª inversión","got":"Cadd11"}`
+8. **de punta a punta | acorde: raíz + calidad (acepta A o B)**: raíz equivocada: mayor leído con raíz en una nota ajena al acorde (m). 146 veces. Ejemplo: `{"phrase":"B063_00_04d","mode":"de punta a punta","label":"V","key":"c","notes":"G (43) C (72) Eb (75)","expected":"G","got":"Cm/2ª inversión"}`
+9. **de punta a punta | enarmonía (nota a nota)**: C# escrito Db. 142 veces. Ejemplo: `{"phrase":"B068_03_02b","label":"V7c/ii","key":"C","note":"C# (61)","app":"Db","appChord":"Am/2ª inversión"}`
+10. **de punta a punta | enarmonía (nota a nota)**: G# escrito Ab. 139 veces. Ejemplo: `{"phrase":"B064_05_01a","label":"I","key":"F","note":"G# (68)","app":"Ab","appChord":"F"}`
 
 ## Los errores más frecuentes (Rock Corpus, tónica, solo desarrollo)
 

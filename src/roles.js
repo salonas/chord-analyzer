@@ -62,7 +62,7 @@ function melodyKind(mel,i,info,toneAt,next){
 function melodyKinds(p,prefs){
   const Hm=splitHarmony(p), out=new Map();
   if(!Hm.mel.length||!Hm.chords.length) return out;
-  const A=analyzeProgression(Hm.chords.map(c=>({notes:c.notes,dur:c.b-c.a,...stepTiming(p,c.a,c.b,c.notes),...(p.names[sigOf(c.notes)]||{})})),prefs);
+  const A=analyzeProgression(Hm.chords.map(c=>({notes:c.notes,dur:c.b-c.a,...stepTiming(p,c.a,c.b,c.notes,c.withMel),...(p.names[sigOf(c.notes)]||{})})),prefs);
   const ci=x=>Hm.chords.indexOf(Hm.chordAt(x.s)), info=Hm.mel.map(x=>against(x.notes[0],A.rs[ci(x)]));
   const toneAt=j=>info[j]&&info[j].tone;
   const ids=x=>p.notes.filter(n=>Math.abs(n.s-x.s)<=TOL&&x.notes.includes(n.m)).map(n=>n.id);

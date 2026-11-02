@@ -180,11 +180,14 @@ describe('row 18: what the empty sheet says about chords', () => {
     expect(chords([[60, 0, 0.5], [64, 0.5, 0.5], [67, 1, 0.5], [72, 1.5, 0.5]])).toBe(1);
   });
   it('reads a legato tune as melody only', () => expect(chords([[60, 0, 1.5], [62, 1, 1.5], [64, 2, 1.5], [65, 3, 1.5]])).toBe(0));
-  it('says all of this, in both languages', () => {
-    const es = emptySheetText();
-    for (const w of ['tres notas a la vez', 'dos si las dos duran un tiempo o más', 'arpegio']) expect(es).toContain(w);
-    const en = inEnglish(emptySheetText);
-    for (const w of ['three notes at once', 'two if both last a beat or more', 'arpeggio']) expect(en).toContain(w);
+  it('reads a broken accompaniment under a held voice as chords', () => {
+    expect(chords([[48, 0, 0.5], [55, 0.5, 0.5], [52, 1, 0.5], [55, 1.5, 0.5], [76, 0, 2]])).toBe(1);
+  });
+  it('says all of this as a list, in both languages', () => {
+    expect(emptySheetText()).toEqual({ head: 'Solo melodía: no hay acordes. La app arma un acorde cuando hay:', items: ['tres notas a la vez', 'dos notas a la vez que duran un tiempo o más',
+      'un arpegio: una sola voz que salta entre tres o más notas de un acorde', 'un acompañamiento: tres o más notas distintas en un tiempo mientras otra voz se sostiene'] });
+    expect(inEnglish(emptySheetText)).toEqual({ head: 'Melody only: no chords. The app builds a chord when there are:', items: ['three notes at once', 'two notes at once that last a beat or more',
+      'an arpeggio: a single voice leaping between three or more notes of a chord', 'an accompaniment: three or more different notes in a beat while another voice holds'] });
   });
 });
 
@@ -206,6 +209,14 @@ describe('row 6: the names of a lane chord with an ornament', () => {
     const r = resolveStep({ notes, dur: 384, a: 0, evs: notes.map(m => ({ m, s: 0, l: m === 59 ? 24 : 384 })), root: 0, sym: 'maj7' }, PREFS);
     expect([r.label, r.orn, r.ornAlt]).toEqual(['Cmaj7', undefined, [59]]);
     expect(names(activeCands(notes, null, r.ornAlt, true))).toEqual([...names(analyze(notes, null)), [0, '', ['Adorno: B3', 'bajo = fundamental']]]);
+  });
+  it('puts a lane reading that takes a note of the tune first, tagged with it', () => {
+    const ns = [48, 64], r = resolveStep({ notes: ns, dur: 384, a: 0, evs: ns.map(m => ({ m, s: 0, l: 384 })), all: [48, 64, 67].map(m => ({ m, s: 0, l: 384 })) }, PREFS);
+    const cs = activeCands(ns, null, [], false, r.c), tags = c => candTags(c, spellCandidate(c, ns, PREFS), null, PREFS).map(t => t.text);
+    expect([cs[0].root, cs[0].type.sym, tags(cs[0])]).toEqual([0, '', ['Con la melodía: G', 'bajo = fundamental']]);
+    expect(inEnglish(() => tags(cs[0]))).toEqual(['With the melody: G', 'bass is the root']);
+    expect([cs[1].root, cs[1].type.sym, tags(cs[1])]).toEqual([0, '', ['bajo = fundamental', 'sin 5']]);
+    expect(activeCands(ns, 0, [], false, r.c)).toEqual(analyze(ns, 0));
   });
   it('is the plain list without ornaments or with a chosen root', () => {
     expect(activeCands(notes, null, [])).toEqual(analyze(notes, null));
