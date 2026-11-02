@@ -1,6 +1,6 @@
 // What the inspector says about the active chord, as pure functions so that each label has a rule and a test.
 import { freq } from './data.js';
-import { inversionText, plainSpell, spellCandidate } from './analysis.js';
+import { analyze, inversionText, noteText, plainSpell, spellCandidate } from './analysis.js';
 import { tr } from './i18n.js';
 
 // The notes of the active chord and their spelling: a chord taken from the progression is spelled in the key the lane
@@ -33,9 +33,23 @@ function intervalText(lo,hi,a,b){
 }
 
 // The tags of a candidate name: why it is, or is not, an exact reading of the notes
-function candTags(c,csp,lockedRoot){
+// The names of the active chord. A lane chord that leaves notes out as ornaments puts that reading first (orn: the notes it
+// leaves out); the readings with every note stay below as alternatives: the rule orders the names, it does not take any away.
+// When the user named the chord with all its notes (after), the reading without the ornaments goes last instead.
+// A root you choose is your reading, so the list is then the plain one
+function activeCands(notes,lockedRoot,orn,after){
+  const all=analyze(notes,lockedRoot);
+  if(!orn||!orn.length||lockedRoot!=null) return all;
+  const top=analyze(notes.filter(m=>!orn.includes(m)),null)[0];
+  if(!top) return all;
+  const rest=all.filter(c=>c.root!==top.root||c.type.sym!==top.type.sym);
+  return after?[...rest,{...top,orn}]:[{...top,orn},...rest];
+}
+
+function candTags(c,csp,lockedRoot,prefs){
   const t=[];
-  if(!c.missing.length&&!c.slash) t.push({exact:true,text:tr('coincidencia exacta','exact match')});
+  if(c.orn) t.push({text:(c.orn.length>1?tr('Adornos','Ornaments'):tr('Adorno','Ornament'))+': '+c.orn.map(m=>noteText(csp.notes.find(n=>n.midi===m),prefs)).join(', ')});
+  if(!c.missing.length&&!c.slash&&!c.orn) t.push({exact:true,text:tr('coincidencia exacta','exact match')});
   if(!c.slash) t.push({text:tr('bajo = fundamental','bass is the root')});
   if(c.missing.length) t.push({text:`${tr('sin','no')} ${c.missing.map(d=>d.label).join(', ')}`});
   if(c.slash) t.push({text:inversionText(c)});
@@ -77,4 +91,4 @@ function warningText(w,nm,ref){
 const emptySheetText=()=>tr('Solo melodía: ningún acorde. Un acorde empieza con tres notas a la vez, con dos si las dos duran un tiempo o más, o con un arpegio: una sola voz que salta entre tres o más notas de un acorde, por medio compás o por compás.',
   'Melody only: no chord. A chord starts with three notes at once, or with two if both last a beat or more, or with an arpeggio: a single voice that leaps between three or more notes of a chord, by half a bar or by the bar.');
 
-export { LIMITS, MUDDY, candTags, chordWarnings, emptySheetText, intervalText, spellActive, warningText };
+export { LIMITS, MUDDY, activeCands, candTags, chordWarnings, emptySheetText, intervalText, spellActive, warningText };

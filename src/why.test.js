@@ -1,5 +1,5 @@
 import { TYPES } from './data.js';
-import { analyze, analyzeProgression, bookends, rankHelp, scoreDetail } from './analysis.js';
+import { analyze, analyzeProgression, bookends, ornamentText, rankHelp, resolveStep, scoreDetail } from './analysis.js';
 import { setLang } from './i18n.js';
 import { PREFS } from './test/helpers.js';
 
@@ -97,5 +97,21 @@ describe('row 10: the reasons of the key', () => {
     const items = [C, F, G7, Am].map(notes => ({ root: analyze(notes, null)[0].root, q: analyze(notes, null)[0].type.q }));
     expect(bookends(items, 9, 'minor').last).toBe(false);
     expect(bookends(items, 9, 'minor').first).toBe(false);
+  });
+});
+
+// The ornament rule: a note that sounds little in its step is left out of the name, and the panel says so
+describe('ornaments in words', () => {
+  const step = { notes: [48, 52, 55, 59], dur: 384, a: 0, evs: [{ m: 48, s: 0, l: 384 }, { m: 52, s: 0, l: 384 }, { m: 55, s: 0, l: 384 }, { m: 59, s: 336, l: 48 }] };
+  it('names the note a step leaves out', () => {
+    const r = resolveStep(step, PREFS);
+    expect(r.label).toBe('C');
+    expect(ornamentText(r.orn, r.spelled, PREFS)).toBe('Adorno: B3 (dura poco; no cambia el nombre del acorde)');
+    expect(inEnglish(() => ornamentText(r.orn, r.spelled, PREFS))).toBe("Ornament: B3 (short; it does not change the chord's name)");
+  });
+  it('says nothing for the same notes without their timing', () => {
+    const r = resolveStep({ notes: step.notes }, PREFS);
+    expect(r.label).toBe('Cmaj7');
+    expect(ornamentText(r.orn, r.spelled, PREFS)).toBe('');
   });
 });

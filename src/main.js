@@ -4,8 +4,8 @@ import { $, esc, fillRange, saveFile, toast } from './dom.js';
 import { EXAMPLE_NAME, activePat, gmOn, isBlock, isDrum, isMulti, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs, trackPat } from './model.js';
 import { gmName } from './gm.js';
 import { fut, hist, lib, persistLib, saveDraft, savePrefs, st } from './state.js';
-import { candTags, chordWarnings, emptySheetText, intervalText, spellActive, warningText } from './panel.js';
-import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, inversionText, keyName, keyText, letterName, noteText, octOff, plainSpell, rankHelp, resolveStep, scoreDetail, spellCandidate, tenDetail, tensionHelp } from './analysis.js';
+import { activeCands, candTags, chordWarnings, emptySheetText, intervalText, spellActive, warningText } from './panel.js';
+import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, inversionText, keyName, keyText, letterName, noteText, octOff, ornamentText, plainSpell, rankHelp, resolveStep, scoreDetail, spellCandidate, tenDetail, tensionHelp } from './analysis.js';
 import { EX_KEYS, FEELINGS, exDefaults, exprSummary, expressPattern, instLabel } from './expression.js';
 import { DRUMS, GROOVES, expressDrums, genGroove } from './drums.js';
 import { libText, parseText, pickInterp, projectText } from './text.js';
@@ -147,7 +147,9 @@ function paintKeys(){
 }
 function renderActive(){
   const notes=[...st.notes].sort((a,b)=>a-b);
-  const cands=analyze(notes,st.lockedRoot);
+  // a chord taken from the lane, as drawn, is read as the lane reads it: without the notes it leaves out as ornaments
+  const S0=st.src==='seg'?curSeg():null, r0=S0&&R.A&&sigOf(notes)===st.srcSig?R.A.rs[R.segs.indexOf(S0)]:null, orn=(r0&&r0.orn)||[];
+  const cands=activeCands(notes,st.lockedRoot,orn.length?orn:(r0&&r0.ornAlt)||[],!orn.length);
   if(st.prefer){ const i=cands.findIndex(c=>c.root===st.prefer.root&&c.type.sym===st.prefer.sym); st.pick=i>=0?i:0; st.prefer=null; }
   if(st.pick>=cands.length) st.pick=0;
   const cur=cands[st.pick]; lastCur=cur;
@@ -168,7 +170,7 @@ function renderActive(){
     const sy=candSymbol(cur,sp,st);
     nameEl.innerHTML=esc(sy.main)+(sy.slash?`<span class="slash">${esc(sy.slash)}</span>`:'');
     const inv=inversionText(cur);
-    descEl.textContent=`${sp.rootName} ${cur.type.name}${inv?' · '+inv:''}${cur.missing.length?tr(' · sin ',' · no ')+cur.missing.map(d=>d.label).join(', '):''}`;
+    descEl.textContent=`${sp.rootName} ${cur.type.name}${inv?' · '+inv:''}${cur.missing.length?tr(' · sin ',' · no ')+cur.missing.map(d=>d.label).join(', '):''}${cur.orn?' · '+ornamentText(cur.orn,spelled,st):''}`;
   } else if(notes.length===1){
     nameEl.textContent=noteText(spelled[0],st); descEl.textContent=tr('Una sola nota.','A single note.');
   } else if(notes.length===2){
@@ -191,7 +193,7 @@ function renderActive(){
   $('cands').innerHTML=cands.length?cands.map((c,i)=>{
     const csp=spellCandidate(c,notes,st,key), sy=candSymbol(c,csp,st);
     const form=c.type.degs.map(d=>{ const s=csp.byPc[(d.pc+c.root)%12], nm=letterName(s.l,s.a,st); return c.missing.includes(d)?`<s>${esc(d.label)} ${esc(nm)}</s>`:`<span>${esc(d.label)} <i>${esc(nm)}</i></span>`; }).join('');
-    const tags=candTags(c,csp,st.lockedRoot).map(t=>`<span class="tag${t.exact?' exact':''}">${esc(t.text)}</span>`);
+    const tags=candTags(c,csp,st.lockedRoot,st).map(t=>`<span class="tag${t.exact?' exact':''}">${esc(t.text)}</span>`);
     return `<li><button class="cand" data-i="${i}" aria-pressed="${i===st.pick}" title="${esc(scoreDetail(c))}"><span class="sym">${esc(sy.main+sy.slash)}</span><span class="desc">${esc(csp.rootName+' '+c.type.name)}${i===st.pick?`<span class="pick">${tr('en uso','in use')}</span>`:''}</span><span class="form">${form}</span><span class="tags">${tags.join('')}</span></button></li>`;
   }).join(''):`<li class="empty">${notes.length<2?tr('Elige al menos dos notas distintas para ver nombres de acorde.','Pick at least two different notes to see chord names.'):tr('Sin coincidencias en los '+TYPES.length+' tipos de acorde del diccionario.','No matches among the '+TYPES.length+' chord types in the dictionary.')}</li>`;
 
@@ -674,7 +676,7 @@ function analysisSheet(A,p){
     <div><span class="lab">${tr('Final','Ending')}</span><span class="stamp"><span>${A.cad?degText(A.cad):tr('sin cadencia final','no final cadence')}</span></span></div>
     ${p.expr?`<div><span class="lab">${tr('Expresión aplicada','Applied expression')}</span><span class="expr">${esc(exprSummary(p.expr))}</span></div>`:''}<div class="an-pats"><span class="lab">${tr('Patrones reconocidos','Recognized patterns')}</span><div>${pats.length?pats.map(f=>`<span class="tag"><b>${f.k}</b>${degText(f.name)}${f.wrap?tr(' (en bucle)',' (looping)'):''}</span>`).join(''):`<span class="none">${tr('Ninguno de los '+PATTERNS.length+' patrones conocidos.','None of the '+PATTERNS.length+' known patterns.')}</span>`}</div></div></div>`;
   const row=i=>{ const r=A.romans[i], lab=esc(A.rs[i].label), fn=FN_NAME[A.fn[i]];
-    return `<div class="an-row"><span class="n">${i+1}</span><span class="main">${r?esc(r.text):lab}</span><span class="sub" title="${r?`${lab} · `:''}${fn} ${ten(A.ten[i])}${A.tenCtx[i]?` · ${tenDetail(A,i)}`:''}"><span class="fn">${r?`<span class="sym">${lab}</span> · `:''}${fn}</span> <span class="ten">${ten(A.ten[i])}</span></span></div>`; };
+    return `<div class="an-row"><span class="n">${i+1}</span><span class="main">${r?esc(r.text):lab}</span><span class="sub" title="${r?`${lab} · `:''}${fn} ${ten(A.ten[i])}${A.tenCtx[i]?` · ${tenDetail(A,i)}`:''}${A.rs[i].orn?` · ${esc(ornamentText(A.rs[i].orn,A.rs[i].spelled,st))}`:''}"><span class="fn">${r?`<span class="sym">${lab}</span> · `:''}${fn}</span> <span class="ten">${ten(A.ten[i])}</span></span></div>`; };
   // a looping pattern gets two open brackets, one at each end of the sheet
   const N=A.rs.length, B=pats.filter(f=>!f.cycle).flatMap(f=>f.wrap?[{k:f.k,a:f.from,b:N-1,open:'b'},{k:f.k,a:0,b:f.to,open:'t'}]:[{k:f.k,a:f.from,b:f.to}]).sort((x,y)=>x.a-y.a||x.k-y.k);
   let rows='';
@@ -826,7 +828,8 @@ $('sepForm').onsubmit=e=>{
 $('noteChips').addEventListener('click',e=>{const b=e.target.closest('.chip[data-m]'); if(!b) return; toggleKey(+b.dataset.m);});
 $('cands').addEventListener('click',e=>{
   const b=e.target.closest('.cand'); if(!b) return; st.pick=+b.dataset.i; renderActive();
-  if(lastCur&&st.src==='seg'&&curSeg()&&sigOf(st.notes)===st.srcSig){ st.prog.names[st.srcSig]={root:lastCur.root,sym:lastCur.type.sym}; render(); }
+  // the list of a lane chord with ornaments reorders once it is named, so the pick follows the name, not the place
+  if(lastCur&&st.src==='seg'&&curSeg()&&sigOf(st.notes)===st.srcSig){ st.prog.names[st.srcSig]={root:lastCur.root,sym:lastCur.type.sym}; st.prefer={root:lastCur.root,sym:lastCur.type.sym}; render(); }
 });
 $('bRoot').onclick=()=>{st.rootMode=!st.rootMode; renderActive();};
 $('bUndo').onclick=undo; $('bRedo').onclick=redo;

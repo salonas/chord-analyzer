@@ -79,7 +79,47 @@ function spellCandidate(c,notes,prefs,key){
     else { const [L,A]=defaultSpell(pc,prefs,key); byPc[pc]={l:L,a:A,deg:d}; }
   }
   return {rootName:letterName(rl,ra,prefs),byPc,
-    notes:notes.map(m=>{const s=byPc[m%12];return {...spellMidi(m,s.l,s.a),deg:s.deg}})};
+    // a note the chord leaves out as an ornament has no degree in it and takes the name of the key
+    notes:notes.map(m=>{const s=byPc[m%12];return s?{...spellMidi(m,s.l,s.a),deg:s.deg}:{...plainSpell(m,prefs,key),orn:true}})};
+}
+// ---------- ornaments (non-chord tones) ----------
+// A step that says when its notes sound (evs: [{m,s,l}] in ticks; a: where the step starts) may leave out up to five pitch classes
+// as ornaments, never the bass, when the chord of the rest explains the stretch better. A pitch class weighs its share of the time
+// the notes sound in the step; the reading costs its type's points, 3 per tenth of the weight left out and 2 per extension (7th and
+// up) that weighs under 15 %: a seventh that passes does not make the chord a seventh chord. Fixed on the development set of
+// TAVERN (1 and 2 Nov 2026: extra weight for the beat and the bass gave the same total and more false drops on exact chords,
+// so it went); without evs a step reads as before.
+const ORN={drop:3,ext:2,extUnder:.15,maxDrop:5};
+function ornWeights(evs,a,dur){
+  const W=new Map(), b=a+dur;
+  for(const x of evs){
+    const w=(Math.min(x.s+x.l,b)-Math.max(x.s,a))/dur;
+    W.set(x.m%12,(W.get(x.m%12)||0)+w);
+  }
+  const tot=[...W.values()].reduce((s,v)=>s+v,0);
+  W.forEach((v,k)=>W.set(k,v/tot));
+  return W;
+}
+function readOrnaments(notes,evs,a,dur){
+  const ev=evs.filter(x=>x.s<a+dur&&x.s+x.l>a&&notes.includes(x.m)); if(!ev.length||!(dur>0)) return null;
+  const W=ornWeights(ev,a,dur), bassPc=notes[0]%12, free=[...W.keys()].filter(pc=>pc!==bassPc);
+  const sets=[[]]; for(const x of free) for(const s of [...sets]) if(s.length<ORN.maxDrop) sets.push([...s,x]);
+  let best=null;
+  for(const D of sets){
+    const keep=notes.filter(m=>!D.includes(m%12));
+    const c=new Set(keep.map(m=>m%12)).size>=2&&analyze(keep,null)[0]; if(!c) continue;
+    const ext=c.type.degs.filter(d=>d.n>=7).map(d=>(d.pc+c.root)%12).filter(pc=>W.has(pc)&&!D.includes(pc)&&W.get(pc)<ORN.extUnder).length;
+    const cost=c.score+ORN.drop*10*D.reduce((s,pc)=>s+W.get(pc),0)+ORN.ext*ext;
+    if(!best||cost<best.cost-1e-9) best={c,cost,D};
+  }
+  return best;
+}
+// The ornaments a step left out, in words: «Adorno: B3 (dura poco; no cambia el nombre del acorde)»
+function ornamentText(orn,spelled,prefs){
+  if(!orn||!orn.length) return '';
+  const ns=orn.map(m=>noteText(spelled.find(n=>n.midi===m)||plainSpell(m,prefs),prefs)).join(', ');
+  return orn.length>1?tr(`Adornos: ${ns} (duran poco; no cambian el nombre del acorde)`,`Ornaments: ${ns} (short; they do not change the chord's name)`)
+    :tr(`Adorno: ${ns} (dura poco; no cambia el nombre del acorde)`,`Ornament: ${ns} (short; it does not change the chord's name)`);
 }
 function bassDeg(c){return c.type.degs.find(d=>d.pc===(c.bass-c.root+12)%12)}
 function inversionText(c){
@@ -99,7 +139,11 @@ function candSymbol(c,sp,prefs){
 function resolveStep(step,prefs,key){
   const notes=[...step.notes].sort((a,b)=>a-b);
   const cands=analyze(notes,null);
-  const c=cands.find(x=>x.root===step.root&&x.type.sym===step.sym)||cands[0]||null;
+  // a chord the user named keeps its name; otherwise the timing of the notes, when the step has it, may leave some out.
+  // The reading without the ornaments is kept either way (orn when it names the step, ornAlt when the user named another)
+  const named=cands.find(x=>x.root===step.root&&x.type.sym===step.sym);
+  const o=step.evs?readOrnaments(notes,step.evs,step.a||0,step.dur):null;
+  const c=named||(o&&o.c)||cands[0]||null;
   const sp=c?spellCandidate(c,notes,prefs,key):null;
   const spelled=sp?sp.notes:notes.map(m=>plainSpell(m,prefs,key));
   let label;
@@ -107,7 +151,8 @@ function resolveStep(step,prefs,key){
   else if(notes.length===1) label=noteText(spelled[0],prefs);
   else if(notes.length===2) label=letterName(spelled[0].l,spelled[0].a,prefs)+'–'+letterName(spelled[1].l,spelled[1].a,prefs);
   else label=notes.length?'?':'—';
-  return {notes,c,sp,spelled,label};
+  const drop=o?notes.filter(m=>o.D.includes(m%12)):[];
+  return {notes,c,sp,spelled,label,...(drop.length&&(o.c===c?{orn:drop}:{ornAlt:drop}))};
 }
 
 // ---------- progression analysis ----------
@@ -476,4 +521,4 @@ function dissonance(r){
   return Math.min(1,v);
 }
 
-export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, RANK, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, letterName, modeName, noteText, octOff, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp, rankHelp, scoreDetail, keyWhy, bookends, resolvesToTonic };
+export { CTX, DISS, FN_NAME, FN_TENSION, PATTERNS, RANK, analyze, analyzeProgression, candSymbol, defaultSpell, detectKey, inversionText, keyName, keyText, letterName, modeName, noteText, octOff, ornamentText, plainSpell, resolveStep, spellCandidate, tenDetail, tensionHelp, rankHelp, scoreDetail, keyWhy, bookends, resolvesToTonic };

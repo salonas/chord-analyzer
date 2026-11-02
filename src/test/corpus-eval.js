@@ -58,11 +58,62 @@ export class Tally {
   rows() { return [...this.cats].map(([cat, c]) => ({ cat, n: c.n, ok: c.ok, pct: c.n ? +(100 * c.ok / c.n).toFixed(1) : null })); }
   top(k) { return [...this.errs.values()].sort((a, b) => b.n - a.n).slice(0, k); }
 }
+export function mergeTallies(list) {
+  const out = new Tally();
+  for (const t of list) {
+    for (const [k, c] of t.cats) { const o = out.cats.get(k) || { n: 0, ok: 0 }; o.n += c.n; o.ok += c.ok; out.cats.set(k, o); }
+    for (const [k, e] of t.errs) { const o = out.errs.get(k); if (o) o.n += e.n; else out.errs.set(k, { ...e }); }
+  }
+  return out;
+}
+// The runs of evalTavern or evalRock on single works or songs, added up: the same numbers as one run over all of them
+export function mergeRuns(runs) {
+  const info = {};
+  for (const k of Object.keys(runs[0] ? runs[0].info : {})) {
+    const vs = runs.map(r => r.info[k]);
+    info[k] = vs[0] instanceof Tally ? mergeTallies(vs) : Array.isArray(vs[0]) ? vs.flat(1) : vs.reduce((s, v) => s + v, 0);
+  }
+  return { T: mergeTallies(runs.map(r => r.T)), info };
+}
+
+// ---------- confidence intervals ----------
+// Percentile bootstrap over whole units (a TAVERN work, a Rock Corpus song): the phrases of a work are not independent, so the
+// unit of resampling is the work. The draws come from a fixed seed, and every category and both sides of a comparison use the
+// same draws. With few units (6 test works) the interval is optimistic: it cannot see the variation of works it has not met.
+const BOOT = 2000;
+function draws(nUnits, B = BOOT, seed = 20261102) {
+  let s = seed >>> 0;
+  const rnd = () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  return Array.from({ length: B }, () => Array.from({ length: nUnits }, () => Math.floor(rnd() * nUnits)));
+}
+const pctile = (xs, q) => { const a = [...xs].sort((x, y) => x - y), i = (a.length - 1) * q, lo = Math.floor(i); return a[lo] + (a[Math.min(lo + 1, a.length - 1)] - a[lo]) * (i - lo); };
+const cats = units => [...new Set(units.flatMap(t => [...t.cats.keys()]))];
+// {category: [low, high]} in percent, one decimal
+export function bootstrapCI(units) {
+  const D = draws(units.length), out = {};
+  for (const cat of cats(units)) {
+    const c = units.map(t => t.cats.get(cat) || { n: 0, ok: 0 });
+    const v = D.map(d => { let n = 0, ok = 0; d.forEach(i => { n += c[i].n; ok += c[i].ok; }); return n ? 100 * ok / n : null; }).filter(x => x !== null);
+    out[cat] = [+pctile(v, .025).toFixed(1), +pctile(v, .975).toFixed(1)];
+  }
+  return out;
+}
+// The same for the difference after − before, unit by unit (paired: each draw takes the same works on both sides)
+export function bootstrapDiff(before, after) {
+  const D = draws(before.length), out = {};
+  for (const cat of cats([...before, ...after])) {
+    const b = before.map(t => t.cats.get(cat) || { n: 0, ok: 0 }), a = after.map(t => t.cats.get(cat) || { n: 0, ok: 0 });
+    const v = D.map(d => { let nb = 0, ob = 0, na = 0, oa = 0; d.forEach(i => { nb += b[i].n; ob += b[i].ok; na += a[i].n; oa += a[i].ok; }); return nb && na ? 100 * (oa / na - ob / nb) : null; }).filter(x => x !== null);
+    out[cat] = [+pctile(v, .025).toFixed(1), +pctile(v, .975).toFixed(1)];
+  }
+  return out;
+}
 
 // ---------- TAVERN ----------
-const stepOf = (notes, a, b) => {
-  const ms = [...new Set(notes.filter(n => n[1] < b && n[1] + n[2] > a).map(n => n[0]))].sort((x, y) => x - y);
-  return ms.length ? { notes: ms, dur: b - a } : null;
+// with plain, the steps carry no timing and the analysis reads them as it did before the ornament rule (the «before» of a comparison)
+const stepOf = (notes, a, b, plain) => {
+  const on = notes.filter(n => n[1] < b && n[1] + n[2] > a), ms = [...new Set(on.map(n => n[0]))].sort((x, y) => x - y);
+  return ms.length ? { notes: ms, dur: b - a, ...(!plain && { a, evs: on.map(n => ({ m: n[0], s: n[1], l: n[2] })) }) } : null;
 };
 const kernNames = notes => { const m = new Map(); notes.forEach(n => { if (!m.has(n[0])) m.set(n[0], new Set()); m.get(n[0]).add(n[3]); }); return m; };
 const overlap = (x, y) => Math.max(0, Math.min(x.b, y.b) - Math.max(x.a, y.a));
@@ -98,6 +149,8 @@ function scoreStep(T, mode, ph, seg, other, r, rom, keyOk, kern) {
   T.add(mode + ' | acorde: raíz (acepta A o B)', rootAny);
   T.add(mode + ' | acorde: raíz + calidad (solo la lectura propia)', qualOwn);
   T.add(mode + ' | acorde: raíz + calidad (acepta A o B)', qualAny, qualAny ? null : { sig, example: detail });
+  // the whole name: F7♭9 or Cadd11 count above as F7 and C, here they do not
+  T.add(mode + ' | acorde: nombre exacto, sin extensiones (acepta A o B)', !!ch && exps.some(x => ch.root === x.root && ch.sym === expSym(x)));
   T.add(mode + ' | acorde: raíz + calidad (acepta A o B), tramos con todas las notas del acorde sonando', qualAny, null, e.complete);
   // control of the conversion: the notes of the stretch are exactly the pitch classes of the labelled chord
   T.add(mode + ' | acorde: raíz + calidad (acepta A o B), tramos cuyas notas son exactamente las del acorde (control)', qualAny, null, nPc === e.pcs.length && e.complete);
@@ -122,7 +175,7 @@ function scoreStep(T, mode, ph, seg, other, r, rom, keyOk, kern) {
   return qualAny;
 }
 
-export function evalTavern(pieces) {
+export function evalTavern(pieces, { plain = false } = {}) {
   const T = new Tally(), info = { phrases: 0, segsConverted: 0, segsSkipped: 0, complete: 0, incompleteSegs: 0, appChordsPerAnalystSeg: [], agreement: new Tally() };
   const kernOf = ph => { const m = kernNames(ph.notes); return midis => { const out = new Map(); midis.forEach(x => out.set(x, m.get(x) || new Set())); return out; }; };
   for (const piece of pieces) for (const ph of piece.phrases) {
@@ -131,7 +184,7 @@ export function evalTavern(pieces) {
     // pattern for the app's own segmentation
     const pat = normProg({ id: 'x', name: ph.id, beats: Math.max(1, Math.ceil(ph.end / 96)), notes: ph.notes.map((n, i) => ({ id: 'n' + i, m: n[0], s: n[1], l: n[2], v: 100 })), names: {} });
     const appSegs = harmonySegs(pat);
-    const appA = appSegs.length ? analyzeProgression(appSegs.map(S => segStep(pat, S)), P) : null;
+    const appA = appSegs.length ? analyzeProgression(appSegs.map(S => segStep(pat, S)).map(st => (plain ? { notes: st.notes, dur: st.dur } : st)), P) : null;
     const expKey = { tonic: ph.key.tonic, mode: ph.key.mode };
     for (const who of ['A', 'B']) {
       const mine = ph.segs[who], theirs = ph.segs[who === 'A' ? 'B' : 'A'];
@@ -146,7 +199,7 @@ export function evalTavern(pieces) {
       }
       // ---- by annotated stretch: the app gets the notes of each stretch ----
       const steps = [], idx = [];
-      mine.forEach((s, i) => { const st = stepOf(ph.notes, s.a, s.b); if (st) { idx.push(i); steps.push(st); } });
+      mine.forEach((s, i) => { const st = stepOf(ph.notes, s.a, s.b, plain); if (st) { idx.push(i); steps.push(st); } });
       if (steps.length) {
         const A = analyzeProgression(steps, P);
         const keyRel = keyRelation(A.key, expKey), keyOk = keyRel === 'ok';

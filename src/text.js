@@ -1,6 +1,6 @@
 // Text export and import (reimportable plain text).
 import { HIGH, LATIN, LETTERS, LOW, NAT, OCT_CONV, T, barsText, fmtB, numB, sigOf, uid } from './data.js';
-import { isDrum, isMulti, isPure, normProg, progEnd, segStep, segs } from './model.js';
+import { isDrum, isMulti, isPure, normProg, progEnd, segStep, segs, stepTiming } from './model.js';
 import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, keyName, keyText, noteText, octOff, plainSpell, resolveStep, spellCandidate } from './analysis.js';
 import { exprSummary, instLabel, instText } from './expression.js';
 import { arpeggioChords, blockMelody, splitHarmony } from './harmony.js';
@@ -65,7 +65,7 @@ function melodyRole(mel,i,info,toneAt,prefs,next,key){
 }
 function harmonyLines(p,prefs,L){
   const Hm=splitHarmony(p);
-  const A=analyzeProgression(Hm.chords.map(c=>({notes:c.notes,dur:c.b-c.a,...(p.names[sigOf(c.notes)]||{})})),prefs);
+  const A=analyzeProgression(Hm.chords.map(c=>({notes:c.notes,dur:c.b-c.a,...stepTiming(p,c.a,c.b,c.notes),...(p.names[sigOf(c.notes)]||{})})),prefs);
   return {Hm,A,write(){
     const nt=m=>noteText(plainSpell(m,prefs,A.key),prefs);
     L.push(tr('# Armonía: n. acorde | grado (función · tensión estimada 0–1: base (función y disonancia) + contexto (llegada, sorpresa, espera)) | inicio–fin (tiempos) | voces | bajo','# Harmony: n. chord | degree (function · estimated tension 0–1: base (function and dissonance) + context (arrival, surprise, wait)) | start–end (beats) | voices | bass')+octTail(prefs));
