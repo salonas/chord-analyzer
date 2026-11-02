@@ -436,18 +436,45 @@ function chromaticReading(rs,romans,key,prefs){
     }
   });
 }
+// A note outside the key that the chord leaves out and that the same voice follows a semitone up is written with the letter under
+// the one it goes to: G♯ → A, not A♭ → A. The same voice is a note that starts when this one ends, a semitone up, with no other
+// starting then a semitone down; the notes of every step of the progression count, so the goal may be in the next chord. A note
+// that goes down keeps its name (written by the semitone it goes to, B → B♭ came out C♭). Only with auto accidentals, and only
+// for steps that say when their notes sound. Fixed on the development set of TAVERN (2 Nov 2026; decision 14)
+function spellByGoal(rs,steps,key,prefs){
+  if(prefs.accPref==='sharp'||prefs.accPref==='flat') return;
+  const evs=[...new Map(steps.flatMap(s=>s.evs||[]).map(x=>[x.m+':'+x.s+':'+x.l,x])).values()];
+  if(!evs.length) return;
+  const sc=SCALE_STEPS[key.mode].map(x=>(x+key.tonic)%12);
+  const goesUp=(m,a,b)=>{
+    const d=evs.filter(x=>x.m===m&&x.s<b&&x.s+x.l>a).map(x=>{const nx=new Set(evs.filter(y=>y.s===x.s+x.l&&Math.abs(y.m-m)===1).map(y=>y.m-m)); return nx.size===1?[...nx][0]:0;}).filter(Boolean);
+    return d.length>0&&d.every(x=>x===1);
+  };
+  rs.forEach((r,i)=>{
+    const st=steps[i]; if(!st.evs) return;
+    const a=st.a||0, b=a+st.dur;
+    r.spelled=r.spelled.map(n=>{
+      const pc=n.midi%12;
+      if(sc.includes(pc)||(r.sp&&r.sp.byPc[pc]&&!n.orn&&!(r.orn||[]).includes(n.midi))||!goesUp(n.midi,a,b)) return n;
+      const l=(plainSpell(n.midi+1,prefs,key).l+6)%7; let ac=((n.midi-NAT[l])%12+12)%12; if(ac>6) ac-=12;
+      return Math.abs(ac)<=1?{...n,...spellMidi(n.midi,l,ac)}:n;
+    });
+  });
+}
 function analyzeProgression(steps,prefs){
   // the key comes from the chords' roots and notes, which do not depend on how they are spelled; the spelling then follows the key
   const first=steps.map(s=>resolveStep(s,prefs));
   const items=first.map((r,i)=>({root:r.c?r.c.root:r.notes.length?r.notes[0]%12:0,q:r.c?r.c.type.q:null,pcs:[...new Set(r.notes.map(m=>m%12))],dur:steps[i].dur||1}));
   if(!items.length) return {rs:first,romans:[],found:[]};
   const keys=detectKey(items), plain=plainTonic(items), rank=k=>k.score+(k.tonic===plain?PLAIN_TONIC:0);
-  // the weight of the plain tonic only picks the key; the alternate one still goes by the scores as measured
-  const top=keys.reduce((b,k)=>rank(k)>rank(b)?k:b), alt=keys.find(k=>k!==top&&top.score-k.score<2), modal=modeOf(top,items), key=modal?{...top,modal}:top;
+  // the weight of the plain tonic only picks the key; the alternate one still goes by the scores as measured. With only two chords
+  // the margin takes the point of the plain V triad too: G → C is V–I in C or I–IV in G, as C → G
+  const top=keys.reduce((b,k)=>rank(k)>rank(b)?k:b), alt=keys.find(k=>k!==top&&top.score-k.score<(items.length===2?3:2)), modal=modeOf(top,items), key=modal?{...top,modal}:top;
   // the lane's chords read again with the key and their neighbours (readWithMelody); the neighbours are the first reading
   const rs=steps.map((s,i)=>resolveStep(s,prefs,key,{prev:first[i-1]&&first[i-1].c,next:first[i+1]&&first[i+1].c}));
   const romans=rs.map(r=>r.c?romanFor(r.c,key):null);
   chromaticReading(rs,romans,key,prefs);
+  spellByGoal(rs,steps,key,prefs);
   const toks=romans.map(r=>r?r.token:'?'), N=toks.length, found=[];
   for(const p of PATTERNS){
     const L=p.seq.length; if(L>N) continue;
@@ -459,7 +486,7 @@ function analyzeProgression(steps,prefs){
   }
   // the patterns are read in the other tonality too, as they would be in the main one: a progression that fits one in the key it
   // was not read in (IV–V–iii–vi in C when A minor was chosen) is still found, and says in which key. The other tonality is the
-  // alternate key when there is one, and always the relative key, the usual ambiguity (the alternate shows only within 2 points).
+  // alternate key when there is one, and always the relative key, the usual ambiguity (the alternate shows only within 2 points, 3 with only two chords).
   // It is shown only when it spans more chords than the longest pattern of the main key: a loop that is the same in both keys
   // (G D Em C is also i–♭VI–♭III–♭VII in E minor) adds nothing
   const longest=Math.max(0,...found.map(f=>((PATTERNS.find(p=>p.name===f.name)||{}).seq||[]).length));

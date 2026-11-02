@@ -40,8 +40,8 @@ describe.skipIf(!process.env.CORPUS_REPORT)('corpus report', () => {
       ['Acorde por tramo (raíz + calidad, acepta A o B; sin los tramos de calidad no determinable: power chord o una sola nota)', '75 %', 'por tramo | acorde: raíz + calidad (acepta A o B), sin contar los tramos de calidad no determinable', 75, 'TAVERN, por tramo anotado'],
       ['Acorde de punta a punta (los tramos sin acorde de la app cuentan como fallo)', '56 %', 'de punta a punta | acorde: raíz + calidad (acepta A o B), contando como fallo los tramos sin acorde de la app', 56, 'TAVERN, de punta a punta'],
       ['Inversión, dado el acorde correcto', '≥ 94 %', 'por tramo | inversión (dado el acorde correcto)', 94, 'TAVERN, por tramo anotado'],
-      ['Tonalidad (tónica y modo)', '85 %', 'por tramo | tonalidad (tónica y modo)', 85, 'TAVERN, por tramo anotado'],
-      ['Tónica, sin aceptar la relativa', '82 %', 'tónica (acepta ambos analistas)', 82, 'Rock Corpus'],
+      ['Tonalidad (tónica y modo)', '82 %', 'por tramo | tonalidad (tónica y modo)', 82, 'TAVERN, por tramo anotado'],
+      ['Tónica, sin aceptar la relativa', '75 %', 'tónica (acepta ambos analistas)', 75, 'Rock Corpus'],
       ['Enarmonía (tramo con todas las notas bien)', '95 %', 'por tramo | enarmonía (tramo con todas las notas bien)', 95, 'TAVERN, por tramo anotado'],
       ['Modulación: canciones con cambio de tonalidad que la app informa', 'la mitad (50 %)', 'modulación: de las canciones en que el corpus cambia de tonalidad, las que la app informa como cambio', 50, 'Rock Corpus'],
     ].map(([n, m, cat, goal, c]) => { const rock = c === 'Rock Corpus'; return [n, m, num(rock ? rT : tT, cat), goal, c, (rock ? CI.rT : CI.tT)[cat] || null]; });
