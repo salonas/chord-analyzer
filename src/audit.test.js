@@ -147,25 +147,24 @@ describe('row 22: the help of the Expression tab quotes the weights of the code'
   const pct = x => Math.round(Math.abs(x) * 100);
   const text = frag => indexTexts().find(t => t.includes(frag));
   it('quotes the voice balance and the bar accents', () => {
-    const voices = text('la más aguda (la melodía)'), accents = text('tiempo 1 +');
-    expect(voices).toContain(`+${pct(RULES.voiceTop)} %`);
-    expect(voices).toContain(`+${pct(RULES.voiceBass)} %`);
-    expect(voices).toContain(`−${pct(RULES.voiceInner)} %`);
-    expect(accents).toContain(`tiempo 1 +${pct(RULES.beat1)} %`);
-    expect(accents).toContain(`tiempo 3 +${pct(RULES.beat3)} %`);
-    expect(accents).toContain(`−${pct(RULES.offbeat)} %`);
+    const voices = text('la más aguda, que suele ser la melodía'), accents = text('el tiempo 1 suma');
+    expect(voices).toContain(`suma el ${pct(RULES.voiceTop)} % del valor`);
+    expect(voices).toContain(`El bajo suma el ${pct(RULES.voiceBass)} %`);
+    expect(voices).toContain(`restan el ${pct(RULES.voiceInner)} %`);
+    expect(accents).toContain(`el tiempo 1 suma el ${pct(RULES.beat1)} %`);
+    expect(accents).toContain(`el tiempo 3 suma el ${pct(RULES.beat3)} %`);
+    expect(accents).toContain(`restan el ${pct(RULES.offbeat)} %`);
   });
   it('quotes the appoggiatura and passing-tone weights, in both languages', () => {
-    const es = text('la que el texto exportado llama apoyatura');
-    expect(RULES.apoyResolve).toBe(-0.5);
-    expect(es).toContain('a la mitad');
-    expect(es).toContain(`bajan un ${pct(RULES.passing)} %`);
-    expect(HTML_EN[es]).toContain('lightened by half');
-    expect(HTML_EN[es]).toContain(`drop ${pct(RULES.passing)} %`);
+    const es = text('resuelve por grado conjunto');
+    expect(es).toContain(`resuelve resta el ${pct(RULES.apoyResolve)} %`);
+    expect(es).toContain(`anticipaciones restan el ${pct(RULES.passing)} %`);
+    expect(HTML_EN[es]).toContain(`resolves to subtracts ${pct(RULES.apoyResolve)} %`);
+    expect(HTML_EN[es]).toContain(`anticipations subtract ${pct(RULES.passing)} %`);
   });
   it('gives the English help the same numbers as the Spanish one', () => {
-    const num = s => (s.match(/[+−]\d+ %/g) || []).join(' ');
-    for (const frag of ['la más aguda (la melodía)', 'tiempo 1 +']) { const es = text(frag); expect(num(HTML_EN[es]).replace(/−/g, '-')).toBe(num(es).replace(/−/g, '-')); }
+    const num = s => (s.match(/\d+ %/g) || []).join(' ');
+    for (const frag of ['la más aguda, que suele ser la melodía', 'el tiempo 1 suma', 'resuelve por grado conjunto']) { const es = text(frag); expect(num(HTML_EN[es])).toBe(num(es)); }
   });
 });
 
@@ -270,8 +269,8 @@ describe('closing trace: the words THEORY.md fixes', () => {
   // row 24: the footer names the reading under a tune and the tension among the estimates (approved on 2 Nov 2026)
   it('names the reading under a tune and the tension in the footer among the estimates, in both languages', () => {
     const es = indexTexts().find(t => t.includes('son una estimación'));
-    expect(es).toContain('Bajo una melodía, la app separa la melodía, lee el acompañamiento por ataques y por tiempos y deja las notas cortas como adorno; esa lectura, la tonalidad, los patrones y la tensión son una estimación.');
-    expect(HTML_EN[es]).toContain('Under a tune, the app sets the tune apart, reads the accompaniment by attacks and by beats and leaves short notes as ornaments; that reading, the key, the patterns and the tension are an estimate.');
+    expect(es).toContain('Si hay una melodía encima, la app la separa del acompañamiento y trata las notas cortas como adornos. Esa lectura, la tonalidad, los patrones y la tensión son una estimación.');
+    expect(HTML_EN[es]).toContain('If there is a tune on top, the app sets it apart from the accompaniment and treats short notes as ornaments. That reading, the key, the patterns and the tension are an estimate.');
   });
   // row 16: the help under the sheet calls the tension an estimate (decision 7)
   it('calls the tension of the sheet an estimate in its help, in both languages', () => {

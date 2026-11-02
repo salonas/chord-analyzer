@@ -226,6 +226,8 @@ function renderActive(){
   $('velTarget').textContent=R.sel.size?tr(`Se aplica a ${vt} nota${vt===1?'':'s'} seleccionada${vt===1?'':'s'}.`,`Applies to ${vt} selected note${vt===1?'':'s'}.`):tr(`Se aplica a todas las notas (${vt}).`,`Applies to every note (${vt}).`);
   renderStaff(spelled);
   segSync();
+  // while the progression plays the inspector panels only grow, so the staff and the keyboard below them stay put
+  document.querySelectorAll('.inspector>.panel').forEach(p=>{ p.style.minHeight=P.playing?p.offsetHeight+'px':''; });
 }
 
 // ---------- render: progression ----------
@@ -693,7 +695,7 @@ function analysisSheet(A,p){
     for(let j=a;j<=b;j++) rows+=row(j);
     rows+='</div>'; i=b+1;
   }
-  return `<div class="an">${head}<div class="an-rows"><span class="lines" aria-hidden="true">${'<b></b>'.repeat(N+2)}</span>${rows}</div>
+  return `<div class="an">${head}<div class="an-rows"><span class="lines" aria-hidden="true">${'<b></b>'.repeat(2*N+2)}</span>${rows}</div>
     <div class="hint">${sheetHint()}</div></div>`;
 }
 // The tracks of a multitrack pattern: pick the one you edit (the others stay as outlines), change its instrument, mute it
