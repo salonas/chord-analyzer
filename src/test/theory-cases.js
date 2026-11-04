@@ -496,6 +496,28 @@ for (const c of melCases.slice(-2)) {
   if (ch.role) ch.role.forEach(([note, start, exp]) => { const line = txt.split('\n').find(l => norm(l).startsWith(norm(note) + ' (') && l.split('|')[1] && l.split('|')[1].trim() === start); const role = line ? line.split('|').pop().trim() : '(nota no listada como melodía)'; add('melodía+acordes', `${c.id}-${note}@${start}`, c.level, `${c.desc} · rol de ${note} en el tiempo ${start}`, exp, role, exp.some(e => role.startsWith(e))); });
 }
 
+// ---------- M. within a key the key spells the notes, not the ♯/♭ preference (4 Nov 2026, BRIMSTONE pattern 3) ----------
+// BRIMSTONE pattern 3 as the user exported it ([MIDI, start, length, velocity], beats): with ♯ the text said «A♯ mayor», A♯m(maj7)/C♯,
+// D♯7 and D♯13♯11; within a key the preference does not apply, so the text is the same with Auto, ♯ and ♭
+{
+  const B3 = [[38,0,4,99],[50,0,4,95],[62,0,4,95],[69,0,3,107],[72,1.5,1.5,99],[70,3,1,97],[37,4,4,100],[46,4,2,95],[57,4,2,96],[61,4,4,96],[65,4,2,107],[53,5,2,94],[45,6,2,107],[67,6,2,112],[49,7,1,98],[41,8,4,105],[50,8,2,100],[62,8,4,100],[69,8,3,112],[72,9.5,1.5,101],[53,10,2,100],[69,11,1,102],[70,11,1,107],[39,12,4,106],[49,12,4,101],[55,12,2,101],[61,12,4,101],[67,12,4,101],[70,12,2,112],[57,14,2,109],[72,14,2,112],[38,16,4,105],[50,16,3,100],[62,16,4,100],[69,16,1.5,112],[45,17,1,96],[69,17.5,1,107],[72,17.5,1,112],[46,18,1,97],[70,18.5,1.5,103],[74,18.5,1.5,108],[50,19,1,97],[37,20,4,107],[43,20,3,102],[53,20,3,103],[61,20,4,102],[65,20,2,103],[72,20,2,112],[67,22,2,109],[70,22,2,112],[45,23,1,111],[55,23,1,112],[41,24,2,109],[57,24,2,104],[62,24,4,104],[69,24,2,112],[41,26,2,106],[46,26,2,101],[58,26,2,101],[70,26,2,101],[72,26,2,112],[39,28,2,111],[55,28,2,106],[61,28,4,107],[69,28,2,112],[39,30,2,110],[48,30,2,105],[58,30,2,105],[67,30,2,112]];
+  const p = normProg({ id: 'M', name: 'brimstone-03-pattern-3', beats: 4, notes: B3.map(([m, s, l, v], i) => ({ id: 'b' + i, m, s: s * T, l: l * T, v })), names: {} });
+  const txt = a => progText(p, { ...P, accPref: a }), auto = txt('auto'), sharp = txt('sharp'), flat = txt('flat');
+  texts.M01 = { desc: 'BRIMSTONE pattern 3 con la preferencia ♯ (igual que en Auto)', text: sharp };
+  const keyOf = t => (t.match(/Tonalidad estimada: ([^·(]+)/) || [, '(sin línea)'])[1].trim();
+  add('enarmonía', 'M01', 2, 'BRIMSTONE pattern 3 con ♯: la tonalidad se llama B♭ mayor, nunca A♯ mayor', 'B♭ mayor', keyOf(sharp), keyOf(sharp) === 'B♭ mayor', 'THEORY.md, «La tonalidad manda sobre la preferencia ♯/♭»');
+  const lab = (t, n) => (t.split('\n').find(l => l.startsWith(n + '. ')) || '').split(' | ')[0].replace(/^\d+\. /, '');
+  [[2, 'B♭m(maj7)/D♭'], [5, 'E♭7'], [6, 'E♭13♯11']].forEach(([n, e]) => add('enarmonía', `M01.${n}`, 2, `BRIMSTONE pattern 3 con ♯: el acorde ${n} se escribe por la tonalidad`, e, lab(sharp, n), lab(sharp, n) === e, 'THEORY.md, «La tonalidad manda sobre la preferencia ♯/♭»'));
+  add('enarmonía', 'M02', 2, 'BRIMSTONE pattern 3: el texto exportado con ♯ y con ♭ es el mismo que con Auto', 'iguales', sharp === auto && flat === auto ? 'iguales' : 'distintos', sharp === auto && flat === auto, 'THEORY.md, «La tonalidad manda sobre la preferencia ♯/♭»');
+}
+// a key keeps the name Auto gives it with any preference: F♯ major with ♭ (not G♭), D♭ major with ♯ (not C♯), E♭ minor with ♯
+[['M03', 'F♯ mayor con ♭: no G♭ mayor', ['F#3 A#3 C#4', 'B2 D#3 F#3', 'C#3 E#3 G#3 B3', 'F#3 A#3 C#4'], 'flat', 'F♯ mayor'],
+ ['M04', 'D♭ mayor con ♯: no C♯ mayor', ['Db3 F3 Ab3', 'Gb2 Bb2 Db3', 'Ab2 C3 Eb3 Gb3', 'Db3 F3 Ab3'], 'sharp', 'D♭ mayor'],
+ ['M05', 'E♭ menor con ♯: no D♯ menor', ['Eb3 Gb3 Bb3', 'Ab2 Cb3 Eb3', 'Bb2 D3 F3 Ab3', 'Eb3 Gb3 Bb3'], 'sharp', 'E♭ menor']].forEach(([id, desc, chs, pref, exp]) => {
+  const A = analyzeProgression(chs.map(c => ({ notes: N(c) })), { ...P, accPref: pref }), got = keyName(A.key, { ...P, accPref: pref });
+  add('tonalidad', id, 2, `Nombre de la tonalidad con la preferencia ${pref === 'flat' ? '♭' : '♯'}: ${desc}`, exp, got, got === exp, 'THEORY.md, «La tonalidad manda sobre la preferencia ♯/♭»');
+});
+
 // pure progression round trip and text labels
 {
   const p = pat('K01', [['C3 E3 G3', 4], ['G2 B2 D3 F3', 4], ['A2 C3 E3', 4], ['F2 A2 C3', 4]], []);

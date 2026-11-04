@@ -10,7 +10,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import { Worker } from 'node:worker_threads';
 import { TYPES } from './data.js';
-import { Fails, KEYS, PREFS, inspector, readVoicing } from './test/spelling-check.js';
+import { analyzeProgression, keyName } from './analysis.js';
+import { Fails, KEYS, PREFS, inspector, keyPattern, readVoicing } from './test/spelling-check.js';
+import { harmonySegs } from './harmony.js';
+import { segStep } from './model.js';
 
 const THREADS = Math.min(8, os.availableParallelism());
 const count = (list, by) => list.reduce((o, f) => { const k = by(f); o[k] = (o[k] || 0) + 1; return o; }, {});
@@ -50,4 +53,34 @@ describe('spelling: the letter of every chord tone comes from the root and the n
     }
     expect(list.length, `${list.length} notas mal escritas; por intervalo: ${JSON.stringify(count(list, f => f.interval))}`).toBe(0);
   }, 300000);
+});
+
+// Within a key the key spells the notes and the accidental preference does not apply (THEORY.md, «La tonalidad manda sobre la
+// preferencia ♯/♭», 4 Nov 2026): a key keeps its usual name with ♯ and ♭ (B♭ major, never A♯ major), never one of more than seven
+// accidentals, and the 6/7-accidental pairs keep the choice of Auto
+describe('the key spells the notes, not the preference', () => {
+  const USUAL = { major: 'C D♭ D E♭ E F F♯ G A♭ A B♭ B'.split(' '), minor: 'C C♯ D E♭ E F F♯ G G♯ A B♭ B'.split(' ') };
+  // the accidentals of a key's signature, from its name: fifths from C of the tonic's letter, 7 per sharp or flat, 3 fewer in minor
+  const signature = name => { const m = name.match(/^([A-G])(♯|♭)?\S* (mayor|menor)$/); return Math.abs('FCGDAEB'.indexOf(m[1]) - 1 + 7 * ({ '♯': 1, '♭': -1 }[m[2]] || 0) - (m[3] === 'menor' ? 3 : 0)); };
+  it('names every key the usual way with Auto, ♯ and ♭, with at most seven accidentals', () => {
+    for (const key of KEYS.filter(Boolean)) {
+      const { p } = keyPattern(TYPES[0], key, [key.tonic]);
+      for (const prefs of PREFS) {
+        const A = analyzeProgression(harmonySegs(p).map(s => segStep(p, s)), prefs);
+        expect([A.key.tonic, A.key.mode]).toEqual([key.tonic, key.mode]);
+        const name = keyName(A.key, prefs);
+        expect(name).toBe(`${USUAL[key.mode][key.tonic]} ${key.mode === 'major' ? 'mayor' : 'menor'}`);
+        expect(signature(name)).toBeLessThanOrEqual(7);
+      }
+    }
+  });
+  it('spells the chords of a pattern in a key the same with Auto, ♯ and ♭', () => {
+    for (const key of KEYS.filter(Boolean)) for (const t of TYPES.filter((_, i) => i % 7 === 0)) {
+      const { p } = keyPattern(t, key, [0, 1, 3, 6, 8, 10]);
+      const read = prefs => analyzeProgression(harmonySegs(p).map(s => segStep(p, s)), prefs).rs.map(r => `${r.label}: ${r.spelled.map(n => n.l + '/' + n.a).join(' ')}`);
+      const auto = read(PREFS[0]);
+      expect(read(PREFS[1])).toEqual(auto);
+      expect(read(PREFS[2])).toEqual(auto);
+    }
+  });
 });

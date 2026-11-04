@@ -5,18 +5,19 @@ import { tr } from './i18n.js';
 // ---------- naming ----------
 const accStr=a=>({'-2':'♭♭','-1':'♭','0':'','1':'♯','2':'♯♯'})[a];
 const letterName=(l,a,prefs)=>(prefs.naming==='latin'?LATIN:LETTERS)[l]+accStr(a);
-// With auto accidentals and a known key, the notes of its scale take its spelling (B♭ in D minor, C♯ as its leading tone)
+// With a known key, the notes of its scale take its spelling (B♭ in D minor, C♯ as its leading tone), whatever the accidental
+// preference: within a key the key spells the notes (decided 4 Nov 2026, BRIMSTONE pattern 3)
 // The tonic is spelled once, with the fewest accidentals in the key signature; ties (F♯/G♭ major, E♭/D♯ minor) take F♯ and E♭.
 // Every scale degree then takes the next letter from the tonic, so F♯ major has E♯ and C♯ minor has B♯ as its leading tone.
 const KEY_TONIC={major:[[0,0],[1,-1],[1,0],[2,-1],[2,0],[3,0],[3,1],[4,0],[5,-1],[5,0],[6,-1],[6,0]],
                  minor:[[0,0],[0,1],[1,0],[2,-1],[2,0],[3,0],[3,1],[4,0],[4,1],[5,0],[6,-1],[6,0]]};
 // minor takes the raised 7th (harmonic) and the raised 6th (melodic) too; they share the letters of the 7th and the 6th
 const SCALE_STEPS={major:[0,2,4,5,7,9,11],minor:[0,2,3,5,7,8,10,11,9]};
-const keyTonicSpell=(key,prefs)=>prefs.accPref==='sharp'||prefs.accPref==='flat'?null:KEY_TONIC[key.mode][key.tonic];
+const keyTonicSpell=key=>KEY_TONIC[key.mode][key.tonic];
 // the altered degree that names a mode: pitch class above the tonic -> letters above the tonic's (the dorian 6th is in the minor steps)
 const MODE_STEP={phrygian:[1,1],lydian:[6,3],mixolydian:[10,6]};
-function keySpell(pc,key,prefs){
-  if(!key||prefs.accPref==='sharp'||prefs.accPref==='flat') return null;
+function keySpell(pc,key){
+  if(!key) return null;
   const [tl]=KEY_TONIC[key.mode][key.tonic], steps=SCALE_STEPS[key.mode], ms=MODE_STEP[key.modal];
   const k=steps.findIndex(s=>(key.tonic+s)%12===pc);
   if(k<0&&!(ms&&(key.tonic+ms[0])%12===pc)) return null;
@@ -24,15 +25,16 @@ function keySpell(pc,key,prefs){
   let a=((pc-NAT[l])%12+12)%12; if(a>6) a-=12;
   return [l,a];
 }
+// The accidental preference (♯, ♭) names the notes only where there is no key: a standalone chord, the piano keys. Within a key
+// a note off the scale takes the usual name (AUTO), as with the preference on Auto
+const prefTable=prefs=>prefs.accPref==='flat'?FLAT:prefs.accPref==='sharp'?SHARP:null;
 function defaultSpell(pc,prefs,key){
-  if(prefs.accPref==='flat') return FLAT[pc];
-  if(prefs.accPref==='sharp') return SHARP[pc];
-  return keySpell(pc,key,prefs)||AUTO[pc];
+  if(key) return keySpell(pc,key)||AUTO[pc];
+  return (prefTable(prefs)||AUTO)[pc];
 }
 function rootSpell(pc,q,prefs,key){
-  if(prefs.accPref==='sharp') return SHARP[pc];
-  if(prefs.accPref==='flat') return FLAT[pc];
-  const k=keySpell(pc,key,prefs); if(k) return k;
+  const t=!key&&prefTable(prefs); if(t) return t[pc];
+  const k=keySpell(pc,key); if(k) return k;
   if((q==='min'||q==='dim'||q==='hdim')&&(pc===1||pc===8)) return SHARP[pc];
   return AUTO[pc];
 }
@@ -81,7 +83,7 @@ function analyze(notes,locked){
 function chordLetters(c,rl,prefs,key){
   const byPc={}; let worst=0;
   for(const d of c.type.degs){
-    const pc=(d.pc+c.root)%12, ks=keySpell(pc,key,prefs);
+    const pc=(d.pc+c.root)%12, ks=keySpell(pc,key);
     if(ks){ byPc[pc]={l:ks[0],a:ks[1],deg:d}; continue; }
     const l=(rl+d.step)%7; let a=((pc-NAT[l])%12+12)%12; if(a>6) a-=12;
     byPc[pc]={l,a,deg:d}; worst=Math.max(worst,Math.abs(a));
@@ -92,7 +94,7 @@ function chordLetters(c,rl,prefs,key){
 // natural if it has one, else the key's own name or the usual one (decided 4 Nov 2026)
 function simplestSpell(pc,prefs,key){
   const n=NAT.indexOf(pc); if(n>=0) return [n,0];
-  const k=keySpell(pc,key,prefs); return k&&Math.abs(k[1])===1?k:defaultSpell(pc,prefs,key);
+  const k=keySpell(pc,key); return k&&Math.abs(k[1])===1?k:defaultSpell(pc,prefs,key);
 }
 function spellCandidate(c,notes,prefs,key){
   let [rl,ra]=rootSpell(c.root,c.type.q,prefs,key), L=chordLetters(c,rl,prefs,key);
@@ -433,7 +435,7 @@ function keyWhy(items,key,alt,plain,prefs){
   return {text,title,reasons:R.map(r=>r.text)};
 }
 const modeName=k=>k&&k.modal?tr(...MODE_NAME[k.modal]):'';
-const keyName=(k,prefs)=>{const [l,a]=keyTonicSpell(k,prefs)||rootSpell(k.tonic,k.mode==='minor'?'min':'maj',prefs); return letterName(l,a,prefs)+(k.mode==='major'?tr(' mayor',' major'):tr(' menor',' minor'));};
+const keyName=(k,prefs)=>{const [l,a]=keyTonicSpell(k); return letterName(l,a,prefs)+(k.mode==='major'?tr(' mayor',' major'):tr(' menor',' minor'));};
 // «D menor (dórico)», and with an alternate key «D menor (dórico; o C mayor)»
 function keyText(k,alt,prefs){
   const inner=[modeName(k),alt?tr('o ','or ')+keyName(alt,prefs):''].filter(Boolean).join('; ');
@@ -483,7 +485,7 @@ function targetBase(nx,key){
 }
 // Spells the notes at the given scale steps from the tonic by letter: rel pitch class -> steps above the tonic's letter
 function respell(r,key,prefs,steps){
-  const [tl]=keyTonicSpell(key,prefs)||rootSpell(key.tonic,key.mode==='minor'?'min':'maj',prefs);
+  const [tl]=keyTonicSpell(key);
   r.spelled=r.spelled.map(n=>{
     const k=steps[((n.midi-key.tonic)%12+12)%12]; if(k==null) return n;
     const l=(tl+k)%7; let a=((n.midi-NAT[l])%12+12)%12; if(a>6) a-=12;
@@ -560,8 +562,9 @@ function chromaticReading(rs,romans,key,prefs){
 // A note outside the key that the chord leaves out and that the same voice follows a semitone up is written with the letter under
 // the one it goes to: G♯ → A, not A♭ → A. The same voice is a note that starts when this one ends, a semitone up, with no other
 // starting then a semitone down; the notes of every step of the progression count, so the goal may be in the next chord. A note
-// that goes down keeps its name (written by the semitone it goes to, B → B♭ came out C♭). Only with auto accidentals, and only
-// for steps that say when their notes sound. Fixed on the development set of TAVERN (2 Nov 2026; decision 14)
+// that goes down keeps its name (written by the semitone it goes to, B → B♭ came out C♭). It depends on the key, so it acts with
+// every accidental preference (4 Nov 2026; until then only with Auto), and only for steps that say when their notes sound.
+// Fixed on the development set of TAVERN (2 Nov 2026; decision 14)
 // A natural note whose goal has its own letter (C → C♯ in D major) keeps it: the letter under the goal gave B♯ → C♯
 function goalSpell(n,a,b,evs,key,prefs,blue){
   if(SCALE_STEPS[key.mode].some(x=>(x+key.tonic)%12===n.midi%12)) return n;
@@ -573,9 +576,7 @@ function goalSpell(n,a,b,evs,key,prefs,blue){
   return Math.abs(ac)<=1?{...n,...spellMidi(n.midi,l,ac)}:n;
 }
 const isBlue=(m,r,key)=>key.mode==='major'&&(m-key.tonic+12)%12===3&&!!r&&!!r.c&&r.c.root===key.tonic&&[4,10].every(x=>r.notes.some(y=>(y-key.tonic+12)%12===x));
-const autoAcc=prefs=>prefs.accPref!=='sharp'&&prefs.accPref!=='flat';
 function spellByGoal(rs,steps,key,prefs){
-  if(!autoAcc(prefs)) return;
   const evs=[...new Map(steps.flatMap(s=>s.evs||[]).map(x=>[x.m+':'+x.s+':'+x.l,x])).values()];
   if(!evs.length) return;
   rs.forEach((r,i)=>{
@@ -591,7 +592,7 @@ function laneSpell(m,s,l,r,evs,key,prefs){
   const own=r&&r.sp&&r.sp.byPc[m%12];
   if(own) return spellMidi(m,own.l,own.a);
   const n=plainSpell(m,prefs,key);
-  return autoAcc(prefs)&&key?goalSpell(n,s,s+l,evs,key,prefs,isBlue(m,r,key)):n;
+  return key?goalSpell(n,s,s+l,evs,key,prefs,isBlue(m,r,key)):n;
 }
 // The key of a progression and its regions, from the chords' roots and notes (they do not depend on how they are spelled).
 // With more than one region, the main key is the one of the region that lasts longest (the first, on a tie)

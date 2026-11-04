@@ -289,6 +289,7 @@ const HTML_EN={
   'Acepta el formato exportado, «Nombre: notas» o solo notas con octava (C4, D♭3, Sol#2). Duración opcional al final: «| 2 tiempos» o «(2 tiempos)».':'Accepts the exported format, “Name: notes” or just notes with octave (C4, D♭3, Sol#2). Optional length at the end: “| 2 beats” or “(2 beats)”.',
   'Nombres':'Names',
   'Alteraciones':'Accidentals',
+  '♯ y ♭ cambian cómo se nombran las teclas y los acordes sueltos. Dentro de una tonalidad, las notas se escriben según la tonalidad.':'♯ and ♭ change how keys and standalone chords are named. Within a key, notes are spelled by the key.',
   'Sonido al editar':'Sound while editing',
   'Sí':'Yes',
   'Nombres de octava':'Octave names',

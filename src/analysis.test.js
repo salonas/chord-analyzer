@@ -104,11 +104,13 @@ describe('D minor with a Phrygian ♭II (brimstone-03-pattern-3)', () => {
     expect(spelled.filter(s => s.midi === 61).every(s => s.l === 0 && s.a === 1)).toBe(true);
     expect(spelled.some(s => Math.abs(s.a) > 1)).toBe(false);
   });
-  it('keeps the sharps when the preference asks for them, and spells D♯7 from its root: F♯♯ is its 3rd (4 Nov 2026)', () => {
-    const B = analyzeProgression(steps, { ...PREFS_BY.default, accPref: 'sharp' });
+  it('writes it as in Auto with the sharp preference too: within a key the key spells the notes (4 Nov 2026)', () => {
+    const B = analyzeProgression(steps, { ...PREFS_BY.default, accPref: 'sharp' }), F = analyzeProgression(steps, { ...PREFS_BY.default, accPref: 'flat' });
     expect([B.key.tonic, B.key.mode]).toEqual([2, 'minor']);
-    expect(B.rs[3].label).toBe('D♯7');
-    expect(B.rs[3].spelled.map(s => 'CDEFGAB'[s.l] + ['♭♭', '♭', '', '♯', '♯♯'][s.a + 2])).toEqual(['D♯', 'C♯', 'F♯♯', 'C♯', 'F♯♯', 'A♯']);
+    expect(B.rs.map(r => r.label)).toEqual(['D5', 'Dm/F', 'A7♭9/C♯', 'E♭7', 'D5']);
+    const names = X => X.rs.map(r => r.spelled.map(s => 'CDEFGAB'[s.l] + ['♭♭', '♭', '', '♯', '♯♯'][s.a + 2]).join(' '));
+    expect(names(B)).toEqual(names(A));
+    expect(names(F)).toEqual(names(A));
   });
 });
 
@@ -155,8 +157,8 @@ describe('spelling a chromatic ornament by where it goes', () => {
   it('keeps A♭ when it goes down to G', () => {
     expect(prog(56, [48, 52, 55]).name).toBe('Ab');
   });
-  it('keeps the accidentals the user chose and steps with no timing', () => {
-    expect(prog(56, [53, 57, 60], PREFS_BY.alt).name).toBe('Ab');
+  it('acts with the flat preference too, as it depends on the key (4 Nov 2026), and not on steps with no timing', () => {
+    expect(prog(56, [53, 57, 60], PREFS_BY.alt).name).toBe('G#');
     expect(prog(56, [53, 57, 60], PREFS_BY.default, false).name).toBe('Ab');
   });
   // D – G – A7 – D with C on the last sixteenth of G, going to the C♯ of A7: the letter under C♯ would be B♯
