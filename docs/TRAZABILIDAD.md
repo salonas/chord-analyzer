@@ -7,7 +7,7 @@ Cierre del proyecto, 2 nov 2026 (sesión B). Cada etiqueta teórica de la interf
 | 1 | Nombre del acorde activo | Reglas: Escritura de notas; Cierre: «sin 5»; dec. 8 y 11 (descripción) | sonda A; `src/audit.test.js` «labels fixed at the close» (`chordDesc`; C9sus4 y C13 sin 9) |
 | 2 | Nombre de cada tipo | Reglas: Inspector | `src/audit.test.js` «row 2» |
 | 3 | Intervalo de dos notas | Reglas: Inspector | `src/audit.test.js` «row 3» |
-| 4 | Deletreo del acorde activo | Reglas: Escritura de notas | `src/audit.test.js` «row 4» |
+| 4 | Deletreo del acorde activo | Reglas: Escritura de notas (la letra de cada nota del acorde; la tonalidad manda sobre la preferencia ♯/♭; la misma escritura en todas las superficies; 4 nov 2026) | `src/audit.test.js` «row 4»; `src/spelling.test.js` (barrido exhaustivo y nombre de la tonalidad); `src/surfaces.test.js` (franja, texto, marcas e inspector); sonda L01–L08, M01–M05 y N01–N03 |
 | 5 | Por qué un nombre va primero (puntos, regla) | Reglas: Por qué un nombre va primero; dec. 11 y 12 | `src/why.test.js` «row 5» (dos bloques) |
 | 6 | Etiquetas de «Posibles nombres» | Reglas: Por qué un nombre va primero; dec. 8 y 11 | `src/audit.test.js` «row 6» (dos bloques) |
 | 7 y 8 | Avisos y sus umbrales | Reglas: Inspector | `src/audit.test.js` «rows 7 and 8» |

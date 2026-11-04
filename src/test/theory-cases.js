@@ -1,7 +1,10 @@
 // Theory probe: ~418 checks of chord, key, degree, function, cadence, pattern, spelling and text output against
 // accepted readings. The cases are the project's own, not a human-annotated corpus (see docs/teoria-fallos.md).
 import { analyze, analyzeProgression, candSymbol, inversionText, keyName, keyText, modeName, resolveStep, spellCandidate } from '../analysis.js';
-import { normProg } from '../model.js';
+import { normProg, segStep } from '../model.js';
+import { harmonySegs } from '../harmony.js';
+import { buildPack } from '../midi.js';
+import { activeCands, spellActive } from '../panel.js';
 import { parseText, progText } from '../text.js';
 
 const P = { naming: 'letters', accPref: 'auto', octConv: 'sci', midiShift: 0 };
@@ -277,6 +280,9 @@ prog('H04', 2, 'Pop con inversión I–V⁶–vi–IV', ['C3 E3 G3', 'B2 D3 G3',
 prog('H05', 2, 'Rotación V–vi–IV–I (patrón en bucle)', ['G2 B2 D3', 'A2 C3 E3', 'F2 A2 C3', 'C3 E3 G3'], { key: 'C mayor', found: ['I–V–vi–IV'] });
 prog('H06', 2, 'Ciclo de quintas iii–vi–ii–V–I', ['E3 G3 B3', 'A2 C3 E3', 'D3 F3 A3', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', found: ['Ciclo de quintas', 'iii–vi–ii–V'] });
 prog('H07', 2, 'Sin patrón (acordes al azar)', ['C3 E3 G3', 'Eb3 G3 Bb3', 'F#3 A#3 C#4', 'A2 C#3 E3'], { found: [] });
+// L. (in a key) a chord tone off the key's scale takes the letter of its interval above the root; see the loose chords of L below
+prog('L07', 2, 'La♭ mayor con iv prestado: D♭m lleva F♭ (fuera de la escala), no E', ['Ab2 C3 Eb3', 'Db3 Fb3 Ab3', 'Eb3 G3 Bb3 Db4', 'Ab2 C3 Eb3'], { key: 'Ab mayor', spell: { 1: 'Db Fb Ab' } }, 'THEORY.md, «Escritura de notas»');
+prog('L08', 2, 'Re mayor: F♯m(maj7) lleva E♯ (fuera de la escala), no F', ['D3 F#3 A3', 'F#2 A2 C#3 E#3', 'G2 B2 D3', 'A2 C#3 E3 G3', 'D3 F#3 A3'], { key: 'D mayor', spell: { 1: 'F# A C# E#' } }, 'THEORY.md, «Escritura de notas»');
 
 for (const c of progCases) {
   const o = runProg(c.chords);
@@ -314,6 +320,25 @@ for (const c of progCases) {
     if (!ch.found.length) add('patrón', c.id, c.level, head, '(ninguno)', o.found.join('; ') || '(ninguno)', !o.found.length, c.ref);
     ch.found.forEach(f => { const fs_ = Array.isArray(f) ? f : [f]; add('patrón', c.id, c.level, head, fs_.join(' | '), o.found.join('; ') || '(ninguno)', fs_.some(x => o.found.some(g => g.includes(x))), c.ref); });
   }
+}
+
+// ---------- L. the letter of a chord tone comes from the root and the number of its interval (4 Nov 2026, BRIMSTONE pattern 3) ----------
+// A chord on its own has no key: every note takes the letter of its interval above the root, with the accidental it needs (A7♯5
+// has E♯, never F); the root is the one the preference gives (C♯ or D♭ for 1 with ♯ or ♭; Auto, as before). In a key, a chord tone
+// off the key's scale does the same (F♭ in D♭m, the iv borrowed in A♭ major); a tone of the scale keeps the key's letter (pending)
+const PREF = a => ({ ...P, accPref: a });
+const looseSpell = [
+  ['L01', 1, 'A7♯5 suelto: la 5ª aumentada de A es E♯, no F', 'A3 C#4 F4 G4', 'auto', 'A C# E# G'],
+  ['L02', 2, 'D♯7 suelto con ♯: la 3ª de D♯ es F𝄪, no G', 'D#3 G3 A#3 C#4', 'sharp', 'D# F## A# C#'],
+  ['L03', 2, 'A♯m(maj7) suelto con ♯: E♯ y G𝄪, no F y A', 'A#3 C#4 F4 A4', 'sharp', 'A# C# E# G##'],
+  ['L04', 2, 'D♯13♯11 suelto con ♯: G𝄪 (♯11) y B♯ (13), no A y C', 'D#3 G3 C#4 A4 C5', 'sharp', 'D# F## C# G## B#'],
+  ['L05', 2, 'D♭m suelto con ♭: la 3ª menor de D♭ es F♭, no E', 'Db3 E3 Ab3', 'flat', 'Db Fb Ab'],
+  ['L06', 2, 'C♯m suelto en Auto: la fundamental se elige como antes (C♯) y la 3ª es E', 'C#3 E3 G#3', 'auto', 'C# E G#'],
+];
+for (const [id, lv, desc, notes, pref, exp] of looseSpell) {
+  const r = resolveStep({ notes: N(notes) }, PREF(pref));
+  const got = r.spelled.map(spellName).join(' ');
+  add('enarmonía', id, lv, `${desc}: ${notes} (${pref})`, exp, `${r.label}: ${got}`, norm(exp) === got, 'THEORY.md, «Escritura de notas»');
 }
 
 // ---------- I. text parsing of note names ----------
@@ -420,6 +445,9 @@ mc('J46', 2, 'Sexta aumentada alemana en La menor (P4): F A D♯ bajo el C5 de l
 mc('J49', 2, 'Sexta aumentada italiana en La menor (P4 con A4 en la melodía): sin la 5ª, F A D♯ es It⁺⁶, y ninguna nota sale como 5 sobre ella', [], [['A1', 0, 4], ['A2', 0, 4], ['C3', 0, 4], ['E3', 0, 4], ['C5', 0, 4], ['F1', 4, 4], ['F2', 4, 4], ['A2', 4, 4], ['D#3', 4, 4], ['A4', 4, 2], ['D#5', 6, 2], ['E1', 8, 4], ['E2', 8, 4], ['G#2', 8, 4], ['B2', 8, 4], ['E5', 8, 4], ['A1', 12, 4], ['A2', 12, 4], ['C3', 12, 4], ['E3', 12, 4], ['A4', 12, 4]], { chords: ['Am', 'It⁺⁶', 'E', 'Am'], romans: ['i', 'It⁶', 'V', 'i'], interval: [['A4', '4', '3'], ['D♯5', '6', '♯6']], textHas: ['A4 (69) | 4 | 2 | It⁺⁶ | 3'], textNot: ['Ger⁺⁶', '| It⁺⁶ | 5 |'] });
 mc('J47', 2, 'La nota de arriba de un bloque continúa la melodía (P5): C5 sobre C3 E3 G3, a una octava o más de la voz siguiente, es la última nota de la melodía, no una voz del acorde', [], [['C2', 0, 4], ['C3', 0, 4], ['E3', 0, 4], ['G3', 0, 4], ['E5', 0, 1], ['D5', 1, 1], ['C5', 2, 2], ['A1', 4, 4], ['A2', 4, 4], ['C3', 4, 4], ['E3', 4, 4], ['C5', 4, 1], ['B4', 5, 1], ['A4', 6, 2], ['F1', 8, 4], ['F2', 8, 4], ['A2', 8, 4], ['C3', 8, 4], ['A4', 8, 1], ['G4', 9, 1], ['F4', 10, 2], ['G1', 12, 4], ['G2', 12, 4], ['B2', 12, 4], ['D3', 12, 4], ['D5', 12, 1], ['B4', 13, 1], ['G4', 14, 2], ['C2', 16, 4], ['C3', 16, 4], ['E3', 16, 4], ['G3', 16, 4], ['C5', 16, 4]], { chords: ['C', 'Am', 'F', 'G', 'C'], melody: ['E5', 'D5', 'C5', 'B4', 'A4', 'G4', 'F4'], textHas: ['C5 (72) | 16 | 4 | C | 1'], textNot: ['G3 C5 |', '# Voz superior'] });
 mc('J48', 2, 'Melodía en las notas de arriba de los bloques (P6): con melodía en el pattern, cada nota de arriba a una octava o más de la voz siguiente la continúa, y «# Voz superior» no sale', [], [['C2', 0, 4], ['C3', 0, 4], ['E3', 0, 4], ['G3', 0, 4], ['E5', 0, 4], ['A1', 4, 4], ['A2', 4, 4], ['C3', 4, 4], ['E3', 4, 4], ['C5', 4, 4], ['F1', 8, 4], ['F2', 8, 4], ['A2', 8, 4], ['C3', 8, 4], ['A4', 8, 4], ['G1', 12, 4], ['G2', 12, 4], ['B2', 12, 4], ['D3', 12, 4], ['B4', 12, 4], ['C2', 16, 4], ['C3', 16, 4], ['E3', 16, 4], ['G3', 16, 4], ['G4', 16, 4], ['A1', 20, 4], ['A2', 20, 4], ['C3', 20, 4], ['E3', 20, 4], ['E5', 20, 4], ['D2', 24, 4], ['D3', 24, 4], ['F#3', 24, 4], ['A3', 24, 4], ['C4', 24, 4], ['F#5', 24, 4], ['G1', 28, 4], ['G2', 28, 4], ['B2', 28, 4], ['D3', 28, 4], ['G5', 28, 4], ['E2', 32, 4], ['E3', 32, 4], ['G3', 32, 4], ['B3', 32, 4], ['G5', 32, 2], ['B4', 34, 2], ['C2', 36, 4], ['C3', 36, 4], ['E3', 36, 4], ['G3', 36, 4], ['E5', 36, 4], ['D2', 40, 4], ['D3', 40, 4], ['F#3', 40, 4], ['A3', 40, 4], ['C4', 40, 4], ['F#5', 40, 2], ['A4', 42, 2], ['G1', 44, 4], ['G2', 44, 4], ['B2', 44, 4], ['D3', 44, 4], ['G4', 44, 4]], { melody: ['E5', 'C5', 'A4', 'B4', 'G4', 'F♯5', 'G5'], textHas: ['G5 (79) | 28 | 4 | G | 1', 'E5 (76) | 0 | 4 | C | 3'], textNot: ['# Voz superior', 'G3 E5 |', 'C4 F♯5 |'] });
+// N. the same spelling on every surface (4 Nov 2026, BRIMSTONE point 3): a tone a chromatic reading respells is written so in the voices,
+// in the tune over it and in the inspector, with its interval by letters from the root
+mc('N01', 2, 'vii°⁶₅/V (A C E♭ F♯ antes de G) con F♯ en la melodía: la melodía escribe F♯ como las voces, no G♭, y su intervalo desde A es 6', [['C3 E3 G3', 4], ['A2 C3 Eb3 F#3', 4], ['G2 B2 D3', 4], ['C3 E3 G3', 4]], [['F#5', 4, 4], ['G5', 8, 4], ['C6', 12, 4]], { chords: ['C', 'Adim7', 'G', 'C'], romans: ['I', 'vii°⁶₅/V', 'V', 'I'], textHas: ['F♯5 (78) | 4 | 4 | Adim7 | 6 |'], textNot: ['G♭5 (78)'] }, 'THEORY.md, «Escritura de notas»');
 for (const c of melCases) {
   const p = pat(c.id, c.chords, c.mel);
   const txt = progText(p, P);
@@ -472,6 +500,42 @@ for (const c of melCases.slice(-2)) {
   if (ch.romans) add('melodía+acordes', c.id + '-grados', c.level, c.desc + ' · grados', ch.romans.join(' – '), romans.join(' – '), romans.length === ch.romans.length && ch.romans.every((e, i) => acc(e, romans[i])));
   if (ch.textHas) { const ok = ch.textHas.every(s => norm(txt).includes(norm(s))); add('melodía+acordes', c.id + '-texto', c.level, c.desc + ' · el texto contiene ' + ch.textHas.join(' y '), ch.textHas.join(' y '), ok ? 'sí' : 'no: solo ' + (txt.match(/Tonalidad estimada: ([^·]+)/) || [, '?'])[1].trim(), ok); }
   if (ch.role) ch.role.forEach(([note, start, exp]) => { const line = txt.split('\n').find(l => norm(l).startsWith(norm(note) + ' (') && l.split('|')[1] && l.split('|')[1].trim() === start); const role = line ? line.split('|').pop().trim() : '(nota no listada como melodía)'; add('melodía+acordes', `${c.id}-${note}@${start}`, c.level, `${c.desc} · rol de ${note} en el tiempo ${start}`, exp, role, exp.some(e => role.startsWith(e))); });
+}
+
+// ---------- M. within a key the key spells the notes, not the ♯/♭ preference (4 Nov 2026, BRIMSTONE pattern 3) ----------
+// BRIMSTONE pattern 3 as the user exported it ([MIDI, start, length, velocity], beats): with ♯ the text said «A♯ mayor», A♯m(maj7)/C♯,
+// D♯7 and D♯13♯11; within a key the preference does not apply, so the text is the same with Auto, ♯ and ♭
+{
+  const B3 = [[38,0,4,99],[50,0,4,95],[62,0,4,95],[69,0,3,107],[72,1.5,1.5,99],[70,3,1,97],[37,4,4,100],[46,4,2,95],[57,4,2,96],[61,4,4,96],[65,4,2,107],[53,5,2,94],[45,6,2,107],[67,6,2,112],[49,7,1,98],[41,8,4,105],[50,8,2,100],[62,8,4,100],[69,8,3,112],[72,9.5,1.5,101],[53,10,2,100],[69,11,1,102],[70,11,1,107],[39,12,4,106],[49,12,4,101],[55,12,2,101],[61,12,4,101],[67,12,4,101],[70,12,2,112],[57,14,2,109],[72,14,2,112],[38,16,4,105],[50,16,3,100],[62,16,4,100],[69,16,1.5,112],[45,17,1,96],[69,17.5,1,107],[72,17.5,1,112],[46,18,1,97],[70,18.5,1.5,103],[74,18.5,1.5,108],[50,19,1,97],[37,20,4,107],[43,20,3,102],[53,20,3,103],[61,20,4,102],[65,20,2,103],[72,20,2,112],[67,22,2,109],[70,22,2,112],[45,23,1,111],[55,23,1,112],[41,24,2,109],[57,24,2,104],[62,24,4,104],[69,24,2,112],[41,26,2,106],[46,26,2,101],[58,26,2,101],[70,26,2,101],[72,26,2,112],[39,28,2,111],[55,28,2,106],[61,28,4,107],[69,28,2,112],[39,30,2,110],[48,30,2,105],[58,30,2,105],[67,30,2,112]];
+  const p = normProg({ id: 'M', name: 'brimstone-03-pattern-3', beats: 4, notes: B3.map(([m, s, l, v], i) => ({ id: 'b' + i, m, s: s * T, l: l * T, v })), names: {} });
+  const txt = a => progText(p, { ...P, accPref: a }), auto = txt('auto'), sharp = txt('sharp'), flat = txt('flat');
+  texts.M01 = { desc: 'BRIMSTONE pattern 3 con la preferencia ♯ (igual que en Auto)', text: sharp };
+  const keyOf = t => (t.match(/Tonalidad estimada: ([^·(]+)/) || [, '(sin línea)'])[1].trim();
+  add('enarmonía', 'M01', 2, 'BRIMSTONE pattern 3 con ♯: la tonalidad se llama B♭ mayor, nunca A♯ mayor', 'B♭ mayor', keyOf(sharp), keyOf(sharp) === 'B♭ mayor', 'THEORY.md, «La tonalidad manda sobre la preferencia ♯/♭»');
+  const lab = (t, n) => (t.split('\n').find(l => l.startsWith(n + '. ')) || '').split(' | ')[0].replace(/^\d+\. /, '');
+  [[2, 'B♭m(maj7)/D♭'], [5, 'E♭7'], [6, 'E♭13♯11']].forEach(([n, e]) => add('enarmonía', `M01.${n}`, 2, `BRIMSTONE pattern 3 con ♯: el acorde ${n} se escribe por la tonalidad`, e, lab(sharp, n), lab(sharp, n) === e, 'THEORY.md, «La tonalidad manda sobre la preferencia ♯/♭»'));
+  add('enarmonía', 'M02', 2, 'BRIMSTONE pattern 3: el texto exportado con ♯ y con ♭ es el mismo que con Auto', 'iguales', sharp === auto && flat === auto ? 'iguales' : 'distintos', sharp === auto && flat === auto, 'THEORY.md, «La tonalidad manda sobre la preferencia ♯/♭»');
+}
+// a key keeps the name Auto gives it with any preference: F♯ major with ♭ (not G♭), D♭ major with ♯ (not C♯), E♭ minor with ♯
+[['M03', 'F♯ mayor con ♭: no G♭ mayor', ['F#3 A#3 C#4', 'B2 D#3 F#3', 'C#3 E#3 G#3 B3', 'F#3 A#3 C#4'], 'flat', 'F♯ mayor'],
+ ['M04', 'D♭ mayor con ♯: no C♯ mayor', ['Db3 F3 Ab3', 'Gb2 Bb2 Db3', 'Ab2 C3 Eb3 Gb3', 'Db3 F3 Ab3'], 'sharp', 'D♭ mayor'],
+ ['M05', 'E♭ menor con ♯: no D♯ menor', ['Eb3 Gb3 Bb3', 'Ab2 Cb3 Eb3', 'Bb2 D3 F3 Ab3', 'Eb3 Gb3 Bb3'], 'sharp', 'E♭ menor']].forEach(([id, desc, chs, pref, exp]) => {
+  const A = analyzeProgression(chs.map(c => ({ notes: N(c) })), { ...P, accPref: pref }), got = keyName(A.key, { ...P, accPref: pref });
+  add('tonalidad', id, 2, `Nombre de la tonalidad con la preferencia ${pref === 'flat' ? '♭' : '♯'}: ${desc}`, exp, got, got === exp, 'THEORY.md, «La tonalidad manda sobre la preferencia ♯/♭»');
+});
+
+// N. the inspector writes a chord picked in the lane as the lane does (C25: the common-tone dim7, D♯ and F♯, not E♭ and G♭), and the
+// .mid of a lane chord in the pack is marked with the lane's name (G♭ in D♭ major, not the F♯ of the chord read on its own)
+{
+  const p = normProg({ id: 'N02', name: 'N02', beats: 4, notes: [[48, 52, 55], [48, 51, 54, 57], [48, 52, 55]].flatMap((ns, k) => ns.map((m, j) => ({ id: `n${k}-${j}`, m, s: 4 * T * k, l: 4 * T, v: 100 }))), names: {} });
+  const S = harmonySegs(p), A = analyzeProgression(S.map(x => segStep(p, x)), P), r = A.rs[1];
+  const cur = activeCands(S[1].notes, null, r.orn || r.ornAlt || [], !(r.orn || []).length, r.c)[0];
+  const got = spellActive(S[1].notes, cur, P, A.key, r).spelled.map(spellName).join(' ');
+  add('enarmonía', 'N02', 2, `Inspector del acorde de la franja ♯ii°7 (${r.label}): mismas letras que el texto`, 'C D# F# A', got, got === 'C D# F# A', 'THEORY.md, «Escritura de notas»');
+  const q = normProg({ id: 'N03', name: 'N03', beats: 4, notes: [[49, 53, 56], [54, 58, 61], [56, 60, 63, 66], [49, 53, 56]].flatMap((ns, k) => ns.map((m, j) => ({ id: `q${k}-${j}`, m, s: 4 * T * k, l: 4 * T, v: 100 }))), names: {} });
+  const f = buildPack({ name: 'N03', bpm: 90, seed: 1, patterns: [q] }, [], P).files.find(x => /\/02 - /.test(x.name)), b = f.data;
+  let mark = ''; for (let i = 0; i < b.length - 3; i++) if (b[i] === 0xFF && b[i + 1] === 0x06) { mark = String.fromCharCode(...b.slice(i + 3, i + 3 + b[i + 2])); break; }
+  add('texto', 'N03', 2, `Paquete .zip, acorde suelto 2 de D♭ – G♭ – A♭7 – D♭ (${f.name.split('/').pop()}): la marca del .mid es el nombre de la franja`, 'Gb', mark, mark === 'Gb', 'THEORY.md, «Escritura de notas»');
 }
 
 // pure progression round trip and text labels

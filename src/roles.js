@@ -29,7 +29,10 @@ function against(m,r,sp){
   // over an augmented sixth the interval is named from the bass by letters: D♯ over F is a ♯6, not the ♭7 of F7. Its tones are
   // the notes it is read with, the tune's included (decision 11): the 5 of F7 is no tone of an It⁺⁶ (a C there makes a Ger⁺⁶)
   const six=r.aug6&&r.aug6.lo&&sp?aug6Iv({midi:m,l:sp.l},r.aug6.lo):null, own=!r.aug6||[...r.notes,...(r.mel||[])].some(y=>(y-m)%12===0);
-  if(d&&own) return {iv:six||d.label,ten:d.n<=7?'low':'mid',tone:d.n<=7};
+  // a tone a chromatic reading respelled (F♯ in a vii°⁶₅/V named Adim7) is named by letters from the root, as its chip in the
+  // inspector: F♯ over A is a 6, not the 𝄫7 of Adim7 (4 Nov 2026)
+  const re=!six&&sp&&r.sp&&r.sp.byPc[m%12]&&r.sp.byPc[m%12].re?aug6Iv({midi:m,l:sp.l},{midi:r.c.root,l:r.sp.byPc[r.c.root].l}):null;
+  if(d&&own) return {iv:six||re||d.label,ten:d.n<=7?'low':'mid',tone:d.n<=7};
   // half a step above a chord tone clashes (♭9 over the root, 4 over a major 3rd): an avoid note, the free role. Over a
   // dominant (major 3rd and minor 7th) the ♭9 and the ♭13 are available tensions instead (avail); they still clash, so
   // their tension stays high

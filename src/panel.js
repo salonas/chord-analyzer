@@ -1,13 +1,24 @@
 // What the inspector says about the active chord, as pure functions so that each label has a rule and a test.
 import { freq } from './data.js';
-import { analyze, inversionText, letterName, melodyText, noteText, ornamentText, plainSpell, spellCandidate } from './analysis.js';
+import { analyze, aug6Iv, inversionText, letterName, melodyText, noteText, ornamentText, plainSpell, spellCandidate } from './analysis.js';
 import { tr } from './i18n.js';
 
 // The notes of the active chord and their spelling: a chord taken from the progression is spelled in the key the lane
-// reads it in (G♯7, not A♭7, in C♯ minor)
-function spellActive(notes,cur,prefs,key){
+// reads it in (G♯7, not A♭7, in C♯ minor), and, while the reading in use is the lane's (lane: that chord of the analysis),
+// with the lane's letters, as the text writes them («Escritura de notas»): an augmented sixth with D♯ over F, each chip named
+// by its interval from the bass; a dim7 read by its resolution (vii°⁶₅/V) or as a ♯ii°7 with the letters of that reading, a
+// respelled chip named by its interval from the root by letters (F♯ over A is a 6). 4 Nov 2026
+function spellActive(notes,cur,prefs,key,lane){
   const sp=cur?spellCandidate(cur,notes,prefs,key):null;
-  return {sp,spelled:sp?sp.notes:notes.map(m=>plainSpell(m,prefs,key))};
+  const spelled=sp?sp.notes:notes.map(m=>plainSpell(m,prefs,key));
+  const own=lane&&cur&&lane.c&&cur.root===lane.c.root&&cur.type.sym===lane.c.type.sym?lane:null;
+  if(!own) return {sp,spelled};
+  const root={l:sp.byPc[cur.root].l,midi:cur.root};
+  return {sp,spelled:spelled.map(n=>{
+    const x=own.spelled.find(y=>y.midi===n.midi); if(!x) return n;
+    if(own.aug6) return {...x,deg:x.deg&&{...x.deg,label:aug6Iv(x,own.aug6.lo)}};
+    return x.l===n.l&&x.a===n.a?n:{...x,deg:n.deg&&{...n.deg,label:aug6Iv(x,root)}};
+  })};
 }
 
 // An interval is named by letters, not by semitones alone: the number is the distance between the letters and the quality

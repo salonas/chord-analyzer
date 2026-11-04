@@ -10,8 +10,8 @@ import { harmonySegs } from './harmony.js';
 import { pitchClip } from './flpitch.js';
 
 // ---------- MIDI export (format 0, 96 PPQ) wrapped in a stored zip ----------
-const SUPSUB={'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','𝄫':'bb','⁺':'+'};
-const ascii=s=>String(s).replace(/[\u2070\u00B9\u00B2\u00B3\u2074-\u207A\u2080-\u2089]|\u{1D12B}/gu,c=>SUPSUB[c]||'').replace(/♯/g,'#').replace(/♭/g,'b').replace(/Δ/g,'maj').replace(/ø/g,'m7b5').replace(/°/g,'dim').normalize('NFD').replace(/\p{M}/gu,'').replace(/[^\x20-\x7e]/g,'?');
+const SUPSUB={'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','𝄫':'bb','𝄪':'##','⁺':'+'};
+const ascii=s=>String(s).replace(/[\u2070\u00B9\u00B2\u00B3\u2074-\u207A\u2080-\u2089]|\u{1D12A}|\u{1D12B}/gu,c=>SUPSUB[c]||'').replace(/♯/g,'#').replace(/♭/g,'b').replace(/Δ/g,'maj').replace(/ø/g,'m7b5').replace(/°/g,'dim').normalize('NFD').replace(/\p{M}/gu,'').replace(/[^\x20-\x7e]/g,'?');
 function vlq(n){ const b=[n&0x7f]; while((n>>>=7)) b.unshift((n&0x7f)|0x80); return b; }
 // A multitrack pattern as a format 1 file: a conductor track (tempo, 4/4), then one track per pattern track on its own
 // channel (the kit on 10); muted tracks go too, as the file is for the DAW. Slides and portamentos are not written.
@@ -29,7 +29,9 @@ function midiMulti(p,bpm,prefs){
   const n=tracks.length;
   return {bytes:new Uint8Array([0x4D,0x54,0x68,0x64,0,0,0,6,0,1,(n>>8)&255,n&255,(T>>8)&255,T&255,...tracks.flat()]),skipped};
 }
-function midiFile(p,bpm,prefs){
+// marks: the chord markers to write instead of the pattern's own analysis ([{t, label}]), for a file of one chord whose name was
+// read elsewhere (a chord of the library has no key; read alone, the chord would get one and could be spelled otherwise)
+function midiFile(p,bpm,prefs,marks){
   if(isMulti(p)) return midiMulti(p,bpm,prefs);
   const enc=s=>[...new TextEncoder().encode(ascii(s))];
   const meta=(type,data)=>[0xFF,type,...vlq(data.length),...data];
@@ -61,8 +63,9 @@ function midiFile(p,bpm,prefs){
     });
   }
   // the chord markers are the lane's chords (harmonySegs), so a chord under a moving tune is one marker, as in the lane
-  const S=isDrum(p)?[]:harmonySegs(p), A=analyzeProgression(S.map(s=>segStep(p,s)),prefs);
-  S.forEach((s,i)=>ev.push({t:s.a,o:0,d:meta(0x06,enc(A.rs[i].label))}));
+  if(marks) marks.forEach(x=>ev.push({t:x.t,o:0,d:meta(0x06,enc(x.label))}));
+  else { const S=isDrum(p)?[]:harmonySegs(p), A=analyzeProgression(S.map(s=>segStep(p,s)),prefs);
+    S.forEach((s,i)=>ev.push({t:s.a,o:0,d:meta(0x06,enc(A.rs[i].label))})); }
   // same tick: chord marker, then note-offs, then pitch bends and controllers, then note-ons, so a repeated note is not cut short
   ev.sort((a,b)=>a.t-b.t||a.o-b.o);
   const us=Math.round(60000000/(bpm||90));
@@ -113,16 +116,18 @@ function buildPack(pr,chords,prefs){
       // each chord on its own: the notes that sound inside it, clipped to it and moved to the start
       const notes=p.notes.filter(n=>n.s<s.b&&n.s+n.l>s.a).map(n=>({id:n.id,m:n.m,s:Math.max(n.s,s.a)-s.a,l:Math.min(n.s+n.l,s.b)-Math.max(n.s,s.a),v:n.v}));
       const label=A.rs[j].label, deg=A.romans[j]?A.romans[j].text:'';
-      const one=midiFile({name:label,notes,names:{[s.sig]:p.names[s.sig]}},pr.bpm,prefs);
+      // its marker is the lane's name for it: read alone, the chord would get a key of its own and could be spelled otherwise
+      const one=midiFile({name:label,notes,names:{[s.sig]:p.names[s.sig]}},pr.bpm,prefs,[{t:0,label}]);
       files.push({name:`${base}/${dChords}/${pn}/${pad(j+1)} - ${fileSafe(label)}${deg?` (${fileSafe(deg)})`:''}.mid`,data:one.bytes}); nchord++;
     });
   });
   chords.forEach((c,i)=>{
     const r=resolveStep(c,prefs), sub={name:r.label,notes:r.notes.map(m=>({id:uid(),m,s:0,l:4*T,v:100})),names:{}};
-    files.push({name:`${base}/${dLib}/${pad(i+1)} - ${fileSafe(r.label)}.mid`,data:midiFile(sub,pr.bpm,prefs).bytes}); nchord++;
+    // a chord of the library has no key: its marker is its name as the library writes it (with the accidental preference)
+    files.push({name:`${base}/${dLib}/${pad(i+1)} - ${fileSafe(r.label)}.mid`,data:midiFile(sub,pr.bpm,prefs,[{t:0,label:r.label}]).bytes}); nchord++;
   });
   files.push({name:`${base}/${base}.txt`,data:new TextEncoder().encode(projectText(pr,prefs).replace(/\n/g,'\r\n'))});
   return {files,nprog,nchord,skipped,base};
 }
 
-export { buildPack, fileBase, midiFile, zipFiles };
+export { ascii, buildPack, fileBase, midiFile, zipFiles };
