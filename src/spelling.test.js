@@ -30,7 +30,9 @@ describe('spelling: the letter of every chord tone comes from the root and the n
     }
     F.list.forEach(f => all.push(f)); F.kept.forEach(f => kept.push(f)); checked += F.checked;
     expect(F.list.length, `${F.list.length} notas mal escritas de ${F.checked}; por intervalo: ${JSON.stringify(count(F.list, f => f.interval))}`).toBe(0);
-  });
+    // about 2 s with 16 cores and 6 s on GitHub's runner (4 cores, shared with the ratchet and the workers of the next test),
+    // over the default 5 s of vitest: it takes its own timeout, as the other long tests do
+  }, 120000);
   it('the exported text and the .mid markers, every type on every root, preference and key', async () => {
     const run = i => new Promise((resolve, reject) => {
       const w = new Worker(new URL('./test/spelling-shard.js', import.meta.url), { workerData: { i, n: THREADS } });
@@ -82,5 +84,5 @@ describe('the key spells the notes, not the preference', () => {
       expect(read(PREFS[1])).toEqual(auto);
       expect(read(PREFS[2])).toEqual(auto);
     }
-  });
+  }, 120000); // 3.7 s on GitHub's runner
 });
