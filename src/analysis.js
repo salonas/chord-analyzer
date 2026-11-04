@@ -484,6 +484,8 @@ function targetBase(nx,key){
   const b=ROMAN[nx.deg]; return ['min','dim','hdim'].includes(e[0])?b.toLowerCase():b;
 }
 // Spells the notes at the given scale steps from the tonic by letter: rel pitch class -> steps above the tonic's letter
+// The chord's own letters (sp.byPc) follow, so that the tune and the added notes over it, the inspector and the name's bass write
+// the notes as its voices do (F♯ in a vii°⁶₅/V, and not G♭ in the melody; 4 Nov 2026)
 function respell(r,key,prefs,steps){
   const [tl]=keyTonicSpell(key);
   r.spelled=r.spelled.map(n=>{
@@ -491,6 +493,11 @@ function respell(r,key,prefs,steps){
     const l=(tl+k)%7; let a=((n.midi-NAT[l])%12+12)%12; if(a>6) a-=12;
     return {...spellMidi(n.midi,l,a),deg:n.deg};
   });
+  if(!r.sp) return;
+  // re: a letter the reading changed, so the interval of that note is named by letters from the root (F♯ over A is a 6)
+  const own={...r.sp.byPc}; r.spelled.forEach(n=>{ const pc=n.midi%12, o=own[pc]; if(o&&(o.l!==n.l||o.a!==n.a)) own[pc]={...o,l:n.l,a:n.a,re:true}; });
+  r.sp={...r.sp,byPc:own};
+  if(r.c){ const sy=candSymbol(r.c,r.sp,prefs); r.label=sy.main+sy.slash; }
 }
 // An augmented sixth is named by its kind, It⁺⁶ (Fr⁺⁶, Ger⁺⁶), in the lane, the sheet, the text and the inspector; the
 // dictionary's name (F7, the same sound) stays among the candidate names. Its own letters (D♯ over F, not E♭) are the chord's
@@ -499,7 +506,6 @@ function respell(r,key,prefs,steps){
 const aug6Iv=(n,b)=>{ const k=((n.l-b.l)%7+7)%7, d=((((n.midi-b.midi)%12+12)%12-NAT[k])+18)%12-6; return FLAT_SIGN[d+2]+(k+1); };
 const FLAT_SIGN=['𝄫','♭','','♯','𝄪'];
 function aug6Name(r,next,g,key){
-  if(r.sp){ const own={...r.sp.byPc}; r.spelled.forEach(n=>{ const pc=n.midi%12; if(own[pc]) own[pc]={...own[pc],l:n.l,a:n.a}; }); r.sp={...r.sp,byPc:own}; }
   const at=(s,x)=>s&&s.spelled.find(n=>((n.midi-key.tonic)%12+12)%12===x);
   r.label=g+'⁺⁶'; r.aug6={g,lo:at(r,8),hi:at(r,6),to:at(next,7)};
 }
