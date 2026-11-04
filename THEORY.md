@@ -78,7 +78,7 @@ Imprime el antes → después de cada fila para el commit y este archivo. Las ci
 
 ### Cómo retomar
 
-1. `npm test` (1148 + 2 saltadas, ratchet incluido; rama `fix/manual-test-p2-p5`, 2 nov 2026) y la sonda, que corre dentro de la suite (`src/theory.test.js`, 647 de 647).
+1. `npm test` (1198 + 2 saltadas, ratchet incluido; rama `fix-brimstone-spelling`, 4 nov 2026) y la sonda, que corre dentro de la suite (`src/theory.test.js`, 671 de 671). El barrido exhaustivo de la escritura (`src/spelling.test.js`) exporta unos 3600 patterns en hilos de trabajo, como el ratchet: unos 40 s en local con 16 núcleos.
 2. Antes de tocar una regla, leer su decisión arriba. Una regla nueva se mide en desarrollo, pareada por obra: `node tools/paired-eval.mjs <worktree de la base>`. El conjunto de prueba se mira una vez, al cierre de la etapa (`--test`), y regenerar `REPORT.md` (`CORPUS_REPORT=1 npx vitest run src/corpus.report.test.js`) también es mirarlo.
 3. Si la sonda cambia a propósito, revisar cada diferencia y regenerar: `UPDATE_THEORY=1 npx vitest run src/theory.test.js` (escribe `passing.json` y `texts.json`). Si mejora el corpus de desarrollo, fijar el ratchet con `UPDATE_CORPUS="<motivo>"`.
 4. Una etiqueta nueva o cambiada lleva su regla en este archivo y su test en el mismo commit.
