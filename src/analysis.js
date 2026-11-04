@@ -72,19 +72,32 @@ function analyze(notes,locked){
   out.sort((a,b)=>a.score-b.score);
   return out.slice(0,10);
 }
-function spellCandidate(c,notes,prefs,key){
-  const [rl,ra]=rootSpell(c.root,c.type.q,prefs,key);
-  const byPc={};
+// Every degree of a chord takes the letter of its number above the root's letter, with the accidental its pitch needs: D♯7 has
+// F♯♯, D♭m has F♭, A7♯5 has E♯ (decided 4 Nov 2026, BRIMSTONE pattern 3). In a key, a chord tone that is a note of the key's
+// scale (its raised 6th and 7th in minor, and the note that names its mode, too) keeps the key's letter, as before: the letter
+// rule on those notes lowered the enharmonic row of TAVERN (development, 15755 → 15647 stretches), because a chord the app names
+// by another root than the composer's (a dim7 or an augmented triad read on its bass, a 7♯5 written as a 7♭13) then spelled all
+// its notes from the wrong letter; it is pending (THEORY.md). worst is the largest accidental the letters need
+function chordLetters(c,rl,prefs,key){
+  const byPc={}; let worst=0;
   for(const d of c.type.degs){
-    const pc=(d.pc+c.root)%12, l=(rl+d.step)%7;
-    let a=((pc-NAT[l])%12+12)%12; if(a>6)a-=12;
-    // notes of the key take its names; otherwise the chord's, except for a double accidental (only the 𝄫7 of a
-    // diminished seventh has one) or a sharp or flat on a white key (E♯, B♯, F♭, C♭), which take the plain name
-    const ks=keySpell(pc,key,prefs), odd=(a===1&&(l===2||l===6))||(a===-1&&(l===0||l===3));
-    if(ks) byPc[pc]={l:ks[0],a:ks[1],deg:d};
-    else if(!odd&&(Math.abs(a)<=1||(a===-2&&d.acc===-2))) byPc[pc]={l,a,deg:d};
-    else { const [L,A]=defaultSpell(pc,prefs,key); byPc[pc]={l:L,a:A,deg:d}; }
+    const pc=(d.pc+c.root)%12, ks=keySpell(pc,key,prefs);
+    if(ks){ byPc[pc]={l:ks[0],a:ks[1],deg:d}; continue; }
+    const l=(rl+d.step)%7; let a=((pc-NAT[l])%12+12)%12; if(a>6) a-=12;
+    byPc[pc]={l,a,deg:d}; worst=Math.max(worst,Math.abs(a));
   }
+  return {byPc,worst};
+}
+// Never a triple accidental: a chord whose letters would need one respells its root by its simplest enharmonic in the key, a
+// natural if it has one, else the key's own name or the usual one (decided 4 Nov 2026)
+function simplestSpell(pc,prefs,key){
+  const n=NAT.indexOf(pc); if(n>=0) return [n,0];
+  const k=keySpell(pc,key,prefs); return k&&Math.abs(k[1])===1?k:defaultSpell(pc,prefs,key);
+}
+function spellCandidate(c,notes,prefs,key){
+  let [rl,ra]=rootSpell(c.root,c.type.q,prefs,key), L=chordLetters(c,rl,prefs,key);
+  if(L.worst>2){ [rl,ra]=simplestSpell(c.root,prefs,key); L=chordLetters(c,rl,prefs,key); }
+  const byPc=L.byPc;
   return {rootName:letterName(rl,ra,prefs),byPc,
     // a note the chord leaves out as an ornament has no degree in it and takes the name of the key
     notes:notes.map(m=>{const s=byPc[m%12];return s?{...spellMidi(m,s.l,s.a),deg:s.deg}:{...plainSpell(m,prefs,key),orn:true}})};

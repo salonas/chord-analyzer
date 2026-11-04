@@ -104,11 +104,11 @@ describe('D minor with a Phrygian ♭II (brimstone-03-pattern-3)', () => {
     expect(spelled.filter(s => s.midi === 61).every(s => s.l === 0 && s.a === 1)).toBe(true);
     expect(spelled.some(s => Math.abs(s.a) > 1)).toBe(false);
   });
-  it('keeps the sharps when the preference asks for them, still without double accidentals', () => {
+  it('keeps the sharps when the preference asks for them, and spells D♯7 from its root: F♯♯ is its 3rd (4 Nov 2026)', () => {
     const B = analyzeProgression(steps, { ...PREFS_BY.default, accPref: 'sharp' });
     expect([B.key.tonic, B.key.mode]).toEqual([2, 'minor']);
     expect(B.rs[3].label).toBe('D♯7');
-    expect(B.rs.flatMap(r => r.spelled).some(s => Math.abs(s.a) > 1)).toBe(false);
+    expect(B.rs[3].spelled.map(s => 'CDEFGAB'[s.l] + ['♭♭', '♭', '', '♯', '♯♯'][s.a + 2])).toEqual(['D♯', 'C♯', 'F♯♯', 'C♯', 'F♯♯', 'A♯']);
   });
 });
 

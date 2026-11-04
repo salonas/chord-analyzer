@@ -277,6 +277,9 @@ prog('H04', 2, 'Pop con inversión I–V⁶–vi–IV', ['C3 E3 G3', 'B2 D3 G3',
 prog('H05', 2, 'Rotación V–vi–IV–I (patrón en bucle)', ['G2 B2 D3', 'A2 C3 E3', 'F2 A2 C3', 'C3 E3 G3'], { key: 'C mayor', found: ['I–V–vi–IV'] });
 prog('H06', 2, 'Ciclo de quintas iii–vi–ii–V–I', ['E3 G3 B3', 'A2 C3 E3', 'D3 F3 A3', 'G2 B2 D3', 'C3 E3 G3'], { key: 'C mayor', found: ['Ciclo de quintas', 'iii–vi–ii–V'] });
 prog('H07', 2, 'Sin patrón (acordes al azar)', ['C3 E3 G3', 'Eb3 G3 Bb3', 'F#3 A#3 C#4', 'A2 C#3 E3'], { found: [] });
+// L. (in a key) a chord tone off the key's scale takes the letter of its interval above the root; see the loose chords of L below
+prog('L07', 2, 'La♭ mayor con iv prestado: D♭m lleva F♭ (fuera de la escala), no E', ['Ab2 C3 Eb3', 'Db3 Fb3 Ab3', 'Eb3 G3 Bb3 Db4', 'Ab2 C3 Eb3'], { key: 'Ab mayor', spell: { 1: 'Db Fb Ab' } }, 'THEORY.md, «Escritura de notas»');
+prog('L08', 2, 'Re mayor: F♯m(maj7) lleva E♯ (fuera de la escala), no F', ['D3 F#3 A3', 'F#2 A2 C#3 E#3', 'G2 B2 D3', 'A2 C#3 E3 G3', 'D3 F#3 A3'], { key: 'D mayor', spell: { 1: 'F# A C# E#' } }, 'THEORY.md, «Escritura de notas»');
 
 for (const c of progCases) {
   const o = runProg(c.chords);
@@ -314,6 +317,25 @@ for (const c of progCases) {
     if (!ch.found.length) add('patrón', c.id, c.level, head, '(ninguno)', o.found.join('; ') || '(ninguno)', !o.found.length, c.ref);
     ch.found.forEach(f => { const fs_ = Array.isArray(f) ? f : [f]; add('patrón', c.id, c.level, head, fs_.join(' | '), o.found.join('; ') || '(ninguno)', fs_.some(x => o.found.some(g => g.includes(x))), c.ref); });
   }
+}
+
+// ---------- L. the letter of a chord tone comes from the root and the number of its interval (4 Nov 2026, BRIMSTONE pattern 3) ----------
+// A chord on its own has no key: every note takes the letter of its interval above the root, with the accidental it needs (A7♯5
+// has E♯, never F); the root is the one the preference gives (C♯ or D♭ for 1 with ♯ or ♭; Auto, as before). In a key, a chord tone
+// off the key's scale does the same (F♭ in D♭m, the iv borrowed in A♭ major); a tone of the scale keeps the key's letter (pending)
+const PREF = a => ({ ...P, accPref: a });
+const looseSpell = [
+  ['L01', 1, 'A7♯5 suelto: la 5ª aumentada de A es E♯, no F', 'A3 C#4 F4 G4', 'auto', 'A C# E# G'],
+  ['L02', 2, 'D♯7 suelto con ♯: la 3ª de D♯ es F𝄪, no G', 'D#3 G3 A#3 C#4', 'sharp', 'D# F## A# C#'],
+  ['L03', 2, 'A♯m(maj7) suelto con ♯: E♯ y G𝄪, no F y A', 'A#3 C#4 F4 A4', 'sharp', 'A# C# E# G##'],
+  ['L04', 2, 'D♯13♯11 suelto con ♯: G𝄪 (♯11) y B♯ (13), no A y C', 'D#3 G3 C#4 A4 C5', 'sharp', 'D# F## C# G## B#'],
+  ['L05', 2, 'D♭m suelto con ♭: la 3ª menor de D♭ es F♭, no E', 'Db3 E3 Ab3', 'flat', 'Db Fb Ab'],
+  ['L06', 2, 'C♯m suelto en Auto: la fundamental se elige como antes (C♯) y la 3ª es E', 'C#3 E3 G#3', 'auto', 'C# E G#'],
+];
+for (const [id, lv, desc, notes, pref, exp] of looseSpell) {
+  const r = resolveStep({ notes: N(notes) }, PREF(pref));
+  const got = r.spelled.map(spellName).join(' ');
+  add('enarmonía', id, lv, `${desc}: ${notes} (${pref})`, exp, `${r.label}: ${got}`, norm(exp) === got, 'THEORY.md, «Escritura de notas»');
 }
 
 // ---------- I. text parsing of note names ----------

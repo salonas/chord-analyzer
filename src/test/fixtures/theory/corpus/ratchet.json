@@ -1,6 +1,6 @@
 {
- "updated": "2026-11-02",
- "why": "the top of a struck chord carries the tune on (manual test P5, P6)",
+ "updated": "2026-11-04",
+ "why": "BRIMSTONE punto 1: las notas de un acorde fuera de la escala toman la letra de su intervalo (E♯, B♯, F♭, C♭ y dobles)",
  "units": {
   "tavern": 21,
   "rock": 158
@@ -31,7 +31,7 @@
    "n": 304
   },
   "enarmonía": {
-   "ok": 15755,
+   "ok": 15761,
    "n": 16398
   },
   "modulación estricta": {

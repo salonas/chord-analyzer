@@ -29,7 +29,9 @@ function midiMulti(p,bpm,prefs){
   const n=tracks.length;
   return {bytes:new Uint8Array([0x4D,0x54,0x68,0x64,0,0,0,6,0,1,(n>>8)&255,n&255,(T>>8)&255,T&255,...tracks.flat()]),skipped};
 }
-function midiFile(p,bpm,prefs){
+// marks: the chord markers to write instead of the pattern's own analysis ([{t, label}]), for a file of one chord whose name was
+// read elsewhere (a chord of the library has no key; read alone, the chord would get one and could be spelled otherwise)
+function midiFile(p,bpm,prefs,marks){
   if(isMulti(p)) return midiMulti(p,bpm,prefs);
   const enc=s=>[...new TextEncoder().encode(ascii(s))];
   const meta=(type,data)=>[0xFF,type,...vlq(data.length),...data];
@@ -61,8 +63,9 @@ function midiFile(p,bpm,prefs){
     });
   }
   // the chord markers are the lane's chords (harmonySegs), so a chord under a moving tune is one marker, as in the lane
-  const S=isDrum(p)?[]:harmonySegs(p), A=analyzeProgression(S.map(s=>segStep(p,s)),prefs);
-  S.forEach((s,i)=>ev.push({t:s.a,o:0,d:meta(0x06,enc(A.rs[i].label))}));
+  if(marks) marks.forEach(x=>ev.push({t:x.t,o:0,d:meta(0x06,enc(x.label))}));
+  else { const S=isDrum(p)?[]:harmonySegs(p), A=analyzeProgression(S.map(s=>segStep(p,s)),prefs);
+    S.forEach((s,i)=>ev.push({t:s.a,o:0,d:meta(0x06,enc(A.rs[i].label))})); }
   // same tick: chord marker, then note-offs, then pitch bends and controllers, then note-ons, so a repeated note is not cut short
   ev.sort((a,b)=>a.t-b.t||a.o-b.o);
   const us=Math.round(60000000/(bpm||90));
@@ -119,7 +122,8 @@ function buildPack(pr,chords,prefs){
   });
   chords.forEach((c,i)=>{
     const r=resolveStep(c,prefs), sub={name:r.label,notes:r.notes.map(m=>({id:uid(),m,s:0,l:4*T,v:100})),names:{}};
-    files.push({name:`${base}/${dLib}/${pad(i+1)} - ${fileSafe(r.label)}.mid`,data:midiFile(sub,pr.bpm,prefs).bytes}); nchord++;
+    // a chord of the library has no key: its marker is its name as the library writes it (with the accidental preference)
+    files.push({name:`${base}/${dLib}/${pad(i+1)} - ${fileSafe(r.label)}.mid`,data:midiFile(sub,pr.bpm,prefs,[{t:0,label:r.label}]).bytes}); nchord++;
   });
   files.push({name:`${base}/${base}.txt`,data:new TextEncoder().encode(projectText(pr,prefs).replace(/\n/g,'\r\n'))});
   return {files,nprog,nchord,skipped,base};
