@@ -20,7 +20,7 @@ Cierre del proyecto, 2 nov 2026 (sesión B). Cada etiqueta teórica de la interf
 | 15 | Tensión 0–1 | dec. 7; Reglas: Tensión | sonda T; `src/analysis.test.js` «tension with context» |
 | 16 | Ayuda «su tensión estimada (0 a 1)» | dec. 7; Reglas: Tensión | `src/audit.test.js` (`sheetHint`) |
 | 17 | Franja: nombre y grado · función | dec. 6 (la franja muestra solo el grado) | sonda; `src/english.test.js` «writes the inversion in words and keeps the strip short» |
-| 18 | Hoja vacía | Reglas: Inspector; dec. 9 | `src/audit.test.js` «row 18» |
+| 18 | Hoja vacía | Reglas: Inspector; Dos notas cortas no son un acorde (también en un pattern de bloques, 8 nov 2026); dec. 9 | `src/audit.test.js` «row 18»; `src/harmony.test.js` «two short notes in a pattern of blocks» |
 | 19 | Intervalo de la melodía | Reglas: Inspector | `src/audit.test.js` «row 19»; sonda J31, J32 |
 | 20 | Tensión de la melodía, «estimada» | Reglas: Tensión (los niveles son una convención) | sonda J30; `src/audit.test.js` «closing trace» y «labels fixed at the close» (un test por nivel) |
 | 21 | Rol de la melodía | Reglas: Roles de la melodía; Cierre: rol «libre» | sonda J; `src/audit.test.js` «closing trace» (retardo) y «labels fixed at the close» (libre y tensión) |
