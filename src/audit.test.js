@@ -3,7 +3,7 @@ import { analyze, analyzeProgression, candSymbol, resolveStep, spellCandidate } 
 import { progText } from './text.js';
 import { RULES } from './expression.js';
 import { HTML_EN, setLang } from './i18n.js';
-import { LIMITS, MUDDY, activeCands, candTags, chordDesc, chordWarnings, emptySheetText, endingText, intervalText, sheetHint, spellActive, warningText } from './panel.js';
+import { LIMITS, MUDDY, activeCands, candTags, chordDesc, chordWarnings, emptySheetText, endingText, intervalText, loopText, sheetHint, spellActive, warningText } from './panel.js';
 import { against } from './roles.js';
 import { harmonySegs } from './harmony.js';
 import { normProg } from './model.js';
@@ -292,6 +292,25 @@ describe('labels fixed at the close', () => {
     }
     expect(inEnglish(() => endingText(run([C, Am]).cad))).toBe('no final cadence');
     expect(endingText(run([C, F, [43, 47, 50, 53], C]).cad)).toContain('auténtica');
+  });
+  // THEORY.md, «Cadencia al repetir» (8 Nov 2026): shown only, never weighed in the key
+  it('says the cadence on repeat when the end has none and the last chord resolves to the first, the tonic', () => {
+    const loop = [C, G, Am, F], A = run(loop);
+    expect([A.cad, A.cadLoop, A.key.tonic, A.key.mode]).toEqual(['', 'Cadencia plagal (IV → I)', 0, 'major']);
+    expect(endingText(A.cad)).toBe('sin cadencia final');
+    expect(loopText(A.cadLoop)).toBe('Al repetir: Cadencia plagal (IV → I)');
+    expect(inEnglish(() => loopText(run(loop).cadLoop))).toBe('On repeat: Plagal cadence (IV → I)');
+    expect(blocks(loop)).toContain('# Final al repetir: Cadencia plagal (IV → I)');
+    expect(blocks(loop).some(l => l.startsWith('# Final:'))).toBe(false);
+    expect(inEnglish(() => blocks(loop))).toContain('# Final on repeat: Plagal cadence (IV → I)');
+    // ♭II → i (Phrygian, doubtful D13 of the audit) is a cadence only on repeat
+    const A7 = [45, 49, 52], Eb = [51, 55, 58];
+    expect(run([Dm, A7, Dm, Eb]).cadLoop).toBe('Cadencia ♭II → i');
+    expect(inEnglish(() => run([Dm, A7, Dm, Eb]).cadLoop)).toBe('♭II → i cadence');
+    // an end with a cadence, or a last chord that does not resolve to the first, has no line on repeat
+    expect(run([Am, G, F, [40, 44, 47]]).cadLoop).toBe('');
+    expect(run([C, F, Dm, C]).cadLoop).toBe('');
+    expect(blocks([C, F, Dm, C]).some(l => l.startsWith('# Final al repetir'))).toBe(false);
   });
   it('writes a pattern that closes only when the pattern repeats with what it has and what comes on the repeat', () => {
     expect(blocks([G, Am, F, C]).find(l => l.startsWith('# Patrones:'))).toContain('I (continúa en V–vi–IV al repetir)');

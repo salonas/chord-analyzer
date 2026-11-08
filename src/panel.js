@@ -120,7 +120,9 @@ function chordDesc(cur,sp,spelled,prefs){
 
 // What the sheet says under «Final»: the cadence of the last two chords, or that there is none
 const endingText=cad=>cad||tr('sin cadencia final','no final cadence');
+// the cadence from the last chord back to the first, shown under «sin cadencia final» (THEORY.md, «Cadencia al repetir»)
+const loopText=cad=>`${tr('Al repetir','On repeat')}: ${cad}`;
 // The help under the sheet: what each row shows (the tension is an estimate, decision 7) and what the brackets join
 const sheetHint=()=>tr('Cada acorde ocupa dos renglones. Arriba va el grado y abajo el acorde, su función y su tensión estimada (0 a 1). Las llaves numeradas del margen unen los grados de cada patrón reconocido. Si una llave queda abierta, el patrón sigue en el otro extremo porque da la vuelta en bucle.','Each chord takes two lines. The degree goes on top and the chord, its function and its estimated tension (0 to 1) go below. The numbered brackets in the margin join the degrees of each recognized pattern. If a bracket is left open, the pattern continues at the other end because it loops around.');
 
-export { LIMITS, MUDDY, activeCands, candTags, chordDesc, chordWarnings, emptySheetText, endingText, intervalText, sheetHint, spellActive, warningText };
+export { LIMITS, MUDDY, activeCands, candTags, chordDesc, chordWarnings, emptySheetText, endingText, intervalText, loopText, sheetHint, spellActive, warningText };

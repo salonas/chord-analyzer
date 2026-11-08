@@ -1,6 +1,6 @@
 {
- "updated": "2026-11-04",
- "why": "BRIMSTONE punto 1: las notas de un acorde fuera de la escala toman la letra de su intervalo (E♯, B♯, F♭, C♭ y dobles)",
+ "updated": "2026-11-08",
+ "why": "C09: a power chord on the tonic weighs as the tonic triad",
  "units": {
   "tavern": 21,
   "rock": 158
@@ -19,11 +19,11 @@
    "n": 11660
   },
   "tonalidad de TAVERN por tramo": {
-   "ok": 1308,
+   "ok": 1314,
    "n": 1622
   },
   "tonalidad de TAVERN de punta a punta": {
-   "ok": 1280,
+   "ok": 1292,
    "n": 1622
   },
   "tónica del rock": {

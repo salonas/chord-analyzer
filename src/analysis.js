@@ -268,17 +268,22 @@ function plainTonic(items){
 }
 // What the key evidence is made of, shared by detectKey and by the reasons it is explained with (keyWhy)
 const tonicQ=mode=>mode==='major'?['maj','dom']:['min'];
+// a chord on the tonic that counts as the tonic chord: the triad of the mode, or a power chord (X5) on the tonic, which weighs the same
+// in major and in minor, so the other notes, the tune and the mode decide the quality (THEORY.md, «El power chord sobre la tónica»)
+const atTonic=(it,t,mode)=>it.root===t&&(tonicQ(mode).includes(it.q)||!!it.p5);
 // the first chord is the tonic, the last one is (V7–vi of the relative major is a deceptive cadence: it ends off the tonic on purpose),
 // and one that starts and ends on the same tonic chord is closed. One that begins on a chord and ends on the major chord a fifth above
 // it ends on a half cadence (half, for the key of the first chord): its last chord is not the tonic, unless its own V7 goes to it
 // (IV–V7–I is an authentic cadence)
 function bookends(items,t,mode){
-  const tq=tonicQ(mode), f=items[0], l=items[items.length-1], pv=items[items.length-2];
+  const f=items[0], l=items[items.length-1], pv=items[items.length-2], on=it=>atTonic(it,t,mode);
   const deceptive=mode==='minor'&&pv&&pv.q==='dom'&&pv.root===(t+10)%12;
-  const half=items.length>2&&!!f.q&&(l.q==='maj'||l.q==='dom')&&(l.root-f.root+12)%12===7, first=f.root===t&&tq.includes(f.q);
+  const half=items.length>2&&!!f.q&&(l.q==='maj'||l.q==='dom')&&(l.root-f.root+12)%12===7, first=on(f);
+  const p5V=items.length>2&&!!f.q&&!!l.p5&&(l.root-f.root+12)%12===7;
   const byV7=!!pv&&pv.q==='dom'&&leads(pv,l);
-  return {first, last:l.root===t&&tq.includes(l.q)&&!deceptive&&!(half&&!byV7), half:half&&first,
-    closed:items.length>2&&f.root===t&&l.root===t&&f.q===l.q&&tq.includes(f.q)};
+  // closed: the same tonic chord at both ends, a power chord on the tonic being the same chord as the triad
+  return {first, last:on(l)&&!deceptive&&!(half&&!byV7)&&!p5V, half:half&&first,
+    closed:items.length>2&&on(f)&&on(l)&&(f.q===l.q||!!f.p5||!!l.p5)};
 }
 // a chord a fifth above the tonic that goes to it, and what it weighs: V7 (or V+) 3, the plain V triad 1, in major as in minor
 const resolution=(it,nx,t)=>!!nx&&nx.root===t&&(it.root-t+12)%12===7?(it.q==='dom'||it.q==='aug'?3:it.q==='maj'?1:0):0;
@@ -295,14 +300,14 @@ function detectKey(items){
       it.pcs.forEach(p=>{const r=(p-t+12)%12; s+=sc.includes(r)?1:p===own7||lead?0:(mode==='minor'&&(r===11||r===1)?.3:mode==='major'&&(r===3||r===8||r===10)?-.5:-1.2);});
       if(it.q){ const e=EXPK[mode][(it.root-t+12)%12]; if(e&&e.includes(it.q)) s+=1.5; else if(e&&it.q==='sus') s+=.5; }
     });
-    const tq=tonicQ(mode), be=bookends(items,t,mode);
+    const be=bookends(items,t,mode);
     if(be.first) s+=2;
     if(be.last) s+=3;
     if(be.half) s+=2;
     // a progression that starts and ends on the same tonic chord is closed on it, even when the chords between borrow
     if(be.closed) s+=1.5;
     items.forEach((it,i)=>{
-      if(it.root===t&&tq.includes(it.q)) s+=.5;
+      if(atTonic(it,t,mode)) s+=.5;
       s+=resolution(it,items[i+1],t);
     });
     if(mode==='major') s+=.01;
@@ -426,6 +431,12 @@ function keyWhy(items,key,alt,plain,prefs){
   if(key.modal){
     const [rel,es,en]=MODE_CHAR[key.modal], n=plainSpell(60+(t+rel)%12,prefs,key), nm=letterName(n.l,n.a,prefs)+(n.a?'':' natural');
     R.push({text:tr(`${modeName(key)}: aparece ${nm} (${es}) y todas las notas están en la escala`,`${modeName(key)}: ${nm} (${en}) appears and every note is in the scale`),pts:0});
+  }
+  // a key is never shown without a reason: with none of the above, the least one, counted as «every note is in the scale» is
+  // (the pitch classes of each chord, chord by chord, on the plain major or natural minor scale); it adds no points
+  if(!R.length){
+    const M=items.reduce((n,it)=>n+it.pcs.length,0), n=items.reduce((k,it)=>k+it.pcs.filter(p=>sc.includes((p-t+12)%12)).length,0);
+    if(M) R.push({text:tr(`${n} de ${M} notas están en su escala`,`${n} of ${M} notes are in its scale`),pts:0});
   }
   if(!R.length) return null;
   const kn=keyName(key,prefs), body=R.map(r=>r.text).join(' · ');
@@ -604,7 +615,7 @@ function laneSpell(m,s,l,r,evs,key,prefs){
 // With more than one region, the main key is the one of the region that lasts longest (the first, on a tie)
 function progressionKeys(steps,prefs,opts){
   const first=steps.map(s=>resolveStep(s,prefs));
-  const items=first.map((r,i)=>({root:r.c?r.c.root:r.notes.length?r.notes[0]%12:0,q:r.c?r.c.type.q:null,pcs:[...new Set(r.notes.map(m=>m%12))],dur:steps[i].dur||1,timed:steps[i].dur!=null}));
+  const items=first.map((r,i)=>({root:r.c?r.c.root:r.notes.length?r.notes[0]%12:0,q:r.c?r.c.type.q:null,p5:!!r.c&&r.c.type.sym==='5',pcs:[...new Set(r.notes.map(m=>m%12))],dur:steps[i].dur||1,timed:steps[i].dur!=null}));
   if(!items.length) return {first,items};
   const keys=detectKey(items), plain=plainTonic(items), rank=k=>k.score+(k.tonic===plain?PLAIN_TONIC:0);
   // the weight of the plain tonic only picks the key; the alternate one still goes by the scores as measured. With only two chords
@@ -654,24 +665,31 @@ function inKey(steps,first,items,lo,hi,key,alt,prefs,whole){
     }
   }
   }
-  let cad='';
-  if(N>=2&&romans[N-1]&&romans[N-2]){
-    const ad=romans[N-2].deg, bd=romans[N-1].deg;
+  // the cadence from chord a to chord b. On repeat (loop), only the ones that arrive on the tonic, plus ♭II → i in minor (THEORY.md,
+  // «Cadencia al repetir»): shown, never weighed in the key
+  const cadOf=(a,b,loop)=>{
+    if(!romans[a]||!romans[b]) return '';
+    const ad=romans[a].deg, bd=romans[b].deg;
     // the degrees are written as the chords are: V → i in minor, vii° → I in major, v → i for the minor dominant
-    const pair=`(${romans[N-2].token} → ${romans[N-1].token})`, domQ=['maj','dom'].includes(rs[N-2].c.type.q);
-    if(bd===0&&ad===7&&domQ) cad=tr('Cadencia auténtica ','Authentic cadence ')+pair;
-    else if(bd===0&&ad===7) cad=tr('Cadencia modal (sin sensible) ','Modal cadence (no leading tone) ')+pair;
-    else if(bd===0&&ad===5) cad=tr('Cadencia plagal ','Plagal cadence ')+pair;
+    const pair=`(${romans[a].token} → ${romans[b].token})`, domQ=['maj','dom'].includes(rs[a].c.type.q);
+    if(bd===0&&ad===7&&domQ) return tr('Cadencia auténtica ','Authentic cadence ')+pair;
+    if(bd===0&&ad===7) return tr('Cadencia modal (sin sensible) ','Modal cadence (no leading tone) ')+pair;
+    if(bd===0&&ad===5) return tr('Cadencia plagal ','Plagal cadence ')+pair;
     // in major it is the backdoor (Mixolydian) cadence; in minor the ♭VII is the natural seventh, a plain ♭VII → i
-    else if(bd===0&&ad===10) cad=key.mode==='minor'?tr('Cadencia ♭VII → i','♭VII → i cadence'):tr('Cadencia ♭VII → I (backdoor / mixolidia)','♭VII → I cadence (backdoor / Mixolydian)');
-    else if(bd===0&&ad===11) cad=tr('Cadencia con sensible ','Leading-tone cadence ')+pair;
-    else if(bd===0&&ad===1&&rs[N-2].c.type.q==='dom') cad=tr('Cadencia con sustituto tritonal (♭II7 → I)','Tritone substitution cadence (♭II7 → I)');
-    else if(ad===7&&(bd===9||bd===8)) cad=tr('Cadencia rota (V → ','Deceptive cadence (V → ')+romans[N-1].base+')';
-    else if(bd===7) cad=tr('Semicadencia (termina en V)','Half cadence (ends on V)');
-  }
+    if(bd===0&&ad===10) return key.mode==='minor'?tr('Cadencia ♭VII → i','♭VII → i cadence'):tr('Cadencia ♭VII → I (backdoor / mixolidia)','♭VII → I cadence (backdoor / Mixolydian)');
+    if(bd===0&&ad===11) return tr('Cadencia con sensible ','Leading-tone cadence ')+pair;
+    if(bd===0&&ad===1&&rs[a].c.type.q==='dom') return tr('Cadencia con sustituto tritonal (♭II7 → I)','Tritone substitution cadence (♭II7 → I)');
+    if(loop) return bd===0&&ad===1&&key.mode==='minor'?tr('Cadencia ♭II → i','♭II → i cadence'):'';
+    if(ad===7&&(bd===9||bd===8)) return tr('Cadencia rota (V → ','Deceptive cadence (V → ')+romans[b].base+')';
+    if(bd===7) return tr('Semicadencia (termina en V)','Half cadence (ends on V)');
+    return '';
+  };
+  const cad=N>=2?cadOf(N-2,N-1,false):'';
+  // a pattern loops: with no cadence at its end, the last chord may resolve to the first, the tonic
+  const cadLoop=whole&&N>=2&&!cad?cadOf(N-1,0,true):'';
   const fn=romans.map((ro,i)=>harmonicFunction(ro,rs[i].c,key));
   const lead=rs.map((r,i)=>fn[i]==='D'&&leadingD(r.c,romans[i],key));
-  return {rs,romans,found,cad,fn,lead};
+  return {rs,romans,found,cad,cadLoop,fn,lead};
 }
 function analyzeProgression(steps,prefs){
   // the key comes from the chords' roots and notes, which do not depend on how they are spelled; the spelling then follows the key

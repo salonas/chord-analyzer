@@ -4,7 +4,7 @@ import { $, esc, fillRange, saveFile, toast } from './dom.js';
 import { EXAMPLE_NAME, activePat, gmOn, isBlock, isDrum, isMulti, newPattern, newSeed, normProg, normProject, progEnd, segStep, segs, trackPat } from './model.js';
 import { gmName } from './gm.js';
 import { fut, hist, lib, persistLib, saveDraft, savePrefs, st } from './state.js';
-import { activeCands, candTags, chordDesc, chordWarnings, emptySheetText, endingText, intervalText, sheetHint, spellActive, warningText } from './panel.js';
+import { activeCands, candTags, chordDesc, chordWarnings, emptySheetText, endingText, intervalText, loopText, sheetHint, spellActive, warningText } from './panel.js';
 import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, defaultSpell, degreeText, keyName, keyText, letterName, melodyText, noteText, octOff, ornamentText, aug6Text, pivotTitle, plainSpell, rankHelp, regionTexts, resolveStep, scoreDetail, spellCandidate, tenDetail, tensionHelp } from './analysis.js';
 import { EX_KEYS, FEELINGS, exDefaults, exprSummary, expressPattern, instLabel } from './expression.js';
 import { DRUMS, GROOVES, expressDrums, genGroove } from './drums.js';
@@ -681,7 +681,7 @@ function analysisSheet(A,p){
   const keyHead=RT?`<p class="plaque">${esc(RT.key)}</p>${RT.sheet.map(x=>`<span class="lab">${degText(x)}</span>`).join('')}${RT.whys.map(w=>`<span class="lab why" title="${esc(w.title)}">${esc(w.text)}</span>`).join('')}`
     :`<p class="plaque">${esc(keyText(A.key,null,st))}</p>${A.alt?`<span class="lab">${tr('o','or')} ${esc(keyName(A.alt,st))}</span>`:''}${A.why?`<span class="lab why" title="${esc(A.why.title)}">${esc(A.why.text)}</span>`:''}`;
   const head=`<div class="an-head"><div>${keyHead}</div>
-    <div><span class="lab">${tr('Final','Ending')}</span><span class="stamp"><span>${degText(endingText(A.cad))}</span></span></div>
+    <div><span class="lab">${tr('Final','Ending')}</span><span class="stamp"><span>${degText(endingText(A.cad))}</span></span>${!A.cad&&A.cadLoop?`<span class="lab">${degText(loopText(A.cadLoop))}</span>`:''}</div>
     ${p.expr?`<div><span class="lab">${tr('Expresión aplicada','Applied expression')}</span><span class="expr">${esc(exprSummary(p.expr))}</span></div>`:''}<div class="an-pats"><span class="lab">${tr('Patrones reconocidos','Recognized patterns')}</span><div>${pats.length?pats.map(f=>`<span class="tag"><b>${f.k}</b>${degText(f.name)}${f.wrap?tr(' (en bucle)',' (looping)'):''}</span>`).join(''):`<span class="none">${tr('Ninguno de los '+PATTERNS.length+' patrones conocidos.','None of the '+PATTERNS.length+' known patterns.')}</span>`}</div></div></div>`;
   const row=i=>{ const r=A.romans[i], lab=esc(A.rs[i].label), fn=FN_NAME[A.fn[i]];
     return `<div class="an-row"><span class="n">${i+1}</span><span class="main"${r&&r.pivotOld?` title="${esc(pivotTitle(r,st))}"`:''}>${r?esc(degreeText(r)):lab}</span><span class="sub" title="${r?`${lab} · `:''}${fn} ${ten(A.ten[i])}${A.tenCtx[i]?` · ${tenDetail(A,i)}`:''}${A.rs[i].orn?` · ${esc(ornamentText(A.rs[i].orn,A.rs[i].spelled,st))}`:''}${A.rs[i].mel?` · ${esc(melodyText(A.rs[i].mel,A.rs[i].sp,st))}`:''}"><span class="fn">${r?`<span class="sym">${lab}</span> · `:''}${fn}</span> <span class="ten">${ten(A.ten[i])}</span></span></div>`; };

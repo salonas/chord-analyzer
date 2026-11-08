@@ -125,6 +125,8 @@ function progText(p,prefs){
   else if(p.notes.length) L.push(`# ${totalText(p)}`);
   if(A.found&&A.found.length) L.push(`${tr('# Patrones','# Patterns')}: ${A.found.map(f=>foundText(f,A.rs.length)).join('; ')}`);
   if(A.cad) L.push(`${tr('# Final','# Ending')}: ${A.cad}`);
+  // shown only: the cadence from the last chord back to the first when the pattern loops (THEORY.md, «Cadencia al repetir»)
+  else if(A.cadLoop) L.push(`${tr('# Final al repetir','# Final on repeat')}: ${A.cadLoop}`);
   L.push(`${tr('# Instrumento','# Instrument')}: ${instText(p.inst,prefs,velUsed(p))}`);
   if(p.expr) L.push(`${tr('# Expresión','# Expression')}: ${exprSummary(p.expr)}`);
   if(hasGlide(p)) L.push(tr(`# Deslizamiento: bend ±${rangeOf(p)} st · ${p.glideNative?'nativo (CC65 y CC84)':'automatización de pitch'}`,`# Glide: bend ±${rangeOf(p)} st · ${p.glideNative?'native (CC65 and CC84)':'pitch automation'}`));
