@@ -75,6 +75,30 @@ describe('row 10: the reasons of the key', () => {
     expect(why(f28, [1, 1, 3, 1]).reasons).toContain('el acorde que más dura es la tónica');
     expect(why([[41, 45, 48], G, [45, 48, 52], [52, 55, 59]], [1, 1, 1, 1]).reasons).not.toContain('el acorde que más dura es la tónica');
   });
+  // C09 of the audit of 4 Nov 2026 (8 Nov 2026): a power chord on the tonic weighs as the tonic triad, the same in major and in minor
+  it('counts a power chord on the tonic as the tonic chord, and leaves major or minor to the other notes', () => {
+    const D5 = [50, 57, 62], Bb5 = [46, 53, 58], C5 = [48, 55, 60];
+    expect(why([D5, Bb5, C5, D5]).text).toBe('D menor: empieza y termina en la tónica · todos los acordes son de la escala');
+    expect(inEnglish(() => why([D5, Bb5, C5, D5]).text)).toBe('D minor: starts and ends on the tonic · every chord is in the scale');
+    const mix = run([D5, C, G, D5]);
+    expect([mix.key.tonic, mix.key.mode, mix.key.modal]).toEqual([2, 'major', 'mixolydian']);
+    expect(mix.why.reasons).toContain('empieza y termina en la tónica');
+    // with no third anywhere the power chord does not choose: the parallel key is the alternate
+    const e = run([[40, 47, 52], [38, 45, 50], [45, 52, 57], [40, 47, 52]]);
+    expect([e.key.tonic, e.alt && e.alt.tonic, e.key.mode !== e.alt.mode]).toEqual([4, 4, true]);
+  });
+  it('does not count a closing power chord a fifth above the first chord as ending on the tonic: it may be the V of a half cadence', () => {
+    const C5 = { root: 0, q: 'sus', p5: true, pcs: [0, 7] }, Cq = { root: 0, q: 'maj', pcs: [0, 4, 7] }, G5 = { root: 7, q: 'sus', p5: true, pcs: [7, 2] };
+    expect(bookends([C5, Cq, G5], 7, 'major').last).toBe(false);
+    expect(bookends([C5, Cq, G5], 0, 'major').first).toBe(true);
+    // a power chord on the tonic at both ends closes the progression, in minor as in major
+    expect(bookends([C5, G5, Cq, G5, C5], 0, 'minor')).toMatchObject({ first: true, last: true, closed: true });
+  });
+  it('never leaves a key without a reason: with none of the others, it counts the notes in its scale', () => {
+    const H07 = [[48, 52, 55], [51, 55, 58], [54, 58, 61], [45, 49, 52]];
+    expect(why(H07).text).toBe('F menor, casi empatada con G♯ menor: 8 de 12 notas están en su escala');
+    expect(inEnglish(() => why(H07).text)).toBe('F minor, nearly tied with G♯ minor: 8 of 12 notes are in its scale');
+  });
   it('says "todos los acordes son de la escala" only when it is literally true', () => {
     expect(why([C, F, G]).reasons).toContain('todos los acordes son de la escala');
     expect(why([C, Ab, F, C]).reasons.join(' ')).not.toContain('de la escala');

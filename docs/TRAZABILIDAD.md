@@ -12,8 +12,8 @@ Cierre del proyecto, 2 nov 2026 (sesión B). Cada etiqueta teórica de la interf
 | 6 | Etiquetas de «Posibles nombres» | Reglas: Por qué un nombre va primero; dec. 8 y 11 | `src/audit.test.js` «row 6» (dos bloques) |
 | 7 y 8 | Avisos y sus umbrales | Reglas: Inspector | `src/audit.test.js` «rows 7 and 8» |
 | 9 | «No se reconoce el acorde» | Reglas: Inspector | sonda A25; `src/audit.test.js` «rows 7 and 8» (aviso `unknown`) |
-| 10 | Por qué la tonalidad | Reglas: Por qué la tonalidad; dec. 13 y 15 | `src/why.test.js` «row 10»; línea del texto en `src/audit.test.js` «closing trace» |
-| 11 | Final (cadencia) | Reglas: Cadencias; Cierre: «sin cadencia final» | sonda G; `src/audit.test.js` (cadencia modal, «sin cadencia final») |
+| 10 | Por qué la tonalidad | Reglas: Por qué la tonalidad (con el porqué mínimo, 8 nov 2026); El power chord sobre la tónica cuenta como tónica; dec. 13 y 15 | `src/why.test.js` «row 10» (power chord en la tónica y porqué mínimo, los dos idiomas); línea del texto en `src/audit.test.js` «closing trace»; sonda X22, X23 y X39 |
+| 11 | Final (cadencia) y «Al repetir» | Reglas: Cadencias (Cadencia al repetir, 8 nov 2026); Cierre: «sin cadencia final» | sonda G y X35–X38; `src/audit.test.js` (cadencia modal, «sin cadencia final», «Al repetir» y `# Final al repetir` en los dos idiomas) |
 | 12 | Patrones | Reglas: Patrones en la otra tonalidad; Cierre: «(continúa en … al repetir)»; dec. 15 | sonda H; `src/gaps.test.js`; `src/audit.test.js` «labels fixed at the close» |
 | 13 | Grado | dec. 1 y 6; Reglas: Grados cromáticos, Modo | sonda D y V |
 | 14 | Función | dec. 4 | sonda E |

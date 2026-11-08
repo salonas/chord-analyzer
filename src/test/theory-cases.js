@@ -124,7 +124,7 @@ const runProg = chs => {
     A,
     key: keyName(A.key, P), alt: A.alt ? keyName(A.alt, P) : '', mode: modeName(A.key), keyText: keyText(A.key, A.alt, P),
     labels: A.rs.map(r => r.label), romans: A.romans.map(r => r ? r.text : '?'), shorts: A.romans.map(r => r ? r.short : '?'), fn: A.fn, ten: A.ten, ctx: A.tenCtx, why: A.why ? A.why.text : '',
-    spelled: A.rs.map(r => r.spelled.map(spellName)), cad: A.cad || '', found: A.found.map(f => f.name),
+    spelled: A.rs.map(r => r.spelled.map(spellName)), cad: A.cad || '', cadLoop: A.cadLoop || '', found: A.found.map(f => f.name),
     // until the app reads regions (F11), the whole progression is one region in its key
     regions: (A.regions || [{ key: A.key }]).map(r => keyName(r.key, P)).join(' → '), pivots: (A.regions || []).slice(1).map(r => r.pivot == null ? 0 : r.pivot + 1),
   };
@@ -283,6 +283,18 @@ prog('H07', 2, 'Sin patrón (acordes al azar)', ['C3 E3 G3', 'Eb3 G3 Bb3', 'F#3 
 // L. (in a key) a chord tone off the key's scale takes the letter of its interval above the root; see the loose chords of L below
 prog('L07', 2, 'La♭ mayor con iv prestado: D♭m lleva F♭ (fuera de la escala), no E', ['Ab2 C3 Eb3', 'Db3 Fb3 Ab3', 'Eb3 G3 Bb3 Db4', 'Ab2 C3 Eb3'], { key: 'Ab mayor', spell: { 1: 'Db Fb Ab' } }, 'THEORY.md, «Escritura de notas»');
 prog('L08', 2, 'Re mayor: F♯m(maj7) lleva E♯ (fuera de la escala), no F', ['D3 F#3 A3', 'F#2 A2 C#3 E#3', 'G2 B2 D3', 'A2 C#3 E3 G3', 'D3 F#3 A3'], { key: 'D mayor', spell: { 1: 'F# A C# E#' } }, 'THEORY.md, «Escritura de notas»');
+// X. auditoría del 4 nov 2026 (auditoria.md, sonda-nueva.js). C09: un power chord sobre la tónica pesa como la tríada de tónica.
+// Antes: X22 «C mayor (o G mayor)»; con D mayor en vez de D5 la app ya decía D mayor (mixolidio). C09c de casos-auditoria.txt tiene las mismas notas
+prog('X22', 2, 'Riff mixolidio con power chord en la tónica: D5 – C – G – D5', ['D3 A3 D4', 'C3 E3 G3', 'G2 B2 D3', 'D3 A3 D4'], { key: 'D mayor', mode: 'mixolidio', why: ['empieza y termina en la tónica'] }, 'auditoria.md, C09');
+// C09: antes D menor, pero el porqué no decía «empieza y termina en la tónica» y aparecía «(o F mayor)». C09a de casos-auditoria.txt tiene las mismas notas
+prog('X23', 2, 'Riff de power chords D5 – B♭5 – C5 – D5', ['D3 A3 D4', 'Bb2 F3 Bb3', 'C3 G3 C4', 'D3 A3 D4'], { key: 'D menor', why: ['empieza y termina en la tónica'] }, 'auditoria.md, C09');
+// Cadencia al repetir (THEORY.md, «Cadencias»): solo se muestra; la tonalidad no cambia (contracasos X35 y X36)
+prog('X35', 2, 'Bucle I–V–vi–IV en Do: sin cadencia final; al repetir, IV → I', ['C3 E3 G3', 'G2 B2 D3', 'A2 C3 E3', 'F2 A2 C3'], { key: 'C mayor', cad: { none: true }, loop: 'Cadencia plagal (IV → I)' }, 'THEORY.md, «Cadencia al repetir»');
+prog('X36', 2, 'i–♭VII–♭VI–V en La menor: termina en semicadencia, así que no hay línea al repetir', ['A2 C3 E3', 'G2 B2 D3', 'F2 A2 C3', 'E2 G#2 B2'], { key: 'A menor', cad: { has: 'Semicadencia' }, loop: '' }, 'THEORY.md, «Cadencia al repetir»');
+prog('X37', 2, 'Dm – A – Dm – E♭: al repetir, ♭II → i (frigia, dudoso D13)', ['D3 F3 A3', 'A2 C#3 E3', 'D3 F3 A3', 'Eb3 G3 Bb3'], { key: 'D menor', cad: { none: true }, loop: 'Cadencia ♭II → i' }, 'THEORY.md, «Cadencia al repetir»');
+prog('X38', 2, 'Am – Dm – E – Am – G: al repetir, ♭VII → i', ['A2 C3 E3', 'D3 F3 A3', 'E2 G#2 B2', 'A2 C3 E3', 'G2 B2 D3'], { key: 'A menor', cad: { none: true }, loop: 'Cadencia ♭VII → i' }, 'THEORY.md, «Cadencia al repetir»');
+// la tonalidad nunca sale sin porqué: sin otro motivo, el mínimo (THEORY.md, «Por qué la tonalidad»). Antes, H07 no tenía porqué
+prog('X39', 2, 'Acordes al azar (H07): el porqué mínimo cuenta las notas en la escala', ['C3 E3 G3', 'Eb3 G3 Bb3', 'F#3 A#3 C#4', 'A2 C#3 E3'], { why: ['8 de 12 notas están en su escala'] }, 'THEORY.md, «Por qué la tonalidad»');
 
 for (const c of progCases) {
   const o = runProg(c.chords);
@@ -316,6 +328,8 @@ for (const c of progCases) {
     else { const hs = Array.isArray(cd.has) ? cd.has : [cd.has]; ok = hs.some(h => o.cad.includes(h)) && !(cd.not && o.cad.includes(cd.not)); exp = hs.join(' | ') + (cd.not ? ` sin "${cd.not}"` : ''); }
     add('cadencia', c.id, c.level, head, exp, o.cad || '(ninguna)', ok, c.ref);
   }
+  // the cadence on repeat ('' asks for none)
+  if (ch.loop != null) add('cadencia', c.id + '-al-repetir', c.level, head + ' · al repetir', ch.loop || '(ninguna)', o.cadLoop || '(ninguna)', o.cadLoop === ch.loop, c.ref);
   if (ch.found) {
     if (!ch.found.length) add('patrón', c.id, c.level, head, '(ninguno)', o.found.join('; ') || '(ninguno)', !o.found.length, c.ref);
     ch.found.forEach(f => { const fs_ = Array.isArray(f) ? f : [f]; add('patrón', c.id, c.level, head, fs_.join(' | '), o.found.join('; ') || '(ninguno)', fs_.some(x => o.found.some(g => g.includes(x))), c.ref); });
@@ -511,9 +525,11 @@ for (const c of melCases.slice(-2)) {
   const txt = a => progText(p, { ...P, accPref: a }), auto = txt('auto'), sharp = txt('sharp'), flat = txt('flat');
   texts.M01 = { desc: 'BRIMSTONE pattern 3 con la preferencia ♯ (igual que en Auto)', text: sharp };
   const keyOf = t => (t.match(/Tonalidad estimada: ([^·(]+)/) || [, '(sin línea)'])[1].trim();
-  add('enarmonía', 'M01', 2, 'BRIMSTONE pattern 3 con ♯: la tonalidad se llama B♭ mayor, nunca A♯ mayor', 'B♭ mayor', keyOf(sharp), keyOf(sharp) === 'B♭ mayor', 'THEORY.md, «La tonalidad manda sobre la preferencia ♯/♭»');
+  // since the power chord on the tonic weighs as the tonic triad (C09, 8 Nov 2026) the key is D minor, with B♭ major as the alternate
+  const keyLine = t => (t.match(/Tonalidad estimada: ([^·]+)/) || [, '(sin línea)'])[1].trim();
+  add('enarmonía', 'M01', 2, 'BRIMSTONE pattern 3 con ♯: la tonalidad y su alternativa se llaman D menor y B♭ mayor, nunca A♯ mayor', 'D menor (o B♭ mayor)', keyLine(sharp), keyLine(sharp) === 'D menor (o B♭ mayor)', 'THEORY.md, «La tonalidad manda sobre la preferencia ♯/♭»');
   const lab = (t, n) => (t.split('\n').find(l => l.startsWith(n + '. ')) || '').split(' | ')[0].replace(/^\d+\. /, '');
-  [[2, 'B♭m(maj7)/D♭'], [5, 'E♭7'], [6, 'E♭13♯11']].forEach(([n, e]) => add('enarmonía', `M01.${n}`, 2, `BRIMSTONE pattern 3 con ♯: el acorde ${n} se escribe por la tonalidad`, e, lab(sharp, n), lab(sharp, n) === e, 'THEORY.md, «La tonalidad manda sobre la preferencia ♯/♭»'));
+  [[2, 'B♭m(maj7)/C♯'], [5, 'E♭7'], [6, 'E♭13♯11']].forEach(([n, e]) => add('enarmonía', `M01.${n}`, 2, `BRIMSTONE pattern 3 con ♯: el acorde ${n} se escribe por la tonalidad`, e, lab(sharp, n), lab(sharp, n) === e, 'THEORY.md, «La tonalidad manda sobre la preferencia ♯/♭»'));
   add('enarmonía', 'M02', 2, 'BRIMSTONE pattern 3: el texto exportado con ♯ y con ♭ es el mismo que con Auto', 'iguales', sharp === auto && flat === auto ? 'iguales' : 'distintos', sharp === auto && flat === auto, 'THEORY.md, «La tonalidad manda sobre la preferencia ♯/♭»');
 }
 // a key keeps the name Auto gives it with any preference: F♯ major with ♭ (not G♭), D♭ major with ♯ (not C♯), E♭ minor with ♯
