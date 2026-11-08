@@ -95,6 +95,35 @@ describe('harmony and melody in the text', () => {
   });
 });
 
+// Two notes struck together for less than a beat are no chord in a pattern of blocks either (audit of 4 Nov 2026, C04;
+// THEORY.md, «Dos notas cortas no son un acorde»)
+describe('two short notes in a pattern of blocks', () => {
+  // X07: Dm (3 beats), C–E and D–F of half a beat, Gm (3 beats), A–C and B♭–D, A, Dm
+  const X07 = '50 0 3|53 0 3|57 0 3|62 0 3|60 3 .5|64 3 .5|62 3.5 .5|65 3.5 .5|43 4 3|55 4 3|58 4 3|62 4 3|57 7 .5|60 7 .5|58 7.5 .5|62 7.5 .5|45 8 4|57 8 4|61 8 4|64 8 4|50 12 4|57 12 4|62 12 4|65 12 4';
+  const chords = rows => splitHarmony(pattern(rows)).chords.map(c => [beats(c.a), beats(c.b), c.notes, c.adds.map(x => [x.m, beats(x.s)])]);
+  it('are ornaments of the chord before them, which lasts their time and keeps its notes', () => {
+    expect(chords(X07)).toEqual([[0, 4, [50, 53, 57, 62], [[60, 3], [64, 3], [65, 3.5]]], [4, 8, [43, 55, 58, 62], [[57, 7], [60, 7]]],
+      [8, 12, [45, 57, 61, 64], []], [12, 16, [50, 57, 62, 65], []]]);
+  });
+  it('go to the chord after them when none sounds right before', () => {
+    expect(chords('60 0 .5|64 0 .5|48 .5 4|52 .5 4|55 .5 4')).toEqual([[0, 4.5, [48, 52, 55], [[60, 0], [64, 0]]]]);
+  });
+  it('stay as they were in a run longer than a beat or with no chord next to them (two voices in eighths)', () => {
+    expect(chords('60 0 .5|64 0 .5|62 .5 .5|65 .5 .5|64 1 .5|67 1 .5|48 1.5 4|52 1.5 4|55 1.5 4').length).toBe(4);
+    expect(chords('60 0 .5|64 0 .5|62 .5 .5|65 .5 .5').length).toBe(2);
+  });
+  it('three notes of half a beat, or two of a beat, are still a chord', () => {
+    expect(chords('48 0 3|52 0 3|55 0 3|50 3 .5|57 3 .5|62 3 .5|43 3.5 4|55 3.5 4|59 3.5 4').length).toBe(3);
+    expect(chords('48 0 3|52 0 3|55 0 3|53 3 1|57 3 1|43 4 4|55 4 4|59 4 4').length).toBe(3);
+  });
+  it('take the text out of the one-line-per-step form, as added notes of their chord', () => {
+    const t = progText(pattern(X07), PREFS);
+    expect(t).toContain('# Armonía');
+    expect(t).toContain('1. Dm | i (tónica · 0,13) | 0–4 | F3 A3 D4 (+C4 en 3 · +E4 en 3 · +F4 en 3,5) | D3');
+    expect(t).toContain('# Patrones: Menor i–iv–V');
+  });
+});
+
 // With a tune in the pattern, the top of a struck chord an octave or more above the next voice, over a chord of three or
 // more pitch classes, carries the tune on (manual test of 2 Nov 2026, P5 and P6)
 describe('the top of a chord that carries the tune on', () => {

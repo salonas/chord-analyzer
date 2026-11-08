@@ -1,6 +1,6 @@
 {
  "updated": "2026-11-08",
- "why": "C09: a power chord on the tonic weighs as the tonic triad",
+ "why": "C04: two short notes in a pattern of blocks are an ornament of their chord",
  "units": {
   "tavern": 21,
   "rock": 158
@@ -11,7 +11,7 @@
    "n": 15909
   },
   "acorde de punta a punta": {
-   "ok": 9064,
+   "ok": 9070,
    "n": 16404
   },
   "inversión, dado el acorde correcto": {

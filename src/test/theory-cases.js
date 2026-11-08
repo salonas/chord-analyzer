@@ -462,6 +462,11 @@ mc('J48', 2, 'Melodía en las notas de arriba de los bloques (P6): con melodía 
 // N. the same spelling on every surface (4 Nov 2026, BRIMSTONE point 3): a tone a chromatic reading respells is written so in the voices,
 // in the tune over it and in the inspector, with its interval by letters from the root
 mc('N01', 2, 'vii°⁶₅/V (A C E♭ F♯ antes de G) con F♯ en la melodía: la melodía escribe F♯ como las voces, no G♭, y su intervalo desde A es 6', [['C3 E3 G3', 4], ['A2 C3 Eb3 F#3', 4], ['G2 B2 D3', 4], ['C3 E3 G3', 4]], [['F#5', 4, 4], ['G5', 8, 4], ['C6', 12, 4]], { chords: ['C', 'Adim7', 'G', 'C'], romans: ['I', 'vii°⁶₅/V', 'V', 'I'], textHas: ['F♯5 (78) | 4 | 4 | Adim7 | 6 |'], textNot: ['G♭5 (78)'] }, 'THEORY.md, «Escritura de notas»');
+// C04 (audit of 4 Nov 2026): two notes struck together for less than a beat are no chord in a pattern of blocks either; they are
+// ornaments of the chord before them (THEORY.md, «Dos notas cortas no son un acorde»)
+mc('X07', 2, 'Bloques Dm (3 t), díadas C–E y D–F de medio tiempo, Gm (3 t), díadas A–C y B♭–D, A, Dm', [['D3 F3 A3 D4', 3], ['C4 E4', .5], ['D4 F4', .5], ['G2 G3 Bb3 D4', 3], ['A3 C4', .5], ['Bb3 D4', .5], ['A2 A3 C#4 E4', 4], ['D3 A3 D4 F4', 4]], [],
+  { chords: ['Dm', 'Gm', 'A', 'Dm'], romans: ['i', 'iv', 'V', 'i'], textHas: ['Menor i–iv–V'], textNot: ['Menor i–iv–v'] }, 'THEORY.md, «Inspector» (hoja vacía)');
+mc('X08', 2, 'D5 (3 t), díada F–A de medio tiempo, B♭, G5', [['D3 A3 D4', 3], ['F3 A3', .5], ['Bb2 F3 Bb3 D4', 4], ['G2 D3 G3', 4.5]], [], { textNot: ['un V resuelve a la tónica', 'F(no5)'] }, 'auditoria.md, C04');
 for (const c of melCases) {
   const p = pat(c.id, c.chords, c.mel);
   const txt = progText(p, P);

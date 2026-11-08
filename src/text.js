@@ -3,7 +3,7 @@ import { HIGH, LATIN, LETTERS, LOW, NAT, OCT_CONV, T, barsText, fmtB, numB, sigO
 import { isDrum, isMulti, isPure, normProg, progEnd, segStep, segs, stepTiming } from './model.js';
 import { FN_NAME, PATTERNS, analyze, analyzeProgression, candSymbol, degreeText, keyName, keyText, laneSpell, noteText, octOff, plainSpell, regionTexts, resolveStep, spellCandidate } from './analysis.js';
 import { exprSummary, instLabel, instText } from './expression.js';
-import { arpeggioChords, blockMelody, splitHarmony } from './harmony.js';
+import { arpeggioChords, blockMelody, shortHosts, splitHarmony } from './harmony.js';
 import { TOL, against, melodyKind, step } from './roles.js';
 import { drumText } from './drums.js';
 import { tr } from './i18n.js';
@@ -111,8 +111,9 @@ function progText(p,prefs){
 # ${tr('Varias pistas','Several tracks')}: ${p.tracks.map(t=>`${t.name} (${p.notes.filter(n=>n.tr===t.id).length})`).join(', ')}
 # ${tr('Este texto no lleva las notas de un pattern con pistas: usa Separar pistas o el .mid.','This text does not carry the notes of a pattern with tracks: use Split tracks or the .mid.')}
 `;
-  const S=segs(p), pure=!p.notes.length||isPure(p,S)&&!blockMelody(p,S).size&&!arpeggioChords(p), L=[`# Pattern: ${p.name||tr('Sin nombre','Untitled')}`];
-  // plain block chords keep one line per chord (the text reads back from them); anything else splits harmony and melody
+  const S=segs(p), pure=!p.notes.length||isPure(p,S)&&!blockMelody(p,S).size&&!arpeggioChords(p)&&!shortHosts(S).some(h=>h!=null), L=[`# Pattern: ${p.name||tr('Sin nombre','Untitled')}`];
+  // plain block chords keep one line per chord (the text reads back from them); anything else splits harmony and melody,
+  // also when two short notes go to a chord as its ornament (THEORY.md, «Dos notas cortas no son un acorde»)
   const H=pure?null:harmonyLines(p,prefs,L);
   const A=pure?analyzeProgression(S.map(s=>segStep(p,s)),prefs):H.A;
   if(pure?S.length:H.Hm.chords.length){

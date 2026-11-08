@@ -46,6 +46,24 @@ function noteRoles(ns){
 
 const subset=(a,b)=>[...a].every(x=>b.has(x));
 
+// Two notes struck together for less than a beat (a dyad, a doubled note) are no chord in a pattern of blocks either
+// (THEORY.md, «Dos notas cortas no son un acorde»): the same limit as noteRoles and the empty sheet. A run of such steps
+// that lasts a beat or less goes to the chord that sounds right before it, or else to the one that starts right after it;
+// a longer run, or one with no chord next to it (two voices in eighths), stays as it was. Returns, for each step, the
+// index of the step it goes to, or null
+const shortPair=s=>s.ids.size===2&&s.b-s.a<T;
+function shortHosts(S){
+  const host=S.map(()=>null);
+  for(let i=0;i<S.length;){
+    if(!shortPair(S[i])){ i++; continue; }
+    let j=i; while(j+1<S.length&&shortPair(S[j+1])&&S[j].b===S[j+1].a) j++;
+    const h=i>0&&S[i-1].b===S[i].a?i-1:j+1<S.length&&S[j].b===S[j+1].a?j+1:null;
+    if(h!=null&&S[j].b-S[i].a<=T) for(let k=i;k<=j;k++) host[k]=h;
+    i=j+1;
+  }
+  return host;
+}
+
 // The highest voice: each note that starts above everything still sounding, chord tops included
 function topVoice(ns){
   const top=[];
@@ -178,9 +196,18 @@ function splitHarmony(p){
   if(S.length&&S.every(s=>isBlock(p,s))){
     const tune=blockMelody(p,S);
     const role=new Map(p.notes.map(n=>[n.id,tune.has(n.id)?'mel':'harm']));
-    const chords=S.map(s=>{ const notes=s.notes.filter(m=>!p.notes.some(n=>tune.has(n.id)&&s.ids.has(n.id)&&n.m===m));
-      return {a:s.a,b:s.b,notes,pcs:new Set(notes.map(m=>m%12)),bass:[{m:notes[0],s:s.a}],adds:[]}; });
-    const mel=p.notes.filter(n=>tune.has(n.id)).sort((a,b)=>a.s-b.s).map(n=>({notes:[n.m],s:n.s,l:n.l}));
+    // two short notes next to a chord are its ornament (shortHosts)
+    const host=shortHosts(S), own=new Map();
+    S.forEach((s,i)=>{ if(host[i]==null){ const notes=s.notes.filter(m=>!p.notes.some(n=>tune.has(n.id)&&s.ids.has(n.id)&&n.m===m));
+      own.set(i,{a:s.a,b:s.b,notes,pcs:new Set(notes.map(m=>m%12)),bass:[{m:notes[0],s:s.a}],adds:[]}); } });
+    S.forEach((s,i)=>{
+      const c=own.get(host[i]); if(!c) return;
+      c.a=Math.min(c.a,s.a); c.b=Math.max(c.b,s.b);
+      p.notes.filter(n=>s.ids.has(n.id)).sort((x,y)=>x.m-y.m).forEach(n=>{ if(!c.notes.includes(n.m)&&!c.adds.some(x=>x.m===n.m)) c.adds.push({m:n.m,s:n.s}); });
+    });
+    const chords=[...own.values()];
+    chords.forEach(c=>c.adds.sort((x,y)=>x.s-y.s||x.m-y.m));
+    const mel=p.notes.filter(n=>role.get(n.id)==='mel').sort((a,b)=>a.s-b.s||a.m-b.m).map(n=>({notes:[n.m],s:n.s,l:n.l}));
     return {chords,mel,top:[],role,chordAt:t=>chords.find(c=>c.a<=t&&t<c.b)};
   }
   const ns=[...p.notes].sort((a,b)=>a.s-b.s||a.m-b.m), role=noteRoles(ns);
@@ -256,4 +283,4 @@ function harmonySegs(p){
     ids:c.own||new Set(p.notes.filter(n=>H.role.get(n.id)!=='mel'&&n.s>=c.a-TOL&&n.s<c.b-TOL).map(n=>n.id))}));
 }
 
-export { arpeggioChords, blockMelody, gridChords, harmonySegs, noteRoles, splitHarmony };
+export { arpeggioChords, blockMelody, gridChords, harmonySegs, noteRoles, shortHosts, splitHarmony };
