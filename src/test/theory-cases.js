@@ -467,6 +467,12 @@ mc('N01', 2, 'vii°⁶₅/V (A C E♭ F♯ antes de G) con F♯ en la melodía: 
 mc('X07', 2, 'Bloques Dm (3 t), díadas C–E y D–F de medio tiempo, Gm (3 t), díadas A–C y B♭–D, A, Dm', [['D3 F3 A3 D4', 3], ['C4 E4', .5], ['D4 F4', .5], ['G2 G3 Bb3 D4', 3], ['A3 C4', .5], ['Bb3 D4', .5], ['A2 A3 C#4 E4', 4], ['D3 A3 D4 F4', 4]], [],
   { chords: ['Dm', 'Gm', 'A', 'Dm'], romans: ['i', 'iv', 'V', 'i'], textHas: ['Menor i–iv–V'], textNot: ['Menor i–iv–v'] }, 'THEORY.md, «Inspector» (hoja vacía)');
 mc('X08', 2, 'D5 (3 t), díada F–A de medio tiempo, B♭, G5', [['D3 A3 D4', 3], ['F3 A3', .5], ['Bb2 F3 Bb3 D4', 4], ['G2 D3 G3', 4.5]], [], { textNot: ['un V resuelve a la tónica', 'F(no5)'] }, 'auditoria.md, C04');
+// C10 (audit of 4 Nov 2026): the top of a struck chord carries the tune on when it comes by step or by a leap up to a fifth,
+// even under an octave from the next voice (THEORY.md, «La nota de arriba de un bloque continúa la melodía»)
+mc('X24', 2, 'Mano derecha cerrada y melodía que termina en C5 (redonda) con el último C', [['C2 C3 E3 G3', 4], ['F1 C3 F3 A3', 4], ['G1 B2 D3 F3', 4], ['C2 C3 E3 G3', 4]], [['E4', 0, 2], ['G4', 2, 2], ['A4', 4, 2], ['F4', 6, 2], ['D4', 8, 2], ['B3', 10, 2], ['C4', 12, 4]],
+  { chords: ['C', 'F', 'G7', 'C'], melody: ['E4', 'G4', 'A4', 'F4', 'D4', 'B3', 'C4'], textHas: ['C4 (60) | 12 | 4 | C | 1'] }, 'THEORY.md, «La nota de arriba de un bloque continúa la melodía» (P5)');
+mc('X25', 2, 'La misma melodía terminando en D4 (la 9ª) con el último C', [['C2 C3 E3 G3', 4], ['F1 C3 F3 A3', 4], ['G1 B2 D3 F3', 4], ['C2 C3 E3 G3', 4]], [['E4', 0, 2], ['G4', 2, 2], ['A4', 4, 2], ['F4', 6, 2], ['D4', 8, 2], ['B3', 10, 2], ['D4', 12, 4]],
+  { chords: ['C', 'F', 'G7', 'C'], textHas: ['D4 (62) | 12 | 4 | C | 9'], textNot: ['Cadd9'] }, 'auditoria.md, C10');
 for (const c of melCases) {
   const p = pat(c.id, c.chords, c.mel);
   const txt = progText(p, P);
