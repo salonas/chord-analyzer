@@ -86,6 +86,17 @@ describe('chord types 13♯11 and 7(no3)', () => {
     const B = analyzeProgression([{ notes: [39, 49, 57, 61, 67, 72] }, { notes: [38, 50, 54, 57] }], P);
     expect(B.romans.map(r => r.text)).toEqual(['♭II13♯11', 'I']);
   });
+  // C13 of the audit of 4 Nov 2026: three degrees do not make a triad, so 7(no3) on its 5th takes words, not ⁶₄ (decision 6)
+  it('writes the inversion of a 7(no3) in words, with no figured bass', () => {
+    const A = analyzeProgression([{ notes: [45, 50, 60], root: 2, sym: '7(no3)' }, { notes: [43, 55, 59, 62] }], P);
+    expect(A.rs[0].label).toBe('D7(no3)/A');
+    expect(A.romans[0].short).toBe('V7(no3)');
+    expect(A.romans[0].text).toBe('V7(no3) en 2ª inversión');
+    expect(A.romans[0].fig).toBe('');
+    // a triad and a seventh keep their figures
+    const B = analyzeProgression([{ notes: [45, 50, 54] }, { notes: [45, 50, 54, 60] }, { notes: [43, 55, 59, 62] }], P);
+    expect(B.romans.map(r => r.text)).toEqual(['V⁶₄', 'V⁴₃', 'I']);
+  });
 });
 
 describe('D minor with a Phrygian ♭II (brimstone-03-pattern-3)', () => {

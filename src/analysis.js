@@ -454,6 +454,9 @@ function keyText(k,alt,prefs){
 }
 // A triad or a seventh in inversion takes a figured bass (⁶, ⁶₅…); anything with extensions, add, sus, 6 or a power chord takes words,
 // so that "/" stays for secondary functions: V9 in 1st inversion, Iadd9 with the bass on the 9
+// A triad is a root, a third and a fifth: three degrees are not enough, 7(no3) has three and is no triad (C13 of the audit of
+// 4 Nov 2026: «♭VII7(no3)⁶₄»), so it takes words too
+const isTriad=t=>t.degs.length===3&&t.degs.some(d=>d.n===3)&&t.degs.some(d=>d.n===5);
 function invWords(c,d){
   return [3,5,7].includes(d.n)?tr('en ','in ')+inversionText(c):tr('con bajo en la ','with the bass on the ')+d.label;
 }
@@ -470,8 +473,8 @@ function romanFor(c,key){
   let fig='', kind='', words='';
   if(c.slash){
     const d=bassDeg(c);
-    if(c.type.degs.length===3&&q!=='sus'&&d.n===3){ fig='⁶'; kind='triad'; }
-    else if(c.type.degs.length===3&&q!=='sus'&&d.n===5){ fig='⁶₄'; kind='triad'; }
+    if(isTriad(c.type)&&d.n===3){ fig='⁶'; kind='triad'; }
+    else if(isTriad(c.type)&&d.n===5){ fig='⁶₄'; kind='triad'; }
     else if(SEVENTHS.has(c.type.sym)&&[3,5,7].includes(d.n)){ fig={3:'⁶₅',5:'⁴₃',7:'⁴₂'}[d.n]; kind='seventh'; ext=ext.replace(/7$/,''); }
     else words=invWords(c,d);
   }
