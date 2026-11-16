@@ -194,7 +194,8 @@ function drawRoll(){
       if(!V.bend.length) continue;
       const t0=slid.has(V)?V.s:V.bend[0].t, t1=slid.has(V)?V.e:V.bend[V.bend.length-1].t;
       const x0=Math.max(K,Math.round(tX(t0))), x1=Math.min(W,Math.round(tX(t1)));
-      const yAt=x=>Math.round(rowY(V.m+bendAt(V.bend,t0+(x-tX(t0))/bw*T))+rh/2-1);
+      // x0 is rounded and can fall a pixel before t0, where bendAt would read 0 (the note's own pitch): clamp the time
+      const yAt=x=>Math.round(rowY(V.m+bendAt(V.bend,Math.min(t1,Math.max(t0,t0+(x-tX(t0))/bw*T))))+rh/2-1);
       let py=yAt(x0);
       for(let x=x0;x<=x1;x++){ const y=yAt(x); g.fillRect(x,Math.min(py,y),2,Math.abs(y-py)+2); py=y; }
     }
