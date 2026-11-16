@@ -14,15 +14,16 @@ describe('splitHarmony', () => {
   const r = splitHarmony(pattern(ROWS));
   it('finds the four chords, not one per note', () => {
     expect(r.chords.map(c => [beats(c.a), beats(c.b), c.notes])).toEqual([
-      [0, 4, [48, 59, 64, 67]], [4, 8, [45, 55, 60, 64, 67]], [8, 10, [50, 60, 65, 69]], [10, 12, [43, 53, 59, 62]]]);
+      [0, 4, [48, 59, 64, 67]], [4, 8, [45, 55, 60, 64]], [8, 10, [50, 60, 65, 69]], [10, 12, [43, 53, 59, 62]]]);
   });
   it('keeps the passing bass and the added voices inside the chord', () => {
     expect(r.chords[0].bass.map(b => [b.m, beats(b.s), !!b.pass])).toEqual([[48, 0, false], [50, 1, true], [49, 1.5, true], [48, 2, false]]);
     expect(r.chords[0].adds.map(a => [a.m, beats(a.s)])).toEqual([[60, 2], [69, 2.5]]);
     expect(r.chords[3].adds.map(a => [a.m, beats(a.s)])).toEqual([[50, 10.5]]);
   });
+  // G4 struck with Am7 comes from E4 by a third and G3 sounds below: it carries the tune on (C10)
   it('lists the tune apart', () => {
-    expect(r.mel.map(m => [m.notes[0], beats(m.s)])).toEqual([[64, 3.5], [65, 5], [64, 5.5], [65, 6], [53, 6.5], [50, 7.5], [55, 8.5], [69, 9], [72, 9.5], [65, 11], [69, 11.5]]);
+    expect(r.mel.map(m => [m.notes[0], beats(m.s)])).toEqual([[64, 3.5], [67, 4], [65, 5], [64, 5.5], [65, 6], [53, 6.5], [50, 7.5], [55, 8.5], [69, 9], [72, 9.5], [65, 11], [69, 11.5]]);
   });
   it('a note doubled in octaves with no chord around is one melody note', () => {
     const d = splitHarmony(pattern('48 0 1|60 0 1|64 .5 .5'));
@@ -54,7 +55,7 @@ describe('splitHarmony', () => {
 describe('harmonySegs', () => {
   it('gives the lane four chords whose ids leave the tune out', () => {
     const p = pattern(ROWS), S = harmonySegs(p), mel = new Set(['n12', 'n18', 'n36']);
-    expect(S.map(s => [beats(s.a), beats(s.b), s.sig])).toEqual([[0, 4, '48,59,64,67'], [4, 8, '45,55,60,64,67'], [8, 10, '50,60,65,69'], [10, 12, '43,53,59,62']]);
+    expect(S.map(s => [beats(s.a), beats(s.b), s.sig])).toEqual([[0, 4, '48,59,64,67'], [4, 8, '45,55,60,64'], [8, 10, '50,60,65,69'], [10, 12, '43,53,59,62']]);
     expect(S.flatMap(s => [...s.ids]).filter(id => mel.has(id))).toEqual([]);
     expect(S[0].ids.size).toBe(12);
   });
@@ -66,13 +67,14 @@ describe('harmony and melody in the text', () => {
   it('writes four chord lines and no lone note as a chord', () => {
     expect(L.filter(l => /^\d+\. /.test(l))).toEqual([
       '1. Cmaj7 | Imaj7 (tónica · 0,1) | 0–4 | B3 E4 G4 (+C4 en 2 · +A4 en 2,5) | C3 → D3 (breve) → D♭3 (breve) → C3',
-      '2. Am7 | vi7 (tónica · 0,13) | 4–8 | G3 C4 E4 G4 | A2',
+      '2. Am7 | vi7 (tónica · 0,13) | 4–8 | G3 C4 E4 | A2',
       '3. Dm7 | ii7 (subdominante · 0,28) | 8–10 | C4 F4 A4 | D3',
       '4. G7 | V7 (dominante · 0,68) | 10–12 | F3 B3 D4 (+D3 en 10,5) | G2']);
   });
   it('explains each melody note against its chord', () => {
     expect(L).toContain('E4 (64) | 3.5 | 0.5 | Cmaj7 | 3 | baja (0,15) | nota del acorde');
-    expect(L).toContain('F4 (65) | 5 | 0.5 | Am7 | ♭6 | alta (0,85) | bordadura');
+    expect(L).toContain('G4 (67) | 4 | 1 | Am7 | ♭7 | baja (0,15) | nota del acorde');
+    expect(L).toContain('F4 (65) | 5 | 0.5 | Am7 | ♭6 | alta (0,85) | paso');
     expect(L).toContain('A4 (69) | 11.5 | 0.5 | G7 | 9 | media (0,5) | tensión');
   });
   it('a note outside its chord that the next chord owns, just before the change, is an anticipation', () => {
@@ -87,7 +89,7 @@ describe('harmony and melody in the text', () => {
   it('reads back the exact notes and the chord names', () => {
     const back = parseText(t, PREFS).projects[0].patterns[0];
     expect(back.notes.length).toBe(37);
-    expect(back.steps.map(s => [s.name, s.notes])).toEqual([['Cmaj7', [48, 59, 64, 67]], ['Am7', [45, 55, 60, 64, 67]], ['Dm7', [50, 60, 65, 69]], ['G7', [43, 53, 59, 62]]]);
+    expect(back.steps.map(s => [s.name, s.notes])).toEqual([['Cmaj7', [48, 59, 64, 67]], ['Am7', [45, 55, 60, 64]], ['Dm7', [50, 60, 65, 69]], ['G7', [43, 53, 59, 62]]]);
   });
   it('writes a power chord as E(5), never E5', () => {
     const p = pattern('40 0 4|47 0 4|64 1 .5');
@@ -134,13 +136,34 @@ describe('the top of a chord that carries the tune on', () => {
     expect(last(P5)).toEqual([72, 16]);
     expect(r.chords.at(-1).notes).toEqual([36, 48, 52, 55]);
   });
-  it('asks an octave or more above the next voice: E4 over G3 stays in the chord, C5 does not', () => {
+  it('asks an octave or more above the next voice when the top comes by a leap over a fifth: E4 over G3 stays in the chord, C5 does not', () => {
     const head = '48 0 4|52 0 4|55 0 4|76 0 1|74 1 1|72 2 2|48 4 4|52 4 4|55 4 4|';
     expect(last(head + '64 4 4')).toEqual([72, 2]);
     expect(last(head + '72 4 4')).toEqual([72, 4]);
   });
   it('asks for a tune elsewhere in the pattern: a held chord with a wide top stays a chord', () => {
     expect(splitHarmony(pattern('36 0 8|48 0 4|52 0 4|55 0 4|72 0 4|53 4 4|57 4 4|60 4 4|77 4 4')).mel).toEqual([]);
+  });
+  // C10 (audit of 4 Nov 2026): under an octave too, when the top comes by step or by a leap up to a fifth from the tune and
+  // is not the seventh of the chord under it
+  const C10 = '36 0 4|48 0 4|52 0 4|55 0 4|64 0 2|67 2 2|29 4 4|48 4 4|53 4 4|57 4 4|69 4 2|65 6 2|31 8 4|47 8 4|50 8 4|53 8 4|62 8 2|59 10 2|36 12 4|48 12 4|52 12 4|55 12 4|';
+  it('takes the last note of the tune out of a closed chord: C4 after B3, doubled below (C10a)', () => {
+    expect(last(C10 + '60 12 4')).toEqual([60, 12]);
+    expect(splitHarmony(pattern(C10 + '60 12 4')).chords.at(-1).notes).toEqual([36, 48, 52, 55]);
+  });
+  it('takes a ninth on top out of the chord, which keeps its name: D4 after B3 over C (C10b)', () => {
+    expect(last(C10 + '62 12 4')).toEqual([62, 12]);
+    expect(harmonySegs(pattern(C10 + '62 12 4')).at(-1).sig).toBe('36,48,52,55');
+  });
+  it('leaves the seventh of the chord under it in the chord: B♭4 after C5 over C E G C is a voice of C7', () => {
+    const rows = '48 0 4|52 0 4|55 0 4|60 0 4|76 0 2|72 2 2|48 4 4|52 4 4|55 4 4|60 4 4|70 4 4';
+    expect(last(rows)).toEqual([72, 2]);
+    expect(splitHarmony(pattern(rows)).chords.at(-1).notes).toEqual([48, 52, 55, 60, 70]);
+  });
+  it('does not chain from one chord to the next: the top after a top that carried the tune on stays in its chord', () => {
+    const rows = '48 0 4|52 0 4|55 0 4|72 0 2|67 2 2|48 4 4|52 4 4|55 4 4|64 4 4|47 8 4|50 8 4|55 8 4|62 8 4';
+    expect(last(rows)).toEqual([64, 4]);
+    expect(splitHarmony(pattern(rows)).chords.at(-1).notes).toEqual([47, 50, 55, 62]);
   });
 });
 

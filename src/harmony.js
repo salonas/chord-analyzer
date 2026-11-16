@@ -7,7 +7,7 @@ import { analyze, resolveStep } from './analysis.js';
 const TOL=Math.round(.05*T); // notes that start within ±0.05 beats start together
 const SHORT=T/2;             // a passing bass lasts half a beat or less
 const isHarm=r=>r==='harm'||r==='inner';
-const OCTAVE=12;
+const OCTAVE=12, FIFTH=7;
 
 // Each note gets a role: harm (chord), inner (moving inner voice), pass (short bass), bass (longer bass) or mel (tune).
 // The lowest voice under a chord is its bass, never the tune, however long it lasts (THEORY.md, «La voz grave es el bajo»)
@@ -40,6 +40,22 @@ function noteRoles(ns){
   if([...role.values()].includes('mel')) for(const g of groups){
     const k=g.notes.length, top=g.notes[k-1], under=g.notes.slice(0,-1).map(n=>n.m);
     if(k>=4&&role.get(top.id)==='harm'&&top.m-under[under.length-1]>=OCTAVE&&new Set(under.map(m=>m%12)).size>=3&&analyze(under,null).length) role.set(top.id,'mel');
+  }
+  // under an octave too, when the chord under it is whole without it: the top carries the tune on when it comes by step or by
+  // a leap up to a fifth from the note of the tune that ends where it starts, nothing higher sounds, and it is not the seventh
+  // of the chord under it (its pitch class does not sound below and it lies a seventh above the root of the chord the notes
+  // under it make on their own; a diminished seventh over a diminished triad). That seventh stays a voice and names the chord.
+  // The note before is one that was the tune already: the rule does not chain from one chord to the next (THEORY.md, C10)
+  const tune=new Set(ns.filter(n=>role.get(n.id)==='mel').map(n=>n.id));
+  if(tune.size) for(const g of groups){
+    const k=g.notes.length, top=g.notes[k-1], under=g.notes.slice(0,-1).map(n=>n.m);
+    if(k<4||role.get(top.id)!=='harm'||new Set(under.map(m=>m%12)).size<3) continue;
+    const c=analyze(under,null)[0];
+    if(!c||ns.some(o=>o!==top&&o.s<=top.s+TOL&&o.s+o.l>top.s+TOL&&o.m>top.m)) continue;
+    const prev=ns.filter(o=>tune.has(o.id)&&Math.abs(o.s+o.l-top.s)<=TOL).sort((a,b)=>b.m-a.m)[0];
+    if(!prev||Math.abs(prev.m-top.m)>FIFTH) continue;
+    const iv=(top.m-c.root+120)%12, seventh=!under.some(m=>m%12===top.m%12)&&(iv===10||iv===11||(iv===9&&c.type.q==='dim'));
+    if(!seventh) role.set(top.id,'mel');
   }
   return role;
 }

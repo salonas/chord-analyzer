@@ -1,6 +1,6 @@
 {
- "updated": "2026-11-08",
- "why": "C04: two short notes in a pattern of blocks are an ornament of their chord",
+ "updated": "2026-11-16",
+ "why": "the top of a struck chord carries the tune on under an octave unless it is the seventh of the chord under it (C10)",
  "units": {
   "tavern": 21,
   "rock": 158
@@ -11,7 +11,7 @@
    "n": 15909
   },
   "acorde de punta a punta": {
-   "ok": 9070,
+   "ok": 9078,
    "n": 16404
   },
   "inversión, dado el acorde correcto": {
@@ -47,7 +47,7 @@
    "n": 1622
   },
   "frases partidas de punta a punta (freno)": {
-   "ok": 58,
+   "ok": 56,
    "n": 1622
   }
  },
