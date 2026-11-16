@@ -67,6 +67,16 @@ describe('voices and tune in the text export', () => {
 });
 
 describe('pickInterp', () => {
+  // a name is read whatever accidentals it is written with: within a key the app writes B♭m7/D♭ with the ♯ preference too
+  it('reads a chord name written with sharps or flats, with any accidental preference', () => {
+    const P = accPref => ({ ...PREFS, accPref });
+    for (const pref of ['auto', 'sharp', 'flat']) {
+      for (const name of ['B♭m7/D♭', 'A♯m7/C♯']) expect(pickInterp({ notes: [49, 53, 56, 58], name }, P(pref))).toMatchObject({ root: 10, sym: 'm7' });
+      for (const name of ['D♭6', 'C♯6', '']) expect(pickInterp({ notes: [49, 53, 56, 58], name }, P(pref))).toMatchObject({ root: 1, sym: '6' });
+      // a name no reading has still falls back to the first one
+      expect(pickInterp({ notes: [49, 53, 56, 58], name: 'G7' }, P(pref))).toMatchObject({ root: 1, sym: '6' });
+    }
+  });
   const steps = fx.hand.parsed.chords.concat(fx.hand.parsed.projects.flatMap(p => p.patterns.flatMap(s => s.steps)));
   for (const [name, prefs] of Object.entries(PREFS_BY)) {
     it(`${name} preferences`, () => {

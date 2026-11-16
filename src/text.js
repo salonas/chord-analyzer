@@ -245,7 +245,10 @@ function parseText(txt,prefs){
 function pickInterp(p,prefs){
   const notes=[...new Set(p.notes)].sort((a,b)=>a-b);
   const cands=analyze(notes,null), want=(p.name||'').replace(/\s+/g,'');
-  const c=cands.find(x=>{const sy=candSymbol(x,spellCandidate(x,notes,prefs),prefs); return want&&(sy.main+sy.slash).replace(/\s+/g,'')===want;})||cands[0];
+  // the name is looked for as the preference in use writes it, then as the other two do: within a key the app writes a chord by the
+  // key, whatever the preference (B♭m7/D♭ with ♯ too), so the text it exported names the same chord when it comes back
+  const as=(x,acc)=>{const q={...prefs,accPref:acc}, sy=candSymbol(x,spellCandidate(x,notes,q),q); return (sy.main+sy.slash).replace(/\s+/g,'');};
+  const c=(want&&[prefs.accPref,'auto','sharp','flat'].reduce((hit,acc)=>hit||cands.find(x=>as(x,acc)===want),null))||cands[0];
   return {notes,root:c?c.root:null,sym:c?c.type.sym:null};
 }
 
