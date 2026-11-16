@@ -32,6 +32,7 @@ describe('row 2: the name of every chord type', () => {
     'maj9♯11': ['novena mayor con 11ª aumentada', 'major ninth sharp eleven'], '7♯5♯9': ['séptima con 5ª y 9ª aumentadas', 'seventh sharp five sharp nine'],
     '7♭5♭9': ['séptima con 5ª disminuida y 9ª menor', 'seventh flat five flat nine'], '7♯5♭9': ['séptima con 5ª aumentada y 9ª menor', 'seventh sharp five flat nine'],
     '7♭9♯11': ['séptima con 9ª menor y 11ª aumentada', 'seventh flat nine sharp eleven'], '13♭9': ['trecena con 9ª menor', 'thirteenth flat nine'],
+    '9♯5': ['novena con 5ª aumentada', 'ninth sharp five'],
   };
   it('has a Spanish and an English name for each of the types, and no type is missing from the table', () => {
     expect(TYPES.map(t => t.sym).sort()).toEqual(Object.keys(NAMES).sort());

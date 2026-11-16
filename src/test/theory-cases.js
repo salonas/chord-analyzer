@@ -4,7 +4,7 @@ import { analyze, analyzeProgression, candSymbol, inversionText, keyName, keyTex
 import { normProg, segStep } from '../model.js';
 import { harmonySegs } from '../harmony.js';
 import { buildPack } from '../midi.js';
-import { activeCands, spellActive } from '../panel.js';
+import { activeCands, chordDesc, spellActive } from '../panel.js';
 import { parseText, progText } from '../text.js';
 
 const P = { naming: 'letters', accPref: 'auto', octConv: 'sci', midiShift: 0 };
@@ -81,6 +81,24 @@ for (const [id, lv, desc, notes, exp] of chordCases) {
   const r = resolveStep({ notes: N(notes) }, P);
   const alts = analyze([...N(notes)].sort((a, b) => a - b), null).slice(0, 4).map(c => { const sy = candSymbol(c, spellCandidate(c, N(notes), P), P); return sy.main + sy.slash; });
   add('acorde', id, lv, `${desc}: ${notes}`, exp, r.label, acc(exp, r.label), '', 'alternativas: ' + alts.join(', '));
+}
+
+// C05 (audit of 4 Nov 2026): common chord types the dictionary lacked. Only 9♯5 is in it (X15); the other seven made a check of
+// this probe fail or a row of the corpus ratchet worse and stay out (THEORY.md, «Pendientes conocidos»), so their checks fail,
+// as a record of the class. today: F7sus2/C, ?, E♭13/C, B♭m6/9/C, G7sus4/C, G11/C and Gm11/C
+const AUDIT_CHORDS = [
+  ['X11', 2, 'Menor con 4ª añadida (madd11, rock y pop)', 'C4 Eb4 F4 G4', ['Cm(add11)', 'Cm(add4)']],
+  ['X12', 2, 'Mayor con 4ª aumentada añadida (lidio sin 7ª)', 'C4 E4 F#4 G4', ['Cadd♯11', 'C(add♯11)', 'Cadd♯4']],
+  ['X13', 3, 'Menor séptima con 9ª menor (acorde frigio)', 'C3 Eb3 G3 Bb3 Db4', ['Cm7♭9']],
+  ['X14', 3, 'Séptima suspendida con 9ª menor (sus♭9)', 'C3 F3 G3 Bb3 Db4', ['C7sus4♭9', 'C7♭9sus4']],
+  ['X15', 3, 'Novena con 5ª aumentada', 'C3 E3 G#3 Bb3 D4', ['C9♯5', 'C+9']],
+  ['X16', 2, 'Suspendido de 2ª y 4ª (sin 3ª)', 'C4 D4 F4 G4', ['Csus2sus4', 'Csus4(add9)', 'Csus2(add4)']],
+  ['X17', 3, 'Séptima mayor suspendida de 4ª', 'C4 F4 G4 B4', ['Cmaj7sus4']],
+  ['X18', 3, 'Trecena suspendida (13sus4)', 'C3 F3 G3 Bb3 D4 A4', ['C13sus4']],
+];
+for (const [id, lv, desc, notes, exp] of AUDIT_CHORDS) {
+  const r = resolveStep({ notes: N(notes) }, P);
+  add('acorde', id, lv, `${desc}: ${notes}`, exp, r.label, acc(exp, r.label), 'auditoria.md, C05');
 }
 
 // ---------- A'. chords whose notes say when they sound: the ornament rule (THEORY.md, 1 Nov 2026) ----------
@@ -482,6 +500,22 @@ mc('X24', 2, 'Mano derecha cerrada y melodía que termina en C5 (redonda) con el
   { chords: ['C', 'F', 'G7', 'C'], melody: ['E4', 'G4', 'A4', 'F4', 'D4', 'B3', 'C4'], textHas: ['C4 (60) | 12 | 4 | C | 1'] }, 'THEORY.md, «La nota de arriba de un bloque continúa la melodía» (P5)');
 mc('X25', 2, 'La misma melodía terminando en D4 (la 9ª) con el último C', [['C2 C3 E3 G3', 4], ['F1 C3 F3 A3', 4], ['G1 B2 D3 F3', 4], ['C2 C3 E3 G3', 4]], [['E4', 0, 2], ['G4', 2, 2], ['A4', 4, 2], ['F4', 6, 2], ['D4', 8, 2], ['B3', 10, 2], ['D4', 12, 4]],
   { chords: ['C', 'F', 'G7', 'C'], textHas: ['D4 (62) | 12 | 4 | C | 9'], textNot: ['Cadd9'] }, 'auditoria.md, C10');
+// C05 in a pattern (audit of 4 Nov 2026). The types are not in the dictionary, so the chords and degrees of X09, X10 and X19 fail,
+// as a record. today: A7sus2/E «IV7sus2 en 2ª inversión» and C in X09, C7(no3)/G in X10, C with F♯3 left out in X19
+mc('X09', 2, 'Em(add11) – C(add♯11) – B7 – Em', [['E2 E3 G3 A3 B3', 4], ['C3 E3 F#3 G3', 4], ['B2 A3 D#4 F#4', 4], ['E2 E3 G3 B3', 4]], [],
+  { chords: ['Em(add11)', ['Cadd♯11', 'C(add♯11)'], 'B7', 'Em'], romans: ['i(add11)', ['♭VIadd♯11', '♭VI(add♯11)'], 'V7', 'i'] }, 'auditoria.md, C05');
+// G B♭ C over G in D minor (BRIMSTONE 1, bars 2 and 6). C13: whatever its name, the chord takes no ⁶₄ after a 7(no3)
+mc('X10', 2, 'Dm – Gm(add11) sin 5 – A – Dm', [['D3 F3 A3 D4', 4], ['G2 C4 G4 Bb4', 4], ['A2 E3 A3 C#4', 4], ['D3 F3 A3 D4', 4]], [],
+  { chords: ['Dm', ['Gm(add11)', 'Gm(add4)'], 'A', 'Dm'], romans: ['i', ['iv(add11)', 'iv(add4)'], 'V', 'i'], textNot: ['7(no3)⁶₄'] }, 'auditoria.md, C05 y C13');
+// C06: a note that lasts the whole chord is no ornament that «dura poco»
+mc('X19', 2, 'C(add♯11) de cuatro tiempos y G', [['C3 E3 F#3 G3', 4], ['G2 D3 G3 B3', 4]], [], { chords: [['Cadd♯11', 'C(add♯11)'], 'G'], insp: [[0, 'no', 'dura poco']] }, 'THEORY.md, decisión 8');
+// The inspector of chord i of the lane, as it is drawn for a chord picked there (as in src/surfaces.test.js): its name and its description
+const inspOf = (p, i) => {
+  const S = harmonySegs(p), A = analyzeProgression(S.map(s => segStep(p, s)), P), seg = S[i], r0 = A.rs[i], orn = (r0 && r0.orn) || [];
+  const cands = activeCands(seg.notes, null, orn.length ? orn : (r0 && r0.ornAlt) || [], !orn.length, r0 && r0.c), cur = cands[0];
+  const { sp, spelled } = spellActive(seg.notes, cur, P, A.key, r0), sy = candSymbol(cur, sp, P);
+  return { name: r0.aug6 ? r0.label : sy.main + sy.slash, desc: chordDesc(cur, sp, spelled, P) };
+};
 for (const c of melCases) {
   const p = pat(c.id, c.chords, c.mel);
   const txt = progText(p, P);
@@ -523,6 +557,11 @@ for (const c of melCases) {
     const b = back ? (back.notes.length ? back.notes : []).map(n => `${n.m}@${n.s}+${n.l}`).sort().join(' ') : '';
     add('texto', c.id, c.level, head, 'mismas notas al reimportar', b === a ? 'iguales' : `distintas (${back ? back.notes.length : 0} notas, pasos ${back ? back.steps.length : 0})`, b === a, c.ref);
   }
+  // insp: [[i, 'no', text]] the description of chord i in the inspector does not hold the text; [[i, 'name', name]] its name is that one
+  if (ch.insp) ch.insp.forEach(([i, kind, s]) => {
+    const x = inspOf(p, i), got = kind === 'name' ? x.name : x.desc;
+    add('superficies', `${c.id}.${i + 1}-inspector`, c.level, `${head} · inspector del acorde ${i + 1}`, kind === 'name' ? s : `sin «${s}»`, got, kind === 'name' ? norm(got) === norm(s) : !got.includes(s), c.ref);
+  });
 }
 
 mc('K02', 2, 'Dos acordes C → G: tonalidad ambigua, el texto debe dar la alternativa', [['C3 E3 G3', 4], ['G2 B2 D3', 4]], [['E4', 0, 2], ['D4', 2, 2], ['D4', 4, 4]], { key: ['C mayor', 'G mayor'], textHas: ['C mayor', 'G mayor'] });
