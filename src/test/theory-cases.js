@@ -509,6 +509,10 @@ mc('X10', 2, 'Dm – Gm(add11) sin 5 – A – Dm', [['D3 F3 A3 D4', 4], ['G2 C4
   { chords: ['Dm', ['Gm(add11)', 'Gm(add4)'], 'A', 'Dm'], romans: ['i', ['iv(add11)', 'iv(add4)'], 'V', 'i'], textNot: ['7(no3)⁶₄'] }, 'auditoria.md, C05 y C13');
 // C06: a note that lasts the whole chord is no ornament that «dura poco»
 mc('X19', 2, 'C(add♯11) de cuatro tiempos y G', [['C3 E3 F#3 G3', 4], ['G2 D3 G3 B3', 4]], [], { chords: [['Cadd♯11', 'C(add♯11)'], 'G'], insp: [[0, 'no', 'dura poco']] }, 'THEORY.md, decisión 8');
+// The name follows the spelling (THEORY.md, 16 Nov 2026): in D minor the raised 5th of A7♯5 is F, a note of the scale, so the chord
+// is an A7♭13 on every surface. before: A7♯5 with F, «V+7»
+mc('L09', 2, 'Dm – A7♯5 escrito con F – Dm: el nombre sigue a la escritura (A7♭13)', [['D3 F3 A3', 4], ['A2 C#3 F3 G3', 4], ['D3 F3 A3', 4]], [],
+  { chords: ['Dm', 'A7♭13', 'Dm'], romans: ['i', 'V7♭13', 'i'], textHas: ['| A2 C♯3 F3 G3 |'], textNot: ['A7♯5', 'E♯'], insp: [[1, 'name', 'A7♭13']] }, 'THEORY.md, «El nombre sigue a la escritura»');
 // The inspector of chord i of the lane, as it is drawn for a chord picked there (as in src/surfaces.test.js): its name and its description
 const inspOf = (p, i) => {
   const S = harmonySegs(p), A = analyzeProgression(S.map(s => segStep(p, s)), P), seg = S[i], r0 = A.rs[i], orn = (r0 && r0.orn) || [];

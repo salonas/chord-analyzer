@@ -1,6 +1,6 @@
 {
  "updated": "2026-11-16",
- "why": "the top of a struck chord carries the tune on under an octave unless it is the seventh of the chord under it (C10)",
+ "why": "the name follows the spelling: a 7♯5 whose raised 5th the key writes as a 6th is a 7♭13",
  "units": {
   "tavern": 21,
   "rock": 158
@@ -11,7 +11,7 @@
    "n": 15909
   },
   "acorde de punta a punta": {
-   "ok": 9078,
+   "ok": 9080,
    "n": 16404
   },
   "inversión, dado el acorde correcto": {

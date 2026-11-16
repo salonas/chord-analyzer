@@ -1,4 +1,4 @@
-import { CTX, DISS, FN_TENSION, analyze, analyzeProgression, detectKey, resolveStep, tenDetail, tensionHelp } from './analysis.js';
+import { CTX, DISS, FN_TENSION, analyze, analyzeProgression, detectKey, keyName, resolveStep, tenDetail, tensionHelp } from './analysis.js';
 import { setLang } from './i18n.js';
 import { EXAMPLE, segs, segStep } from './model.js';
 import fx from './test/fixtures/analysis.json';
@@ -85,6 +85,29 @@ describe('chord types 13♯11 and 7(no3)', () => {
     expect(A.fn).toEqual(['D', 'T']);
     const B = analyzeProgression([{ notes: [39, 49, 57, 61, 67, 72] }, { notes: [38, 50, 54, 57] }], P);
     expect(B.romans.map(r => r.text)).toEqual(['♭II13♯11', 'I']);
+  });
+  // The name follows the spelling (THEORY.md, 16 Nov 2026): a 7♯5 whose raised 5th the key writes as a 6th above the root is a 7♭13
+  it('names a 7♯5 written with the letter of the 6th as a 7♭13, and only in a key that writes it so', () => {
+    const Dm = [50, 53, 57], A7s5 = [45, 49, 53, 55];
+    const A = analyzeProgression([{ notes: Dm }, { notes: A7s5 }, { notes: Dm }], P);
+    expect(keyName(A.key, P)).toBe('D menor');
+    expect(A.rs[1].label).toBe('A7♭13');
+    expect(A.rs[1].spelled.map(n => 'CDEFGAB'[n.l] + n.a + ':' + n.deg.label)).toEqual(['A0:1', 'C1:3', 'F0:♭13', 'G0:♭7']);
+    expect(A.rs[1].c.missing.map(d => d.label)).toEqual(['5']);
+    expect(A.romans[1].text).toBe('V7♭13');
+    expect(A.fn[1]).toBe('D');
+    // alone, with no key, it is written from its root and stays a 7♯5 with E♯
+    const alone = resolveStep({ notes: A7s5 }, P);
+    expect(alone.label).toBe('A7♯5');
+    expect(alone.spelled.map(n => 'CDEFGAB'[n.l] + n.a)).toEqual(['A0', 'C1', 'E1', 'G0']);
+    // in F♯ minor the key writes that note E♯, the letter of the 5th: C♯7♯5 would need a key that writes G𝄪, so take III+7
+    const F = analyzeProgression([{ notes: [54, 57, 61] }, { notes: [45, 49, 53, 55] }, { notes: [54, 57, 61] }], P);
+    expect(keyName(F.key, P)).toBe('F♯ menor');
+    expect(F.rs[1].label).toBe('A7♯5');
+    expect(F.rs[1].spelled.map(n => 'CDEFGAB'[n.l] + n.a)).toEqual(['A0', 'C1', 'E1', 'G0']);
+    // a chord the user named keeps its name
+    const U = analyzeProgression([{ notes: Dm }, { notes: A7s5, root: 9, sym: '7♯5' }, { notes: Dm }], P);
+    expect(U.rs[1].label).toBe('A7♯5');
   });
   // C13 of the audit of 4 Nov 2026: three degrees do not make a triad, so 7(no3) on its 5th takes words, not ⁶₄ (decision 6)
   it('writes the inversion of a 7(no3) in words, with no figured bass', () => {
