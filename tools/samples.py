@@ -30,7 +30,6 @@ from sfzregions import cc_defaults, program  # noqa: E402
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'public', 'samples')
 ARIA_ROOT = ''
-SF2_RATE = 48000   # sample rate of the converted sf2_smpl.wav files
 DRUM_LAYERS = [40, 80, 120]
 PITCH_VEL = 100
 PITCH_STEP = 4           # semitones between rendered notes; the browser retunes the ones between
@@ -239,12 +238,29 @@ def ffmpeg(*args):
     return subprocess.run([FFMPEG, '-hide_banner', '-nostdin', '-y', *args], capture_output=True, text=True, check=True)
 
 
+_rates = {}
+
+
+def wav_rate(path):
+    """Sample rate in the header of a .wav file. Each ARIA conversion writes its sf2_smpl.wav at the rate of its bank
+    (48000 for Musyng Kite and the Famicom bank, 44100 for Just t4), and a region's offset and end count samples at it."""
+    if path not in _rates:
+        with open(path, 'rb') as f:
+            head = f.read(4096)
+        i = head.find(b'fmt ')
+        if head[:4] != b'RIFF' or i < 0:
+            sys.exit(f'{path}: not a .wav file')
+        _rates[path] = int.from_bytes(head[i + 12:i + 16], 'little')
+    return _rates[path]
+
+
 def render(mix, wav, seconds):
     inputs, chains = [], []
     for i, (path, g, semis, (a, h, d, sus), hz, cut) in enumerate(mix):
         if cut:
             off, end, loop = cut
-            inputs += ['-ss', f'{off / SF2_RATE:.6f}', '-t', f'{(end - off + 1) / SF2_RATE:.6f}']
+            rate = wav_rate(path)
+            inputs += ['-ss', f'{off / rate:.6f}', '-t', f'{(end - off + 1) / rate:.6f}']
         inputs += ['-i', path]
         pitch = f',asetrate={44100 * 2 ** (semis / 12):.3f},aresample=44100' if abs(semis) > 1e-3 else ''
         filt = f',lowpass=f={hz:.1f}:p=2' if hz else ''
