@@ -42,7 +42,9 @@ El idioma se comparte con salonas.github.io en la clave `salonas.lang`.
 `tools/` tiene los scripts de Python que leen la plantilla de FL Studio y sus `.sfz`
 (`flp.py`, `sfzkeys.py`) y uno que valida un `.zip` de MIDI (`check_midi_zip.py`).
 `samples.py` arma los samples de `public/samples/` a partir de la plantilla de FL: lee qué `.sfz` carga
-cada canal y usa solo bibliotecas CC0 (usa `sfzregions.py` y necesita `ffmpeg`).
+cada canal y usa solo bibliotecas CC0 (usa `sfzregions.py` y necesita `ffmpeg`). Después de cada render, corre
+`node tools/sample-tuning.mjs`: mide la afinación de cada `.mp3` contra la nota en que está archivado (`k` en
+`manifest.json`) y termina con error si alguno queda a más de 0,6 semitonos.
 `subset-unifont.py` recorta GNU Unifont a los caracteres que usa la app (necesita `fontTools`), y
 `tools/icons/make-icons.py` dibuja los íconos de 16×16 de `public/img/icons/` a partir de
 `tools/icons/icons.json` (necesita `Pillow`).
