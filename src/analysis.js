@@ -228,6 +228,32 @@ function resolveStep(step,prefs,key,nb){
   return {notes,c,sp,spelled,label,...(drop.length&&(o.c===c?{orn:drop}:{ornAlt:drop})),...(o&&o.c===c&&o.mel&&o.mel.length&&{mel:o.mel})};
 }
 
+// The name follows the spelling (THEORY.md, «El nombre sigue a la escritura», 16 Nov 2026). In a key, a chord tone that is a note of
+// the scale keeps the key's letter (chordLetters), so A7♯5 in D minor writes F, which is no 5th of A. A 7♯5 whose raised 5th is
+// written with the letter of the 6th above the root is named for what is written, a 7♭13 with no 5th; no letter changes. Where the
+// key writes that note with the letter of the 5th (E♯ in F♯ minor) it stays a 7♯5, and a chord the user named keeps its name
+// (r.named). asWritten puts the reading first in the inspector of a chord taken from the lane (activeCands). Naming a dim7 or an
+// augmented triad from the note its letters stack in thirds from was measured too and stayed out (THEORY.md, «Pendientes conocidos»)
+function nameBySpelling(r,prefs){
+  const c=r.c, sp=r.sp; if(!c||!sp||r.named||c.type.sym!=='7♯5') return;
+  const root=sp.byPc[c.root], up=sp.byPc[(c.root+8)%12];
+  if(up.l!==(root.l+5)%7) return;
+  const t=TYPES.find(x=>x.sym==='7♭13'), missing=t.degs.filter(d=>d.label==='5');
+  const parts={...c.parts,type:t.rank,missing:missing.length*RANK.missing};
+  const nc={...c,type:t,missing,parts,score:c.score-c.parts.type-c.parts.missing+parts.type+parts.missing,asWritten:true};
+  // the letters stay; each takes its degree in the new reading, and the 5th, which does not sound, the letter of its number
+  const byPc={};
+  t.degs.forEach(d=>{
+    const pc=(d.pc+c.root)%12, x=sp.byPc[pc];
+    if(x){ byPc[pc]={l:x.l,a:x.a,deg:d}; return; }
+    const l=(root.l+d.step)%7; let a=((pc-NAT[l])%12+12)%12; if(a>6) a-=12;
+    byPc[pc]={l,a,deg:d};
+  });
+  r.c=nc; r.sp={...sp,byPc};
+  r.spelled=r.spelled.map(n=>n.deg&&byPc[n.midi%12]?{...n,deg:byPc[n.midi%12].deg}:n);
+  const sy=candSymbol(nc,r.sp,prefs); r.label=sy.main+sy.slash;
+}
+
 // ---------- progression analysis ----------
 const MAJ=[0,2,4,5,7,9,11], MIN=[0,2,3,5,7,8,10];
 const EXP={major:{0:['maj'],2:['min'],4:['min'],5:['maj'],7:['maj','dom'],9:['min'],11:['dim','hdim']},
@@ -454,6 +480,9 @@ function keyText(k,alt,prefs){
 }
 // A triad or a seventh in inversion takes a figured bass (⁶, ⁶₅…); anything with extensions, add, sus, 6 or a power chord takes words,
 // so that "/" stays for secondary functions: V9 in 1st inversion, Iadd9 with the bass on the 9
+// A triad is a root, a third and a fifth: three degrees are not enough, 7(no3) has three and is no triad (C13 of the audit of
+// 4 Nov 2026: «♭VII7(no3)⁶₄»), so it takes words too
+const isTriad=t=>t.degs.length===3&&t.degs.some(d=>d.n===3)&&t.degs.some(d=>d.n===5);
 function invWords(c,d){
   return [3,5,7].includes(d.n)?tr('en ','in ')+inversionText(c):tr('con bajo en la ','with the bass on the ')+d.label;
 }
@@ -470,8 +499,8 @@ function romanFor(c,key){
   let fig='', kind='', words='';
   if(c.slash){
     const d=bassDeg(c);
-    if(c.type.degs.length===3&&q!=='sus'&&d.n===3){ fig='⁶'; kind='triad'; }
-    else if(c.type.degs.length===3&&q!=='sus'&&d.n===5){ fig='⁶₄'; kind='triad'; }
+    if(isTriad(c.type)&&d.n===3){ fig='⁶'; kind='triad'; }
+    else if(isTriad(c.type)&&d.n===5){ fig='⁶₄'; kind='triad'; }
     else if(SEVENTHS.has(c.type.sym)&&[3,5,7].includes(d.n)){ fig={3:'⁶₅',5:'⁴₃',7:'⁴₂'}[d.n]; kind='seventh'; ext=ext.replace(/7$/,''); }
     else words=invWords(c,d);
   }
@@ -632,6 +661,8 @@ function inKey(steps,first,items,lo,hi,key,alt,prefs,whole){
   // the lane's chords read again with the key and their neighbours (readWithMelody); the neighbours are the first reading
   const S=steps.slice(lo,hi+1);
   const rs=S.map((s,j)=>{ const i=lo+j; return resolveStep(s,prefs,key,{prev:first[i-1]&&first[i-1].c,next:first[i+1]&&first[i+1].c}); });
+  // the name follows the spelling before the degrees are read, so that the degree is the one of the name (vii°⁴₂, not ♭vi°7)
+  rs.forEach((r,j)=>{ if(r.c&&S[j].root===r.c.root&&S[j].sym===r.c.type.sym) r.named=true; nameBySpelling(r,prefs); });
   const romans=rs.map(r=>r.c?romanFor(r.c,key):null);
   chromaticReading(rs,romans,key,prefs);
   spellByGoal(rs,S,key,prefs);

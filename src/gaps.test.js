@@ -64,6 +64,8 @@ describe('chord dictionary', () => {
     ['7♯5♭9', [48, 52, 56, 58, 61], 'C7♯5♭9'],
     ['7♭9♯11', [48, 52, 55, 58, 61, 66], 'C7♭9♯11'],
     ['13♭9', [48, 52, 55, 58, 61, 69], 'C13♭9'],
+    // C05 of the audit of 4 Nov 2026: the one type of its eight that came in (it read B♭9♯11/C)
+    ['9♯5', [48, 52, 56, 58, 62], 'C9♯5'],
   ])('names %s', (_, notes, want) => expect(name(notes)).toBe(want));
   it('does not take a plain chord for an altered one', () => {
     expect(name([48, 52, 55, 58])).toBe('C7');

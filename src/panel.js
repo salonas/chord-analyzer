@@ -50,9 +50,10 @@ function intervalText(lo,hi,a,b){
 // A root you choose is your reading, so the list is then the plain one
 function activeCands(notes,lockedRoot,orn,after,lane){
   const all=analyze(notes,lockedRoot);
-  // a lane chord whose name takes notes of the tune or weighed its neighbours (readWithMelody) goes first as the lane reads it;
+  // a lane chord whose name takes notes of the tune or weighed its neighbours (readWithMelody), or follows its spelling in the
+  // key (A7♭13 for an A7♯5 written with F; nameBySpelling), goes first as the lane reads it;
   // the readings of the chord's own notes stay below, C(no5) under the C the tune completes too
-  if(lane&&(lane.mel||lane.ctx)&&lockedRoot==null) return [{...lane,...(orn&&orn.length&&{orn})},...all.filter(c=>c.root!==lane.root||c.type.sym!==lane.type.sym||c.missing.length!==lane.missing.length)];
+  if(lane&&(lane.mel||lane.ctx||lane.asWritten)&&lockedRoot==null) return [{...lane,...(orn&&orn.length&&{orn})},...all.filter(c=>c.root!==lane.root||c.type.sym!==lane.type.sym||c.missing.length!==lane.missing.length)];
   if(!orn||!orn.length||lockedRoot!=null) return all;
   const top=analyze(notes.filter(m=>!orn.includes(m)),null)[0];
   if(!top) return all;

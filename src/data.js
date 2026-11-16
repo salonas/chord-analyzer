@@ -68,6 +68,10 @@ const TYPES=[
  ['7♭9♯11', '', 'séptima con 9ª menor y 11ª aumentada', 'seventh flat nine sharp eleven', '1 3 5 b7 b9 #11', .85],
  ['13♭9', '', 'trecena con 9ª menor', 'thirteenth flat nine', '1 3 5 b7 b9 13', .85],
  ['7(no3)', '', 'séptima sin 3ª', 'seventh no third', '1 5 b7', .9],
+ // C05 of the audit of 4 Nov 2026 asked for eight common types the dictionary lacks. Only 9♯5 is here: each of the other seven
+ // (m(add11), add♯11, m7♭9, 7sus4♭9, sus2sus4, maj7sus4, 13sus4) made a check of the probe fail or a row of the corpus ratchet
+ // worse, whatever its rank from 0 to 0.9 (THEORY.md, «Pendientes conocidos», with the figures)
+ ['9♯5', '', 'novena con 5ª aumentada', 'ninth sharp five', '1 3 #5 b7 9', .85],
 ].map(([sym,alt,es,en,f,rank])=>{
   const degs=f.split(' ').map(parseDeg);
   const big=degs.length>=4, hasExt=degs.some(d=>d.n>=11);
