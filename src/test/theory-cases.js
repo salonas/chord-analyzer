@@ -467,6 +467,15 @@ mc('N01', 2, 'vii°⁶₅/V (A C E♭ F♯ antes de G) con F♯ en la melodía: 
 mc('X07', 2, 'Bloques Dm (3 t), díadas C–E y D–F de medio tiempo, Gm (3 t), díadas A–C y B♭–D, A, Dm', [['D3 F3 A3 D4', 3], ['C4 E4', .5], ['D4 F4', .5], ['G2 G3 Bb3 D4', 3], ['A3 C4', .5], ['Bb3 D4', .5], ['A2 A3 C#4 E4', 4], ['D3 A3 D4 F4', 4]], [],
   { chords: ['Dm', 'Gm', 'A', 'Dm'], romans: ['i', 'iv', 'V', 'i'], textHas: ['Menor i–iv–V'], textNot: ['Menor i–iv–v'] }, 'THEORY.md, «Inspector» (hoja vacía)');
 mc('X08', 2, 'D5 (3 t), díada F–A de medio tiempo, B♭, G5', [['D3 A3 D4', 3], ['F3 A3', .5], ['Bb2 F3 Bb3 D4', 4], ['G2 D3 G3', 4.5]], [], { textNot: ['un V resuelve a la tónica', 'F(no5)'] }, 'auditoria.md, C04');
+// C01 (audit of 4 Nov 2026): a bass in quarters or eighths struck with the tune opens no chord and does not take the tune
+// (THEORY.md, «La voz grave es el bajo», parts 1 and 2). Not implemented: these checks fail until the rule is in.
+// today X01 reads C · Dm11 · C/E · Fmaj9 · G7/B, X02 «+D5 en 1 · +G5 en 3» and «# Voz superior», X03 C · Cmaj7/E · G
+mc('X01', 2, 'Bajo caminante en negras bajo C sostenido, con la melodía en negras', [], [['C2', 0, 1], ['E3', 0, 4], ['G3', 0, 4], ['C4', 0, 4], ['E5', 0, 1], ['D2', 1, 1], ['F5', 1, 1], ['E2', 2, 1], ['G5', 2, 1], ['F2', 3, 1], ['A5', 3, 1], ['B2', 4, 4], ['D3', 4, 4], ['F3', 4, 4], ['G3', 4, 4], ['G5', 4, 2], ['B4', 6, 2]],
+  { chords: ['C', 'G7/B'], melody: ['E5', 'F5', 'G5', 'A5', 'B4'], textHas: ['| C2 → D2 → E2 → F2'], textNot: ['Dm11', 'Fmaj9'] }, 'THEORY.md, «La voz grave es el bajo» (partes 1 y 2)');
+mc('X02', 2, 'Bajo de pop en negras (la fundamental) bajo C, con la melodía en negras', [], [['C2', 0, 1], ['C2', 1, 1], ['C2', 2, 1], ['C2', 3, 1], ['E3', 0, 4], ['G3', 0, 4], ['C4', 0, 4], ['E5', 0, 1], ['D5', 1, 1], ['E5', 2, 1], ['G5', 3, 1]],
+  { chords: ['C'], melody: ['E5', 'D5', 'G5'], textNot: ['+D5 en 1', '# Voz superior'] }, 'auditoria.md, C01');
+mc('X03', 2, 'Bajo en corcheas bajo C y G, con la melodía encima', [], [...[0, .5, 1, 1.5, 2, 2.5, 3, 3.5].map(s => ['C2', s, .5]), ...[4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5].map(s => ['G1', s, .5]), ['E3', 0, 4], ['G3', 0, 4], ['C4', 0, 4], ['D3', 4, 4], ['G3', 4, 4], ['B3', 4, 4], ['E5', 0, 1.5], ['D5', 1.5, .5], ['C5', 2, 1], ['B4', 3, 1], ['D5', 4, 2], ['G4', 6, 2]],
+  { chords: ['C', 'G'], melody: ['E5', 'D5', 'C5', 'B4', 'G4'], textNot: ['Cmaj7/E'] }, 'auditoria.md, C01');
 // C10 (audit of 4 Nov 2026): the top of a struck chord carries the tune on when it comes by step or by a leap up to a fifth,
 // even under an octave from the next voice (THEORY.md, «La nota de arriba de un bloque continúa la melodía»)
 mc('X24', 2, 'Mano derecha cerrada y melodía que termina en C5 (redonda) con el último C', [['C2 C3 E3 G3', 4], ['F1 C3 F3 A3', 4], ['G1 B2 D3 F3', 4], ['C2 C3 E3 G3', 4]], [['E4', 0, 2], ['G4', 2, 2], ['A4', 4, 2], ['F4', 6, 2], ['D4', 8, 2], ['B3', 10, 2], ['C4', 12, 4]],
